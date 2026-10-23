@@ -1,0 +1,358 @@
+<section
+  class="aurelle-featured-editions full-width"
+  style="--aurelle-editions-background: {{ section.settings.background_color }}; --aurelle-editions-foreground: {{ section.settings.foreground_color }}; --aurelle-editions-accent: {{ section.settings.accent_color }};"
+>
+  <div class="aurelle-featured-editions__grid">
+    {% for block in section.blocks %}
+      {% liquid
+        assign edition_link = block.settings.link
+        if edition_link == blank and block.settings.collection != blank
+          assign edition_link = block.settings.collection.url
+        endif
+        if edition_link == blank
+          assign encoded_search_terms = block.settings.search_terms | url_encode
+          assign edition_link = routes.search_url | append: '?q=' | append: encoded_search_terms | append: '&type=product'
+        endif
+
+        assign edition_image = 'aurelle-hero-main.jpeg'
+        if block.settings.fallback_image == 'earrings'
+          assign edition_image = 'aurelle-category-earrings.jpg'
+        endif
+      %}
+
+      <article class="aurelle-featured-editions__card" {{ block.shopify_attributes }}>
+        <div class="aurelle-featured-editions__image-wrap">
+          {% if block.settings.image != blank %}
+            {{ block.settings.image | image_url: width: 1600 | image_tag: class: 'aurelle-featured-editions__image', alt: '', widths: '580, 900, 1200, 1600', sizes: '(min-width: 761px) calc((100vw - 120px) / 2), calc(100vw - 40px)', loading: 'lazy' }}
+          {% else %}
+            <img
+              class="aurelle-featured-editions__image"
+              src="{{ edition_image | asset_url }}"
+              width="580"
+              height="521"
+              alt=""
+              loading="lazy"
+            >
+          {% endif %}
+        </div>
+        <div class="aurelle-featured-editions__gradient" aria-hidden="true"></div>
+        <div class="aurelle-featured-editions__copy">
+          {% if block.settings.eyebrow != blank %}
+            <p class="aurelle-featured-editions__eyebrow">{{ block.settings.eyebrow | escape }}</p>
+          {% endif %}
+          {% if block.settings.heading != blank %}
+            <h2 class="aurelle-featured-editions__heading">{{ block.settings.heading | escape }}</h2>
+          {% endif %}
+          {% if block.settings.description != blank %}
+            <p class="aurelle-featured-editions__description">{{ block.settings.description | escape }}</p>
+          {% endif %}
+          {% if block.settings.button_label != blank %}
+            <a class="aurelle-featured-editions__button" href="{{ edition_link | escape }}">
+              {{ block.settings.button_label | escape }}
+            </a>
+          {% endif %}
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+</section>
+
+{% stylesheet %}
+  .aurelle-featured-editions {
+    width: 100%;
+    padding: 40px 48px;
+    color: var(--aurelle-editions-foreground);
+    background: var(--aurelle-editions-background);
+  }
+
+  .aurelle-featured-editions__grid {
+    display: grid;
+    width: min(1184px, 100%);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+    margin-inline: auto;
+  }
+
+  .aurelle-featured-editions__card {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    min-height: 521px;
+    flex-direction: column;
+    justify-content: flex-end;
+    overflow: hidden;
+    padding: 48px;
+    border-radius: 2px;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 10%), 0 2px 4px -2px rgb(0 0 0 / 10%);
+    isolation: isolate;
+  }
+
+  .aurelle-featured-editions__image-wrap,
+  .aurelle-featured-editions__gradient {
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+  }
+
+  .aurelle-featured-editions__image-wrap {
+    overflow: hidden;
+    background: #d8cfc2;
+  }
+
+  .aurelle-featured-editions__image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    transition: transform 700ms cubic-bezier(0.2, 0.65, 0.3, 1);
+  }
+
+  .aurelle-featured-editions__card:hover .aurelle-featured-editions__image,
+  .aurelle-featured-editions__card:focus-within .aurelle-featured-editions__image {
+    transform: scale(1.035);
+  }
+
+  .aurelle-featured-editions__gradient {
+    background: linear-gradient(180deg, rgb(0 0 0 / 0%) 18%, rgb(0 0 0 / 30%) 55%, rgb(0 0 0 / 80%) 100%);
+  }
+
+  .aurelle-featured-editions__copy {
+    width: 100%;
+    max-width: 448px;
+  }
+
+  .aurelle-featured-editions__eyebrow {
+    margin: 0 0 8px;
+    color: var(--aurelle-editions-accent);
+    font-family: var(--font-primary--family);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.25em;
+    line-height: 16.5px;
+    text-transform: uppercase;
+  }
+
+  .aurelle-featured-editions__heading {
+    margin: 0 0 12px;
+    color: var(--aurelle-editions-foreground);
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 36px;
+    font-weight: 400;
+    line-height: 45px;
+  }
+
+  .aurelle-featured-editions__description {
+    max-width: 448px;
+    margin: 0 0 18px;
+    color: rgb(252 249 244 / 90%);
+    font-family: var(--font-primary--family);
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.625;
+  }
+
+  .aurelle-featured-editions__button {
+    display: inline-flex;
+    min-height: 41px;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 28px;
+    border-radius: 12px;
+    color: #1c1c19;
+    background: #fcf9f4;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 10%), 0 2px 4px -2px rgb(0 0 0 / 10%);
+    font-family: var(--font-primary--family);
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    line-height: 16.5px;
+    text-align: center;
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: color 180ms ease, background-color 180ms ease, transform 180ms ease;
+  }
+
+  .aurelle-featured-editions__button:hover {
+    color: #fcf9f4;
+    background: #735b26;
+    transform: translateY(-1px);
+  }
+
+  .aurelle-featured-editions__button:focus-visible {
+    outline: 2px solid #ffdea2;
+    outline-offset: 4px;
+  }
+
+  @media screen and (max-width: 900px) {
+    .aurelle-featured-editions {
+      padding-inline: 32px;
+    }
+
+    .aurelle-featured-editions__card {
+      min-height: 480px;
+      padding: 32px;
+    }
+  }
+
+  @media screen and (max-width: 760px) {
+    .aurelle-featured-editions {
+      padding: 28px 20px;
+    }
+
+    .aurelle-featured-editions__grid {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .aurelle-featured-editions__card {
+      min-height: min(118vw, 480px);
+      padding: 28px 24px;
+    }
+
+    .aurelle-featured-editions__heading {
+      font-size: clamp(30px, 8vw, 36px);
+      line-height: 1.2;
+    }
+
+    .aurelle-featured-editions__description {
+      font-size: 14px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .aurelle-featured-editions__image,
+    .aurelle-featured-editions__button {
+      transition: none;
+    }
+
+    .aurelle-featured-editions__card:hover .aurelle-featured-editions__image,
+    .aurelle-featured-editions__card:focus-within .aurelle-featured-editions__image,
+    .aurelle-featured-editions__button:hover {
+      transform: none;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "AURELLE featured edits",
+  "settings": [
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Section background",
+      "default": "#FCF9F4"
+    },
+    {
+      "type": "color",
+      "id": "foreground_color",
+      "label": "Card text",
+      "default": "#FCF9F4"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Eyebrow accent",
+      "default": "#FFDEA2"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "edition",
+      "name": "Editorial feature",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Feature image",
+          "info": "Optional. If blank, the chosen existing AURELLE image is used."
+        },
+        {
+          "type": "select",
+          "id": "fallback_image",
+          "label": "Existing image fallback",
+          "options": [
+            { "value": "hero", "label": "AURELLE editorial portrait" },
+            { "value": "earrings", "label": "Gold earrings portrait" }
+          ],
+          "default": "hero"
+        },
+        {
+          "type": "text",
+          "id": "eyebrow",
+          "label": "Eyebrow",
+          "default": "The High Jewellery Capsule"
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "default": "Heirlooms for every day"
+        },
+        {
+          "type": "textarea",
+          "id": "description",
+          "label": "Description",
+          "default": "Sculpted silhouettes for slow mornings, salon evenings, and everything in between."
+        },
+        {
+          "type": "text",
+          "id": "button_label",
+          "label": "Button label",
+          "default": "Explore heirlooms"
+        },
+        {
+          "type": "collection",
+          "id": "collection",
+          "label": "Collection destination",
+          "info": "Optional. Selecting a collection links the button to that collection."
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "Custom button destination",
+          "info": "Optional. Overrides the collection destination."
+        },
+        {
+          "type": "text",
+          "id": "search_terms",
+          "label": "Product search fallback",
+          "default": "high jewellery",
+          "info": "Used when no collection or custom destination is selected."
+        }
+      ]
+    }
+  ],
+  "max_blocks": 2,
+  "presets": [
+    {
+      "name": "AURELLE featured edits",
+      "blocks": [
+        {
+          "type": "edition",
+          "settings": {
+            "fallback_image": "hero",
+            "eyebrow": "The High Jewellery Capsule",
+            "heading": "Heirlooms for every day",
+            "description": "Sculpted silhouettes for slow mornings, salon evenings, and everything in between.",
+            "button_label": "Explore heirlooms",
+            "search_terms": "high jewellery"
+          }
+        },
+        {
+          "type": "edition",
+          "settings": {
+            "fallback_image": "earrings",
+            "eyebrow": "Modern Solid Gold",
+            "heading": "Thoughtful layers",
+            "description": "Substantial chains, fluid pavé solitaires, and refined accents designed to layer and live in.",
+            "button_label": "Shop layers",
+            "search_terms": "solid gold"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

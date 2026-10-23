@@ -12,9 +12,108 @@
     "main": {
       "type": "aurelle-hero",
       "settings": {}
+    },
+    "aurelle_categories": {
+      "type": "aurelle-categories",
+      "blocks": {
+        "rings": {
+          "type": "category",
+          "settings": {
+            "fallback_image": "rings",
+            "heading": "Rings",
+            "description": "Solitaires & Sculptural Stacks",
+            "badge_text": "34 Pieces"
+          }
+        },
+        "earrings": {
+          "type": "category",
+          "settings": {
+            "fallback_image": "earrings",
+            "heading": "Earrings",
+            "description": "Architectural Drops & Hoops",
+            "badge_text": "28 Pieces"
+          }
+        },
+        "necklaces": {
+          "type": "category",
+          "settings": {
+            "fallback_image": "necklaces",
+            "heading": "Necklaces",
+            "description": "Tennis & Medallion Suites",
+            "badge_text": "19 Pieces"
+          }
+        },
+        "bangles": {
+          "type": "category",
+          "settings": {
+            "fallback_image": "bangles",
+            "heading": "Bangles",
+            "description": "Solid 18K Cuffs & Chains",
+            "badge_text": "22 Pieces"
+          }
+        },
+        "bridal": {
+          "type": "category",
+          "settings": {
+            "fallback_image": "bridal",
+            "heading": "Bridal",
+            "description": "Ceremonial Solitaires",
+            "badge_text": "16 Pieces"
+          }
+        }
+      },
+      "block_order": [
+        "rings",
+        "earrings",
+        "necklaces",
+        "bangles",
+        "bridal"
+      ],
+      "settings": {}
+    },
+    "aurelle_featured_editions": {
+      "type": "aurelle-featured-editions",
+      "blocks": {
+        "high_jewellery": {
+          "type": "edition",
+          "settings": {
+            "fallback_image": "hero",
+            "eyebrow": "The High Jewellery Capsule",
+            "heading": "Heirlooms for every day",
+            "description": "Sculpted silhouettes for slow mornings, salon evenings, and everything in between.",
+            "button_label": "Explore heirlooms",
+            "search_terms": "high jewellery"
+          }
+        },
+        "modern_gold": {
+          "type": "edition",
+          "settings": {
+            "fallback_image": "earrings",
+            "eyebrow": "Modern Solid Gold",
+            "heading": "Thoughtful layers",
+            "description": "Substantial chains, fluid pavé solitaires, and refined accents designed to layer and live in.",
+            "button_label": "Shop layers",
+            "search_terms": "solid gold"
+          }
+        }
+      },
+      "block_order": [
+        "high_jewellery",
+        "modern_gold"
+      ],
+      "settings": {}
+    },
+    "aurelle_iconic_products": {
+      "type": "aurelle-iconic-products",
+      "blocks": {},
+      "block_order": [],
+      "settings": {}
     }
   },
   "order": [
-    "main"
+    "main",
+    "aurelle_categories",
+    "aurelle_featured_editions",
+    "aurelle_iconic_products"
   ]
 }

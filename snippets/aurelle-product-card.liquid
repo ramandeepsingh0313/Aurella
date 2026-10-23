@@ -1,0 +1,105 @@
+{% doc %}
+  Renders an AURELLE product card using live Shopify product data.
+
+  @param {product} product - The Shopify product to render.
+  @example
+  {% render 'aurelle-product-card', product: product %}
+{% enddoc %}
+
+{% liquid
+  assign card_badge = blank
+  for product_tag in product.tags
+    assign badge_prefix = product_tag | slice: 0, 6 | downcase
+    if badge_prefix == 'badge:'
+      assign card_badge = product_tag | remove_first: 'Badge:' | remove_first: 'badge:' | strip
+      break
+    endif
+  endfor
+
+  assign card_subtitle = product.metafields.custom.card_subtitle.value | default: product.type | default: product.vendor
+  assign color_option_index = -1
+  for product_option in product.options_with_values
+    assign option_name = product_option.name | downcase
+    if option_name contains 'color' or option_name contains 'colour'
+      assign color_option_index = forloop.index0
+      break
+    endif
+  endfor
+%}
+
+<article class="aurelle-product-card" role="listitem">
+  <a class="aurelle-product-card__media" href="{{ product.url | escape }}" aria-label="{{ product.title | escape }}">
+    {% if card_badge != blank %}
+      <span class="aurelle-product-card__badge">{{ card_badge | escape }}</span>
+    {% endif %}
+    {% if product.featured_image != blank %}
+      {{ product.featured_image | image_url: width: 960 | image_tag: class: 'aurelle-product-card__image', alt: product.featured_image.alt, widths: '360, 540, 720, 960', sizes: '(min-width: 1200px) 25vw, (min-width: 761px) 33vw, 78vw', loading: 'lazy' }}
+      {% if product.images[1] != blank %}
+        {{ product.images[1] | image_url: width: 960 | image_tag: class: 'aurelle-product-card__image aurelle-product-card__image--hover', alt: '', widths: '360, 540, 720, 960', sizes: '(min-width: 1200px) 25vw, (min-width: 761px) 33vw, 78vw', loading: 'lazy' }}
+      {% endif %}
+    {% else %}
+      {{ 'product-1' | placeholder_svg_tag: 'aurelle-product-card__placeholder' }}
+    {% endif %}
+    {% unless product.available %}
+      <span class="aurelle-product-card__sold-out">Sold out</span>
+    {% endunless %}
+  </a>
+
+  <div class="aurelle-product-card__details">
+    <div class="aurelle-product-card__meta-row">
+      {% if card_subtitle != blank %}
+        <p class="aurelle-product-card__subtitle">{{ card_subtitle | escape }}</p>
+      {% endif %}
+      {% if color_option_index > -1 %}
+        {% liquid
+          assign rendered_colors = '|'
+        %}
+        <div class="aurelle-product-card__swatches" aria-label="Available colors">
+          {% for variant in product.variants %}
+            {% assign color_name = variant.options[color_option_index] %}
+            {% assign color_key = color_name | handleize | prepend: '|' | append: '|' %}
+            {% unless rendered_colors contains color_key %}
+              {% assign rendered_colors = rendered_colors | append: color_name | handleize | append: '|' %}
+              {% liquid
+                assign color_value = '#D6D0C7'
+                assign normalized_color = color_name | downcase
+                case normalized_color
+                  when 'gold', 'yellow gold', '18k yellow gold'
+                    assign color_value = '#C9A962'
+                  when 'rose gold', '18k rose gold'
+                    assign color_value = '#D9A39A'
+                  when 'white gold', 'silver', 'platinum'
+                    assign color_value = '#D8D8D6'
+                  when 'black'
+                    assign color_value = '#262521'
+                endcase
+              %}
+              <a
+                class="aurelle-product-card__swatch"
+                href="{{ variant.url | escape }}"
+                style="--aurelle-product-swatch: {{ color_value }}"
+                aria-label="{{ color_name | escape }}"
+                title="{{ color_name | escape }}"
+              ></a>
+            {% endunless %}
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+
+    <h3 class="aurelle-product-card__title">
+      <a href="{{ product.url | escape }}">{{ product.title | escape }}</a>
+    </h3>
+
+    {% if product.metafields.custom.card_description.value != blank %}
+      <p class="aurelle-product-card__description">{{ product.metafields.custom.card_description.value | escape }}</p>
+    {% endif %}
+
+    <div class="aurelle-product-card__price-row">
+      <p class="aurelle-product-card__price">{{ product.price | money }}</p>
+      {% if product.compare_at_price > product.price %}
+        <s class="aurelle-product-card__compare-price">{{ product.compare_at_price | money }}</s>
+      {% endif %}
+    </div>
+  </div>
+</article>
