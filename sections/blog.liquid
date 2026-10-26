@@ -1,31 +1,119 @@
 {% comment %}
-  This section is used in the blog template to render the blog page listing all
-  articles within a blog.
+  This section renders a responsive, paginated list of articles for a blog.
 
   https://shopify.dev/docs/storefronts/themes/architecture/templates/blog
 {% endcomment %}
 
-<h1>{{ blog.title }}</h1>
+<section class="aurelle-blog full-width">
+  <div class="aurelle-blog__inner">
+    <h1>{{ blog.title | escape }}</h1>
 
-{% paginate blog.articles by 5 %}
-  {% for article in blog.articles %}
-    <div>
-      {% if article.image %}
-        {{ article.image | image_url: width: 1000 | image_tag }}
-      {% endif %}
-      <h2>
-        {{ article.title | link_to: article.url }}
-      </h2>
-      {% assign date = article.published_at | time_tag: format: 'date' %}
-      <p>{{ 'blog.article_metadata_html' | t: date: date, author: article.author }}</p>
-      <p>{{ article.excerpt }}</p>
-    </div>
-  {% endfor %}
+    {% paginate blog.articles by 10 %}
+      <div class="aurelle-blog__grid">
+        {% for article in blog.articles %}
+          <article class="aurelle-blog__card">
+            {% if article.image %}
+              <a class="aurelle-blog__image" href="{{ article.url }}" aria-label="{{ article.title | escape }}">
+                {{ article.image | image_url: width: 1200 | image_tag: alt: article.image.alt | default: article.title, widths: '360, 540, 720, 960, 1200', sizes: '(min-width: 1000px) 33vw, (min-width: 600px) 50vw, 100vw', loading: 'lazy' }}
+              </a>
+            {% endif %}
+            <h2><a href="{{ article.url }}">{{ article.title | escape }}</a></h2>
+            {% assign date = article.published_at | time_tag: format: 'date' %}
+            <p class="aurelle-blog__metadata">{{ 'blog.article_metadata_html' | t: date: date, author: article.author }}</p>
+            {% if article.excerpt != blank %}<div class="aurelle-blog__excerpt rte">{{ article.excerpt }}</div>{% endif %}
+          </article>
+        {% endfor %}
+      </div>
 
-  {%- if paginate.pages > 1 -%}
-    {{- paginate | default_pagination -}}
-  {%- endif -%}
-{% endpaginate %}
+      {%- if paginate.pages > 1 -%}
+        <nav class="aurelle-blog__pagination" aria-label="{{ 'general.pagination.label' | t }}">
+          {{- paginate | default_pagination -}}
+        </nav>
+      {%- endif -%}
+    {% endpaginate %}
+  </div>
+</section>
+
+{% stylesheet %}
+  .aurelle-blog {
+    padding-block: clamp(40px, 7vw, 96px);
+  }
+
+  .aurelle-blog__inner {
+    width: min(1280px, calc(100% - clamp(32px, 8vw, 112px)));
+    margin-inline: auto;
+  }
+
+  .aurelle-blog__inner > h1,
+  .aurelle-article__inner > h1 {
+    margin-bottom: clamp(24px, 4vw, 48px);
+    font-family: 'Bodoni MT', Didot, Georgia, 'Times New Roman', serif;
+    font-size: clamp(34px, 5vw, 60px);
+    font-weight: 400;
+    line-height: 1.08;
+  }
+
+  .aurelle-blog__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+    gap: clamp(20px, 3vw, 40px);
+  }
+
+  .aurelle-blog__card,
+  .aurelle-blog__image {
+    min-width: 0;
+  }
+
+  .aurelle-blog__image {
+    display: block;
+    overflow: hidden;
+    background: #f2efeb;
+  }
+
+  .aurelle-blog__image img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+  }
+
+  .aurelle-blog__card h2 {
+    margin-top: 16px;
+    font-family: 'Bodoni MT', Didot, Georgia, 'Times New Roman', serif;
+    font-size: clamp(22px, 2.4vw, 30px);
+    font-weight: 400;
+    line-height: 1.2;
+  }
+
+  .aurelle-blog__card h2 a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .aurelle-blog__metadata {
+    margin-top: 8px;
+    color: #77716a;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .aurelle-blog__excerpt {
+    margin-top: 12px;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .aurelle-blog__pagination {
+    margin-top: 36px;
+  }
+
+  @media screen and (max-width: 520px) {
+    .aurelle-blog__inner {
+      width: calc(100% - 32px);
+    }
+  }
+{% endstylesheet %}
 
 {% schema %}
 {

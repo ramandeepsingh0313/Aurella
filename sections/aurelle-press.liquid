@@ -1,0 +1,206 @@
+<section
+  class="aurelle-press full-width"
+  style="--aurelle-press-background: {{ section.settings.background_color }}; --aurelle-press-foreground: {{ section.settings.foreground_color }}; --aurelle-press-muted: {{ section.settings.muted_color }};"
+  aria-label="{{ section.settings.eyebrow | escape }}"
+>
+  <div class="aurelle-press__inner">
+    {% if section.settings.eyebrow != blank %}
+      <p class="aurelle-press__eyebrow">{{ section.settings.eyebrow | escape }}</p>
+    {% endif %}
+    {% if section.blocks.size > 0 %}
+      <ul class="aurelle-press__logos" role="list">
+        {% for block in section.blocks %}
+          <li class="aurelle-press__logo-item aurelle-press__logo-item--{{ block.settings.style }}" {{ block.shopify_attributes }}>
+            {% if block.settings.logo != blank %}
+              {% assign press_logo_alt = block.settings.logo_alt | default: block.settings.name %}
+              {{ block.settings.logo | image_url: width: 480 | image_tag: class: 'aurelle-press__logo-image', alt: press_logo_alt, widths: '160, 240, 320, 480', sizes: '(min-width: 701px) 20vw, 42vw', loading: 'lazy' }}
+            {% elsif block.settings.name != blank %}
+              <span class="aurelle-press__logo-name">{{ block.settings.name | escape }}</span>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </div>
+</section>
+
+{% stylesheet %}
+  .aurelle-press {
+    width: 100%;
+    padding: 78px 42px 64px;
+    color: var(--aurelle-press-foreground);
+    background: var(--aurelle-press-background);
+  }
+
+  .aurelle-press__inner {
+    width: min(1280px, 100%);
+    margin-inline: auto;
+  }
+
+  .aurelle-press__eyebrow {
+    margin: 0 0 22px;
+    color: var(--aurelle-press-foreground);
+    font-family: var(--font-primary--family);
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    line-height: 1.4;
+    text-align: center;
+    text-transform: uppercase;
+  }
+
+  .aurelle-press__logos {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    column-gap: clamp(28px, 6vw, 78px);
+    row-gap: 66px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .aurelle-press__logo-item {
+    display: grid;
+    min-height: 32px;
+    flex: 1 1 0;
+    min-width: 0;
+    place-items: center;
+    color: var(--aurelle-press-muted);
+    text-align: center;
+    transition: color 220ms ease, opacity 220ms ease, transform 220ms ease;
+  }
+
+  .aurelle-press__logo-item:nth-child(5) {
+    flex-basis: 100%;
+  }
+
+  .aurelle-press__logo-item:hover {
+    color: var(--aurelle-press-foreground);
+    transform: translateY(-2px);
+  }
+
+  .aurelle-press__logo-name {
+    display: block;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(18px, 2vw, 26px);
+    letter-spacing: 0.045em;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  .aurelle-press__logo-item--serif_italic .aurelle-press__logo-name {
+    font-style: italic;
+    letter-spacing: -0.025em;
+  }
+
+  .aurelle-press__logo-item--sans .aurelle-press__logo-name,
+  .aurelle-press__logo-item--sans_bold .aurelle-press__logo-name {
+    font-family: var(--font-primary--family);
+  }
+
+  .aurelle-press__logo-item--sans_bold .aurelle-press__logo-name {
+    font-size: clamp(16px, 1.8vw, 23px);
+    font-weight: 700;
+    letter-spacing: 0.12em;
+  }
+
+  .aurelle-press__logo-image {
+    display: block;
+    width: auto;
+    max-width: min(100%, 220px);
+    max-height: 36px;
+    object-fit: contain;
+    opacity: 0.72;
+    transition: opacity 220ms ease, transform 220ms ease;
+  }
+
+  .aurelle-press__logo-item:hover .aurelle-press__logo-image {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+
+  @media screen and (max-width: 700px) {
+    .aurelle-press {
+      padding: 54px 20px 48px;
+    }
+
+    .aurelle-press__eyebrow {
+      margin-bottom: 24px;
+    }
+
+    .aurelle-press__logos {
+      column-gap: 20px;
+      row-gap: 36px;
+    }
+
+    .aurelle-press__logo-item {
+      min-height: 28px;
+      flex-basis: calc(50% - 10px);
+    }
+
+    .aurelle-press__logo-item:nth-child(5) {
+      flex-basis: 100%;
+    }
+
+    .aurelle-press__logo-name {
+      font-size: clamp(16px, 5vw, 21px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .aurelle-press__logo-item,
+    .aurelle-press__logo-image {
+      transition: none;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "AURELLE press mentions",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "As Celebrated In" },
+    { "type": "color", "id": "background_color", "label": "Section background", "default": "#FCF9F4" },
+    { "type": "color", "id": "foreground_color", "label": "Primary text", "default": "#39352F" },
+    { "type": "color", "id": "muted_color", "label": "Publication wordmarks", "default": "#8A857D" }
+  ],
+  "blocks": [
+    {
+      "type": "publication",
+      "name": "Publication",
+      "settings": [
+        { "type": "text", "id": "name", "label": "Publication name", "default": "VOGUE" },
+        { "type": "image_picker", "id": "logo", "label": "Optional publication logo", "info": "Use only a logo you have permission to display. Otherwise a typographic wordmark is shown." },
+        { "type": "text", "id": "logo_alt", "label": "Logo alternative text" },
+        {
+          "type": "select",
+          "id": "style",
+          "label": "Wordmark style",
+          "options": [
+            { "value": "serif", "label": "Editorial serif" },
+            { "value": "serif_italic", "label": "Italic serif" },
+            { "value": "sans", "label": "Sans serif" },
+            { "value": "sans_bold", "label": "Bold sans serif" }
+          ],
+          "default": "serif"
+        }
+      ]
+    }
+  ],
+  "max_blocks": 8,
+  "presets": [
+    {
+      "name": "AURELLE press mentions",
+      "blocks": [
+        { "type": "publication", "settings": { "name": "VOGUE", "style": "serif_italic" } },
+        { "type": "publication", "settings": { "name": "Harper's BAZAAR", "style": "serif" } },
+        { "type": "publication", "settings": { "name": "ELLE LUXE", "style": "sans_bold" } },
+        { "type": "publication", "settings": { "name": "L'OFFICIEL", "style": "serif_italic" } },
+        { "type": "publication", "settings": { "name": "VANITY FAIR", "style": "serif" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

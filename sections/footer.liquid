@@ -1,57 +1,624 @@
-<footer>
-  <div class="footer__copyright">
-    &copy;
-    {{ 'now' | date: '%Y' }}
-    {{ shop.name | link_to: routes.root_url }}, {{ powered_by_link }}
-  </div>
+{% liquid
+  assign atelier_menu = section.settings.atelier_menu | default: section.settings.menu
+  assign email_id = 'AurelleFooterEmail-' | append: section.id
+%}
 
-  <div class="footer__links">
-    {% for link in section.settings.menu.links %}
-      {{ link.title | link_to: link.url }}
-    {% endfor %}
-  </div>
+<footer
+  class="aurelle-footer full-width"
+  style="--aurelle-footer-background: {{ section.settings.background_color }}; --aurelle-footer-foreground: {{ section.settings.foreground_color }}; --aurelle-footer-muted: {{ section.settings.muted_color }}; --aurelle-footer-accent: {{ section.settings.accent_color }};"
+>
+  {% if section.settings.show_trust_strip and section.blocks.size > 0 %}
+    <div class="aurelle-footer__trust">
+      <div class="aurelle-footer__inner">
+        <ul class="aurelle-footer__trust-list" role="list">
+          {% for block in section.blocks %}
+            <li class="aurelle-footer__trust-item" {{ block.shopify_attributes }}>
+              <span class="aurelle-footer__trust-icon" aria-hidden="true">
+                {% case block.settings.icon %}
+                  {% when 'rjc' %}
+                    <svg viewBox="0 0 24 24" focusable="false"><path d="m12 2 2.3 2 3-.4 1 2.8 2.8 1.3-.7 3.1 1.6 2.6-2.3 2.1-.1 3.1-3 .7-1.8 2.5-2.8-1.3-2.8 1.3-1.8-2.5-3-.7-.1-3.1L2 13.4l1.6-2.6-.7-3.1 2.8-1.3 1-2.8 3 .4z"/><path d="m8.5 12 2.2 2.2 4.8-4.8"/></svg>
+                  {% when 'gia' %}
+                    <svg viewBox="0 0 24 24" focusable="false"><path d="M3 8.5 6.5 4h11L21 8.5 12 20 3 8.5Z"/><path d="M3 8.5h18M6.5 4 9 8.5 12 20l3-11.5L17.5 4"/></svg>
+                  {% when 'recycled' %}
+                    <svg viewBox="0 0 24 24" focusable="false"><path d="m8.2 4.2 2-2.2 2.1 2.2M10 2v5M14.7 5.2h2.8l3.1 5.3-1.3 2.1M20.6 10.5l-4.4 2.2M18.8 17.2l-1.3 2.4H11l-1.2-2.1M11 19.6l-3.4-3.5M5.1 15.5 3.7 13l2.8-5.2 2.6.1M3.7 13l4.7-.9"/></svg>
+                  {% when 'delivery' %}
+                    <svg viewBox="0 0 24 24" focusable="false"><path d="M2.5 6h12v11h-12zM14.5 10h4l3 3v4h-7zM6 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM18 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M15 10v3h6"/></svg>
+                {% endcase %}
+              </span>
+              <span class="aurelle-footer__trust-copy">
+                {% if block.settings.heading != blank %}
+                  <span class="aurelle-footer__trust-heading">{{ block.settings.heading | escape }}</span>
+                {% endif %}
+                {% if block.settings.description != blank %}
+                  <span class="aurelle-footer__trust-description">{{ block.settings.description | escape }}</span>
+                {% endif %}
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  {% endif %}
 
-  <div class="footer__payment">
-    {% if section.settings.show_payment_icons %}
-      {% for type in shop.enabled_payment_types %}
-        {{ type | payment_type_svg_tag }}
-      {% endfor %}
-    {% endif %}
+  <div class="aurelle-footer__inner">
+    <div class="aurelle-footer__main">
+      <div class="aurelle-footer__salon">
+        {% if section.settings.newsletter_eyebrow != blank %}
+          <p class="aurelle-footer__eyebrow">{{ section.settings.newsletter_eyebrow | escape }}</p>
+        {% endif %}
+        {% if section.settings.newsletter_heading != blank %}
+          <h2 class="aurelle-footer__salon-heading">{{ section.settings.newsletter_heading | escape }}</h2>
+        {% endif %}
+        {% if section.settings.newsletter_description != blank %}
+          <p class="aurelle-footer__salon-description">{{ section.settings.newsletter_description | escape }}</p>
+        {% endif %}
+
+        {% form 'customer', id: section.id, class: 'aurelle-footer__form' %}
+          <input type="hidden" name="contact[tags]" value="newsletter, aurelle-atelier-circle">
+          <label class="aurelle-footer__visually-hidden" for="{{ email_id }}">{{ section.settings.email_label | escape }}</label>
+          <input
+            class="aurelle-footer__email"
+            id="{{ email_id }}"
+            type="email"
+            name="contact[email]"
+            value="{{ form.email | escape }}"
+            placeholder="{{ section.settings.email_placeholder | escape }}"
+            autocomplete="email"
+            autocorrect="off"
+            autocapitalize="off"
+            required
+          >
+          <button class="aurelle-footer__submit" type="submit" aria-label="{{ section.settings.newsletter_button_label | escape }}">
+            <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M3 10h13M10 4l6 6-6 6"/></svg>
+          </button>
+          {% if form.errors %}
+            <div class="aurelle-footer__form-message aurelle-footer__form-message--error" role="alert">{{ form.errors | default_errors }}</div>
+          {% endif %}
+          {% if form.posted_successfully? %}
+            <p class="aurelle-footer__form-message aurelle-footer__form-message--success" role="status">{{ section.settings.success_message | escape }}</p>
+          {% endif %}
+        {% endform %}
+      </div>
+
+      <div class="aurelle-footer__navigation">
+        <div class="aurelle-footer__column">
+          <h3 class="aurelle-footer__column-heading">{{ section.settings.atelier_heading | escape }}</h3>
+          {% if atelier_menu != blank and atelier_menu.links.size > 0 %}
+            <ul class="aurelle-footer__links" role="list">
+              {% for link in atelier_menu.links %}
+                <li><a href="{{ link.url | escape }}">{{ link.title | escape }}</a></li>
+              {% endfor %}
+            </ul>
+          {% elsif request.design_mode %}
+            <p class="aurelle-footer__editor-hint">Choose an Atelier menu in the footer settings.</p>
+          {% endif %}
+        </div>
+
+        <div class="aurelle-footer__column">
+          <h3 class="aurelle-footer__column-heading">{{ section.settings.collections_heading | escape }}</h3>
+          {% if section.settings.collections_menu != blank and section.settings.collections_menu.links.size > 0 %}
+            <ul class="aurelle-footer__links" role="list">
+              {% for link in section.settings.collections_menu.links %}
+                <li><a href="{{ link.url | escape }}">{{ link.title | escape }}</a></li>
+              {% endfor %}
+            </ul>
+          {% elsif request.design_mode %}
+            <p class="aurelle-footer__editor-hint">Choose a collections menu in the footer settings.</p>
+          {% endif %}
+        </div>
+
+        <div class="aurelle-footer__column">
+          <h3 class="aurelle-footer__column-heading">{{ section.settings.care_heading | escape }}</h3>
+          {% if section.settings.care_menu != blank and section.settings.care_menu.links.size > 0 %}
+            <ul class="aurelle-footer__links" role="list">
+              {% for link in section.settings.care_menu.links %}
+                <li><a href="{{ link.url | escape }}">{{ link.title | escape }}</a></li>
+              {% endfor %}
+            </ul>
+          {% elsif request.design_mode %}
+            <p class="aurelle-footer__editor-hint">Choose a client care menu in the footer settings.</p>
+          {% endif %}
+        </div>
+
+        <div class="aurelle-footer__column">
+          <h3 class="aurelle-footer__column-heading">{{ section.settings.legal_heading | escape }}</h3>
+          {% if section.settings.legal_menu != blank and section.settings.legal_menu.links.size > 0 %}
+            <ul class="aurelle-footer__links" role="list">
+              {% for link in section.settings.legal_menu.links %}
+                <li><a href="{{ link.url | escape }}">{{ link.title | escape }}</a></li>
+              {% endfor %}
+            </ul>
+          {% elsif shop.policies.size > 0 %}
+            <ul class="aurelle-footer__links" role="list">
+              {% for policy in shop.policies %}
+                {% if policy != blank %}
+                  <li><a href="{{ policy.url | escape }}">{{ policy.title | escape }}</a></li>
+                {% endif %}
+              {% endfor %}
+            </ul>
+          {% elsif request.design_mode %}
+            <p class="aurelle-footer__editor-hint">Choose a legal menu or add store policies.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="aurelle-footer__bottom">
+      <p class="aurelle-footer__copyright">&copy; {{ 'now' | date: '%Y' }} {{ section.settings.copyright_name | escape }}. {{ section.settings.copyright_note | escape }}</p>
+      {% if section.settings.show_payment_icons and shop.enabled_payment_types.size > 0 %}
+        <ul class="aurelle-footer__payments" role="list" aria-label="Accepted payment methods">
+          {% for type in shop.enabled_payment_types %}
+            <li>{{ type | payment_type_svg_tag }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </div>
   </div>
 </footer>
 
 {% stylesheet %}
-  footer {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 2rem;
+  .aurelle-footer {
+    width: 100%;
+    color: var(--aurelle-footer-foreground);
+    background: var(--aurelle-footer-background);
   }
-  footer a {
+
+  .aurelle-footer__inner {
+    width: min(1440px, 100%);
+    margin-inline: auto;
+    padding-inline: 42px;
+  }
+
+  .aurelle-footer__trust {
+    padding: 84px 0 112px;
+  }
+
+  .aurelle-footer__trust-list {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(22px, 3vw, 44px);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .aurelle-footer__trust-item {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 26px minmax(0, 1fr);
+    align-items: center;
+    gap: 13px;
+  }
+
+  .aurelle-footer__trust-icon {
+    display: grid;
+    width: 26px;
+    height: 26px;
+    place-items: center;
+    color: var(--aurelle-footer-accent);
+    transition: transform 220ms ease;
+  }
+
+  .aurelle-footer__trust-item:hover .aurelle-footer__trust-icon {
+    transform: translateY(-3px);
+  }
+
+  .aurelle-footer__trust-icon svg {
+    width: 100%;
+    height: 100%;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.8;
+  }
+
+  .aurelle-footer__trust-copy {
+    display: grid;
+    gap: 3px;
+  }
+
+  .aurelle-footer__trust-heading {
+    color: var(--aurelle-footer-foreground);
+    font-family: var(--font-primary--family);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    line-height: 1.4;
+    text-transform: uppercase;
+  }
+
+  .aurelle-footer__trust-description {
+    color: var(--aurelle-footer-muted);
+    font-family: var(--font-primary--family);
+    font-size: 11px;
+    line-height: 1.45;
+  }
+
+  .aurelle-footer__main {
+    display: grid;
+    grid-template-columns: minmax(280px, 1.85fr) minmax(0, 4fr);
+    gap: clamp(36px, 5vw, 64px);
+    align-items: start;
+  }
+
+  .aurelle-footer__salon {
+    max-width: 390px;
+  }
+
+  .aurelle-footer__eyebrow {
+    margin: 0 0 10px;
+    color: var(--aurelle-footer-accent);
+    font-family: var(--font-primary--family);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    line-height: 1.4;
+    text-transform: uppercase;
+  }
+
+  .aurelle-footer__salon-heading {
+    margin: 0;
+    color: var(--aurelle-footer-foreground);
+    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+    font-size: clamp(21px, 2vw, 25px);
+    font-weight: 400;
+    line-height: 1.25;
+  }
+
+  .aurelle-footer__salon-description {
+    margin: 8px 0 0;
+    color: var(--aurelle-footer-muted);
+    font-family: var(--font-primary--family);
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .aurelle-footer__form {
+    display: flex;
+    min-height: 38px;
+    align-items: center;
+    margin-top: 18px;
+    border-bottom: 1px solid rgb(255 255 255 / 32%);
+  }
+
+  .aurelle-footer__visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+
+  .aurelle-footer__email {
+    width: 0;
+    min-width: 0;
+    min-height: 38px;
+    flex: 1 1 auto;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    color: var(--aurelle-footer-foreground);
+    background: transparent;
+    font-family: var(--font-primary--family);
+    font-size: 11px;
+  }
+
+  .aurelle-footer__email::placeholder {
+    color: var(--aurelle-footer-muted);
+    opacity: 1;
+  }
+
+  .aurelle-footer__submit {
+    display: grid;
+    width: 34px;
+    height: 38px;
+    flex: 0 0 34px;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    color: var(--aurelle-footer-accent);
+    background: transparent;
+    cursor: pointer;
+    transition: transform 180ms ease;
+  }
+
+  .aurelle-footer__submit:hover {
+    transform: translateX(3px);
+  }
+
+  .aurelle-footer__submit svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.8;
+  }
+
+  .aurelle-footer__form-message {
+    flex: 0 0 100%;
+    margin: 8px 0;
+    font-family: var(--font-primary--family);
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  .aurelle-footer__form-message--error {
+    color: #ffb5a8;
+  }
+
+  .aurelle-footer__form-message--success {
+    color: var(--aurelle-footer-accent);
+  }
+
+  .aurelle-footer__form-message ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .aurelle-footer__navigation {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(18px, 3vw, 42px);
+  }
+
+  .aurelle-footer__column {
+    min-width: 0;
+  }
+
+  .aurelle-footer__column-heading {
+    margin: 0 0 16px;
+    color: var(--aurelle-footer-foreground);
+    font-family: var(--font-primary--family);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    line-height: 1.4;
+    text-transform: uppercase;
+  }
+
+  .aurelle-footer__links {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .aurelle-footer__links a {
+    color: var(--aurelle-footer-muted);
+    font-family: var(--font-primary--family);
+    font-size: 11px;
+    line-height: 1.35;
     text-decoration: none;
-    color: var(--color-foreground);
+    transition: color 180ms ease;
   }
-  footer .footer__links,
-  footer .footer__payment {
+
+  .aurelle-footer__links a:hover,
+  .aurelle-footer__links a:focus-visible {
+    color: var(--aurelle-footer-accent);
+  }
+
+  .aurelle-footer__editor-hint {
+    margin: 0;
+    color: var(--aurelle-footer-muted);
+    font-family: var(--font-primary--family);
+    font-size: 10px;
+    line-height: 1.5;
+  }
+
+  .aurelle-footer__bottom {
     display: flex;
-    gap: 1rem;
+    min-height: 64px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-top: 72px;
+    padding-bottom: 26px;
+  }
+
+  .aurelle-footer__copyright {
+    margin: 0;
+    color: var(--aurelle-footer-muted);
+    font-family: var(--font-primary--family);
+    font-size: 10px;
+    line-height: 1.5;
+  }
+
+  .aurelle-footer__payments {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 14px;
+    margin: 0;
+    padding: 0;
+    color: var(--aurelle-footer-muted);
+    list-style: none;
+  }
+
+  .aurelle-footer__payments li {
+    display: flex;
+    align-items: center;
+  }
+
+  .aurelle-footer__payments svg {
+    display: block;
+    width: auto;
+    max-width: 54px;
+    height: 14px;
+    filter: grayscale(1);
+    opacity: 0.66;
+  }
+
+  .aurelle-footer__email:focus-visible,
+  .aurelle-footer__submit:focus-visible,
+  .aurelle-footer__links a:focus-visible {
+    outline: 2px solid var(--aurelle-footer-accent);
+    outline-offset: 3px;
+  }
+
+  @media screen and (max-width: 1000px) {
+    .aurelle-footer__inner {
+      padding-inline: 28px;
+    }
+
+    .aurelle-footer__trust-list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      row-gap: 28px;
+    }
+
+    .aurelle-footer__trust {
+      padding-bottom: 82px;
+    }
+
+    .aurelle-footer__main {
+      grid-template-columns: minmax(220px, 1fr) minmax(0, 1.7fr);
+      gap: 36px;
+    }
+
+    .aurelle-footer__navigation {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      row-gap: 28px;
+    }
+  }
+
+  @media screen and (max-width: 700px) {
+    .aurelle-footer__inner {
+      padding-inline: 20px;
+    }
+
+    .aurelle-footer__trust {
+      padding: 40px 0 52px;
+    }
+
+    .aurelle-footer__trust-list {
+      gap: 22px 18px;
+    }
+
+    .aurelle-footer__trust-item {
+      grid-template-columns: 22px minmax(0, 1fr);
+      gap: 10px;
+    }
+
+    .aurelle-footer__trust-icon {
+      width: 22px;
+      height: 22px;
+    }
+
+    .aurelle-footer__trust-description {
+      font-size: 10px;
+    }
+
+    .aurelle-footer__main {
+      grid-template-columns: 1fr;
+      gap: 42px;
+    }
+
+    .aurelle-footer__navigation {
+      gap: 28px 18px;
+    }
+
+    .aurelle-footer__bottom {
+      min-height: 0;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 18px;
+      margin-top: 48px;
+      padding-bottom: 24px;
+    }
+
+    .aurelle-footer__payments {
+      justify-content: flex-start;
+      gap: 12px;
+    }
+  }
+
+  @media screen and (max-width: 440px) {
+    .aurelle-footer__trust-list {
+      grid-template-columns: 1fr;
+      row-gap: 18px;
+    }
+
+    .aurelle-footer__navigation {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .aurelle-footer__column-heading {
+      margin-bottom: 12px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .aurelle-footer__trust-icon,
+    .aurelle-footer__submit,
+    .aurelle-footer__links a {
+      transition: none;
+    }
+
+    .aurelle-footer__trust-item:hover .aurelle-footer__trust-icon,
+    .aurelle-footer__submit:hover {
+      transform: none;
+    }
   }
 {% endstylesheet %}
 
 {% schema %}
 {
-  "name": "t:general.footer",
+  "name": "AURELLE footer",
   "settings": [
+    { "type": "color", "id": "background_color", "label": "Footer background", "default": "#1F1D1B" },
+    { "type": "color", "id": "foreground_color", "label": "Primary text", "default": "#F5F1EA" },
+    { "type": "color", "id": "muted_color", "label": "Secondary text", "default": "#8E8983" },
+    { "type": "color", "id": "accent_color", "label": "Muted gold accent", "default": "#E8C176" },
+    { "type": "checkbox", "id": "show_trust_strip", "label": "Show trust benefits", "default": true },
+    { "type": "text", "id": "newsletter_eyebrow", "label": "Newsletter eyebrow", "default": "VIP Private Salon" },
+    { "type": "text", "id": "newsletter_heading", "label": "Newsletter heading", "default": "Join the Atelier Circle" },
+    { "type": "textarea", "id": "newsletter_description", "label": "Newsletter description", "default": "Receive bespoke invitations, private viewings, and a 10% acquisition privilege on your initial salon order." },
+    { "type": "text", "id": "email_label", "label": "Accessible email label", "default": "Email address" },
+    { "type": "text", "id": "email_placeholder", "label": "Email placeholder", "default": "Enter your correspondence address" },
+    { "type": "text", "id": "newsletter_button_label", "label": "Accessible signup button label", "default": "Join the Atelier Circle" },
+    { "type": "text", "id": "success_message", "label": "Signup success message", "default": "Thank you for joining the Atelier Circle." },
+    { "type": "text", "id": "atelier_heading", "label": "Atelier column heading", "default": "The Atelier" },
+    { "type": "link_list", "id": "atelier_menu", "label": "Atelier menu" },
+    { "type": "link_list", "id": "menu", "label": "Fallback Atelier menu" },
+    { "type": "text", "id": "collections_heading", "label": "Collections column heading", "default": "Collections" },
+    { "type": "link_list", "id": "collections_menu", "label": "Collections menu" },
+    { "type": "text", "id": "care_heading", "label": "Client care column heading", "default": "Client Care" },
+    { "type": "link_list", "id": "care_menu", "label": "Client care menu" },
+    { "type": "text", "id": "legal_heading", "label": "Legal column heading", "default": "Legal & Terms" },
+    { "type": "link_list", "id": "legal_menu", "label": "Legal menu" },
+    { "type": "checkbox", "id": "show_payment_icons", "label": "Show enabled payment methods", "default": true },
+    { "type": "text", "id": "copyright_name", "label": "Copyright name", "default": "AURELLE Fine Jewellery Maison" },
+    { "type": "text", "id": "copyright_note", "label": "Copyright note", "default": "All global rights reserved." }
+  ],
+  "blocks": [
     {
-      "type": "link_list",
-      "id": "menu",
-      "label": "t:labels.menu"
-    },
-    {
-      "type": "checkbox",
-      "id": "show_payment_icons",
-      "label": "t:labels.show_payment_icons",
-      "default": true
+      "type": "benefit",
+      "name": "Trust benefit",
+      "settings": [
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "Icon",
+          "options": [
+            { "value": "rjc", "label": "RJC seal" },
+            { "value": "gia", "label": "Diamond" },
+            { "value": "recycled", "label": "Recycled gold" },
+            { "value": "delivery", "label": "Delivery" }
+          ],
+          "default": "rjc"
+        },
+        { "type": "text", "id": "heading", "label": "Benefit heading", "default": "RJC Certified" },
+        { "type": "textarea", "id": "description", "label": "Benefit description", "default": "Responsible jewellery council ethics and sourcing." }
+      ]
     }
-  ]
+  ],
+  "max_blocks": 4
 }
 {% endschema %}

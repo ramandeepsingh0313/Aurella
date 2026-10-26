@@ -1,0 +1,499 @@
+<section
+  class="aurelle-lookbook full-width"
+  style="--aurelle-lookbook-background: {{ section.settings.background_color }}; --aurelle-lookbook-foreground: {{ section.settings.foreground_color }}; --aurelle-lookbook-muted: {{ section.settings.muted_color }}; --aurelle-lookbook-accent: {{ section.settings.accent_color }};"
+  aria-labelledby="AurelleLookbookHeading-{{ section.id }}"
+  data-aurelle-lookbook
+>
+  <div class="aurelle-lookbook__inner">
+    <div class="aurelle-lookbook__content">
+      {% if section.settings.eyebrow != blank %}
+        <p class="aurelle-lookbook__eyebrow">{{ section.settings.eyebrow | escape }}</p>
+      {% endif %}
+      {% if section.settings.heading != blank %}
+        <h2 class="aurelle-lookbook__heading" id="AurelleLookbookHeading-{{ section.id }}">
+          {{ section.settings.heading | escape }}
+        </h2>
+      {% endif %}
+      {% if section.settings.description != blank %}
+        <div class="aurelle-lookbook__description rte">{{ section.settings.description }}</div>
+      {% endif %}
+
+      {% assign lookbook_products = section.blocks | where: 'type', 'product' %}
+      {% if lookbook_products.size > 0 %}
+        <ol class="aurelle-lookbook__product-list">
+          {% for block in lookbook_products %}
+            {% liquid
+              assign item_title = block.settings.fallback_title
+              assign item_detail = block.settings.detail
+              assign item_price = block.settings.fallback_price
+              assign item_url = routes.all_products_collection_url
+              if block.settings.product != blank
+                assign item_title = block.settings.product.title
+                assign item_price = block.settings.product.price | money
+                assign item_url = block.settings.product.url
+              endif
+            %}
+            <li class="aurelle-lookbook__product-item" {{ block.shopify_attributes }}>
+              <a class="aurelle-lookbook__product-link" href="{{ item_url | escape }}">
+                <span class="aurelle-lookbook__product-number">{{ forloop.index }}</span>
+                <span class="aurelle-lookbook__product-copy">
+                  <span class="aurelle-lookbook__product-title">{{ item_title | escape }}</span>
+                  {% if item_detail != blank %}
+                    <span class="aurelle-lookbook__product-detail">{{ item_detail | escape }}</span>
+                  {% endif %}
+                </span>
+                {% if item_price != blank %}
+                  <span class="aurelle-lookbook__product-price">{{ item_price | escape }}</span>
+                {% endif %}
+              </a>
+            </li>
+          {% endfor %}
+        </ol>
+      {% endif %}
+
+      {% if section.settings.button_label != blank %}
+        {% assign lookbook_button_link = section.settings.button_link | default: routes.all_products_collection_url %}
+        <a class="aurelle-lookbook__button" href="{{ lookbook_button_link | escape }}">
+          <span>{{ section.settings.button_label | escape }}</span>
+          <span class="aurelle-lookbook__button-arrow" aria-hidden="true">&#8594;</span>
+        </a>
+      {% endif %}
+    </div>
+
+    <div class="aurelle-lookbook__visual">
+      <div class="aurelle-lookbook__image-wrap">
+        {% if section.settings.image != blank %}
+          {% assign lookbook_image_alt = section.settings.image_alt | default: section.settings.image.alt %}
+          {{ section.settings.image | image_url: width: 1800 | image_tag: class: 'aurelle-lookbook__image', alt: lookbook_image_alt, widths: '640, 900, 1200, 1500, 1800', sizes: '(min-width: 1000px) 54vw, 100vw', loading: 'lazy' }}
+        {% else %}
+          <div class="aurelle-lookbook__placeholder" aria-hidden="true">
+            {{ 'image' | placeholder_svg_tag: 'aurelle-lookbook__placeholder-svg' }}
+            {% if request.design_mode %}<span>Upload the Solstice campaign image in this section's settings.</span>{% endif %}
+          </div>
+        {% endif %}
+
+        {% for block in lookbook_products %}
+          {% if block.settings.product != blank %}
+            <a
+              class="aurelle-lookbook__hotspot"
+              href="{{ block.settings.product.url }}"
+              style="--hotspot-x: {{ block.settings.position_x }}%; --hotspot-y: {{ block.settings.position_y }}%;"
+              aria-label="View {{ block.settings.product.title | escape }}"
+              {{ block.shopify_attributes }}
+            >
+              <span class="aurelle-lookbook__hotspot-dot" aria-hidden="true"></span>
+              <span class="aurelle-lookbook__hotspot-label">{{ block.settings.product.title | escape }}</span>
+            </a>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+{% stylesheet %}
+  .aurelle-lookbook {
+    width: 100%;
+    padding: 72px 42px;
+    color: var(--aurelle-lookbook-foreground);
+    background: var(--aurelle-lookbook-background);
+  }
+
+  .aurelle-lookbook__inner {
+    display: grid;
+    width: min(1440px, 100%);
+    grid-template-columns: minmax(0, 0.78fr) minmax(0, 1fr);
+    align-items: center;
+    gap: clamp(40px, 5vw, 64px);
+    margin-inline: auto;
+  }
+
+  .aurelle-lookbook__content {
+    min-width: 0;
+  }
+
+  .aurelle-lookbook__eyebrow {
+    margin: 0 0 10px;
+    color: var(--aurelle-lookbook-accent);
+    font-family: var(--font-primary--family);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    line-height: 1.4;
+    text-transform: uppercase;
+  }
+
+  .aurelle-lookbook__heading {
+    margin: 0;
+    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+    font-size: clamp(38px, 4.2vw, 58px);
+    font-weight: 400;
+    letter-spacing: -0.035em;
+    line-height: 1.08;
+  }
+
+  .aurelle-lookbook__description {
+    max-width: 450px;
+    margin-top: 16px;
+    color: var(--aurelle-lookbook-muted);
+    font-family: var(--font-primary--family);
+    font-size: 14px;
+    line-height: 1.62;
+  }
+
+  .aurelle-lookbook__description p {
+    margin: 0;
+  }
+
+  .aurelle-lookbook__product-list {
+    display: grid;
+    gap: 12px;
+    margin: 24px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .aurelle-lookbook__product-item {
+    min-width: 0;
+    background: rgb(255 255 255 / 5%);
+    transition: background-color 200ms ease, transform 200ms ease;
+  }
+
+  .aurelle-lookbook__product-item:hover {
+    background: rgb(255 255 255 / 9%);
+    transform: translateX(3px);
+  }
+
+  .aurelle-lookbook__product-link {
+    display: flex;
+    min-height: 56px;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 12px;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .aurelle-lookbook__product-item--empty {
+    display: flex;
+    min-height: 56px;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 12px;
+  }
+
+  .aurelle-lookbook__product-number {
+    display: grid;
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+    place-items: center;
+    border-radius: 50%;
+    color: #241e13;
+    background: #f2d58e;
+    font-family: var(--font-primary--family);
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  .aurelle-lookbook__product-copy {
+    display: grid;
+    min-width: 0;
+    gap: 2px;
+  }
+
+  .aurelle-lookbook__product-title {
+    overflow: hidden;
+    font-family: var(--font-primary--family);
+    font-size: 12px;
+    line-height: 1.4;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .aurelle-lookbook__product-detail {
+    overflow: hidden;
+    color: var(--aurelle-lookbook-muted);
+    font-family: var(--font-primary--family);
+    font-size: 10px;
+    line-height: 1.4;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .aurelle-lookbook__product-price {
+    flex: 0 0 auto;
+    margin-left: auto;
+    color: #f2d58e;
+    font-family: var(--font-primary--family);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+  }
+
+  .aurelle-lookbook__button {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 30px;
+    padding: 0 24px;
+    color: #fff;
+    background: var(--aurelle-lookbook-accent);
+    font-family: var(--font-primary--family);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    line-height: 1.4;
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: background-color 180ms ease, transform 180ms ease;
+  }
+
+  .aurelle-lookbook__button:hover,
+  .aurelle-lookbook__button:focus-visible {
+    background: #a3833d;
+    transform: translateY(-2px);
+  }
+
+  .aurelle-lookbook__button-arrow {
+    font-size: 18px;
+    line-height: 1;
+    transition: transform 180ms ease;
+  }
+
+  .aurelle-lookbook__button:hover .aurelle-lookbook__button-arrow,
+  .aurelle-lookbook__button:focus-visible .aurelle-lookbook__button-arrow {
+    transform: translateX(3px);
+  }
+
+  .aurelle-lookbook__visual {
+    min-width: 0;
+  }
+
+  .aurelle-lookbook__image-wrap {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    aspect-ratio: 1.45;
+    background: #292522;
+  }
+
+  .aurelle-lookbook__image,
+  .aurelle-lookbook__placeholder {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 800ms cubic-bezier(0.2, 0.65, 0.3, 1);
+  }
+
+  .aurelle-lookbook__image-wrap:hover .aurelle-lookbook__image {
+    transform: scale(1.025);
+  }
+
+  .aurelle-lookbook__placeholder {
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: 14px;
+    padding: 24px;
+    color: #d8d0c3;
+    background: linear-gradient(145deg, #38322d, #171513);
+    text-align: center;
+  }
+
+  .aurelle-lookbook__placeholder-svg {
+    width: min(44%, 240px);
+    height: auto;
+    fill: rgb(255 255 255 / 20%);
+  }
+
+  .aurelle-lookbook__placeholder span {
+    max-width: 280px;
+    font-family: var(--font-primary--family);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .aurelle-lookbook__hotspot {
+    position: absolute;
+    z-index: 1;
+    top: var(--hotspot-y);
+    left: var(--hotspot-x);
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    border-radius: 50%;
+    background: #fbf8f1;
+    box-shadow: 0 2px 12px rgb(0 0 0 / 24%);
+    transform: translate(-50%, -50%);
+  }
+
+  .aurelle-lookbook__hotspot-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--aurelle-lookbook-accent);
+    transition: transform 180ms ease;
+  }
+
+  .aurelle-lookbook__hotspot:hover .aurelle-lookbook__hotspot-dot,
+  .aurelle-lookbook__hotspot:focus-visible .aurelle-lookbook__hotspot-dot {
+    transform: scale(1.5);
+  }
+
+  .aurelle-lookbook__hotspot-label {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    width: max-content;
+    max-width: 220px;
+    padding: 8px 10px;
+    color: #241e13;
+    background: #fbf8f1;
+    font-family: var(--font-primary--family);
+    font-size: 11px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, 4px);
+    transition: opacity 160ms ease, transform 160ms ease;
+  }
+
+  .aurelle-lookbook__hotspot:hover .aurelle-lookbook__hotspot-label,
+  .aurelle-lookbook__hotspot:focus-visible .aurelle-lookbook__hotspot-label {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+
+  @media screen and (max-width: 900px) {
+    .aurelle-lookbook {
+      padding: 56px 30px;
+    }
+
+    .aurelle-lookbook__inner {
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr);
+      gap: 32px;
+    }
+
+    .aurelle-lookbook__heading {
+      font-size: clamp(34px, 5vw, 46px);
+    }
+
+    .aurelle-lookbook__description {
+      font-size: 12px;
+    }
+  }
+
+  @media screen and (max-width: 650px) {
+    .aurelle-lookbook {
+      padding: 30px 24px 20px;
+    }
+
+    .aurelle-lookbook__inner {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0;
+    }
+
+    .aurelle-lookbook__heading {
+      max-width: 460px;
+      font-size: clamp(44px, 12vw, 52px);
+    }
+
+    .aurelle-lookbook__description {
+      margin-top: 12px;
+      font-size: 13px;
+    }
+
+    .aurelle-lookbook__image-wrap {
+      aspect-ratio: 0.92;
+    }
+
+    .aurelle-lookbook__visual {
+      display: none;
+    }
+
+    .aurelle-lookbook__product-list {
+      gap: 14px;
+      margin-top: 20px;
+    }
+
+    .aurelle-lookbook__product-link {
+      min-height: 48px;
+      gap: 10px;
+      padding: 7px 9px;
+    }
+
+    .aurelle-lookbook__product-title {
+      font-size: 12px;
+    }
+
+    .aurelle-lookbook__product-detail {
+      font-size: 10px;
+    }
+
+    .aurelle-lookbook__button {
+      width: auto;
+      min-width: 227px;
+      min-height: 38px;
+      margin-top: 34px;
+      padding-inline: 25px;
+    }
+
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .aurelle-lookbook__product-item,
+    .aurelle-lookbook__button,
+    .aurelle-lookbook__button-arrow,
+    .aurelle-lookbook__image,
+    .aurelle-lookbook__hotspot-dot,
+    .aurelle-lookbook__hotspot-label {
+      transition: none;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "AURELLE lookbook",
+  "settings": [
+    { "type": "image_picker", "id": "image", "label": "Lookbook photograph", "info": "Upload the Solstice campaign photograph shown in the design reference." },
+    { "type": "text", "id": "image_alt", "label": "Image alternative text", "default": "Model wearing the Solstice diamond jewellery suite" },
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "High Jewellery Capsule" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "The Solstice Suite" },
+    { "type": "richtext", "id": "description", "label": "Description", "default": "<p>A homage to the radiant warmth of southern French light. Featuring over 14 carats of internally flawless pear and marquise cut diamonds set in articulable 18k yellow gold lace.</p>", "info": "Reference copy is editable. Verify material and product claims before publishing." },
+    { "type": "text", "id": "button_label", "label": "Button label", "default": "Acquire lookbook suite" },
+    { "type": "url", "id": "button_link", "label": "Button destination", "info": "Leave blank to link to all products." },
+    { "type": "color", "id": "background_color", "label": "Section background", "default": "#1E1B19" },
+    { "type": "color", "id": "foreground_color", "label": "Primary text", "default": "#F8F5EF" },
+    { "type": "color", "id": "muted_color", "label": "Secondary text", "default": "#A7A19A" },
+    { "type": "color", "id": "accent_color", "label": "Muted gold accent", "default": "#806122" }
+  ],
+  "blocks": [
+    {
+      "type": "product",
+      "name": "Lookbook product",
+      "settings": [
+        { "type": "product", "id": "product", "label": "Product", "info": "Select a real store product to show its title, price, product-page link, and image hotspot." },
+        { "type": "text", "id": "fallback_title", "label": "Display title until a product is selected", "info": "Design-reference sample. Selecting a product replaces this with its live title." },
+        { "type": "text", "id": "detail", "label": "Product detail", "info": "Design-reference sample. Verify this detail or replace it; selecting a product does not change this line." },
+        { "type": "text", "id": "fallback_price", "label": "Display price until a product is selected", "info": "Design-reference sample price. Selecting a product replaces it with the live Shopify price." },
+        { "type": "range", "id": "position_x", "label": "Hotspot horizontal position", "min": 0, "max": 100, "step": 1, "unit": "%", "default": 60 },
+        { "type": "range", "id": "position_y", "label": "Hotspot vertical position", "min": 0, "max": 100, "step": 1, "unit": "%", "default": 42 }
+      ]
+    }
+  ],
+  "max_blocks": 4,
+  "presets": [
+    {
+      "name": "AURELLE lookbook",
+      "blocks": [
+        { "type": "product", "settings": { "fallback_title": "Solstice Pear Diamond Choker", "detail": "6.80 ctw · 18K Yellow Gold", "fallback_price": "$14,800", "position_x": 60, "position_y": 42 } },
+        { "type": "product", "settings": { "fallback_title": "Solstice Cascading Drop Earrings", "detail": "3.40 ctw · Removable Jacket", "fallback_price": "$7,450", "position_x": 50, "position_y": 63 } }
+      ]
+    }
+  ]
+}
+{% endschema %}

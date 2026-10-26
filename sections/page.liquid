@@ -5,9 +5,49 @@
   https://shopify.dev/docs/storefronts/themes/architecture/templates/page
 {% endcomment %}
 
-<h1>{{ page.title }}</h1>
+<main class="aurelle-page full-width">
+  <div class="aurelle-page__inner">
+    <h1>{{ page.title | escape }}</h1>
+    <div class="aurelle-page__content rte">{{ page.content }}</div>
+  </div>
+</main>
 
-{{ page.content }}
+{% stylesheet %}
+  .aurelle-page {
+    padding-block: clamp(40px, 6vw, 88px);
+  }
+
+  .aurelle-page__inner {
+    width: min(1000px, calc(100% - clamp(32px, 8vw, 112px)));
+    margin-inline: auto;
+  }
+
+  .aurelle-page__inner > h1 {
+    margin-bottom: 24px;
+    font-family: 'Bodoni MT', Didot, Georgia, 'Times New Roman', serif;
+    font-size: clamp(34px, 5vw, 56px);
+    font-weight: 400;
+    line-height: 1.1;
+  }
+
+  .aurelle-page__content {
+    font-size: 16px;
+    line-height: 1.7;
+  }
+
+  .aurelle-page__content img,
+  .aurelle-page__content video,
+  .aurelle-page__content table,
+  .aurelle-page__content iframe {
+    max-width: 100%;
+  }
+
+  @media screen and (max-width: 520px) {
+    .aurelle-page__inner {
+      width: calc(100% - 32px);
+    }
+  }
+{% endstylesheet %}
 
 {% schema %}
 {

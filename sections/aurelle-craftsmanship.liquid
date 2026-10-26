@@ -1,0 +1,570 @@
+{% liquid
+  assign craftsmanship_image_alt = section.settings.image_alt | default: section.settings.image.alt
+%}
+
+<section
+  class="aurelle-craftsmanship full-width"
+  style="--aurelle-craftsmanship-background: {{ section.settings.background_color }}; --aurelle-craftsmanship-foreground: {{ section.settings.foreground_color }}; --aurelle-craftsmanship-muted: {{ section.settings.muted_color }}; --aurelle-craftsmanship-accent: {{ section.settings.accent_color }};"
+  aria-labelledby="AurelleCraftsmanshipHeading-{{ section.id }}"
+  data-aurelle-craftsmanship
+>
+  <div class="aurelle-craftsmanship__inner">
+    <div class="aurelle-craftsmanship__visual">
+      <div class="aurelle-craftsmanship__image-wrap">
+        {% if section.settings.image != blank %}
+          {{ section.settings.image | image_url: width: 1600 | image_tag: class: 'aurelle-craftsmanship__image', alt: craftsmanship_image_alt, widths: '480, 720, 960, 1200, 1600', sizes: '(min-width: 1000px) 46vw, (min-width: 701px) 80vw, 100vw', loading: 'lazy' }}
+        {% else %}
+          <div class="aurelle-craftsmanship__placeholder" aria-hidden="true">
+            {{ 'image' | placeholder_svg_tag: 'aurelle-craftsmanship__placeholder-svg' }}
+            {% if request.design_mode %}
+              <span>Select a workshop photograph in this section's settings.</span>
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+
+      {% if section.settings.badge_eyebrow != blank or section.settings.badge_heading != blank %}
+        <aside class="aurelle-craftsmanship__badge" aria-label="{{ section.settings.badge_eyebrow | escape }}">
+          {% if section.settings.badge_eyebrow != blank %}
+            <p class="aurelle-craftsmanship__badge-eyebrow">{{ section.settings.badge_eyebrow | escape }}</p>
+          {% endif %}
+          {% if section.settings.badge_heading != blank %}
+            <p class="aurelle-craftsmanship__badge-heading">{{ section.settings.badge_heading | escape }}</p>
+          {% endif %}
+        </aside>
+      {% endif %}
+    </div>
+
+    <div class="aurelle-craftsmanship__content">
+      {% if section.settings.eyebrow != blank %}
+        <p class="aurelle-craftsmanship__eyebrow">{{ section.settings.eyebrow | escape }}</p>
+      {% endif %}
+
+      {% if section.settings.heading != blank %}
+        <h2 class="aurelle-craftsmanship__heading" id="AurelleCraftsmanshipHeading-{{ section.id }}">
+          {{ section.settings.heading | escape | newline_to_br }}
+        </h2>
+      {% endif %}
+
+      {% if section.settings.description != blank %}
+        <div class="aurelle-craftsmanship__description rte">{{ section.settings.description }}</div>
+      {% endif %}
+
+      {% if section.blocks.size > 0 %}
+        <ul class="aurelle-craftsmanship__stats" role="list">
+          {% for block in section.blocks %}
+            <li class="aurelle-craftsmanship__stat" {{ block.shopify_attributes }}>
+              {% if block.settings.value != blank %}
+                <p class="aurelle-craftsmanship__stat-value">{{ block.settings.value | escape }}</p>
+              {% endif %}
+              {% if block.settings.label != blank %}
+                <p class="aurelle-craftsmanship__stat-label">{{ block.settings.label | escape }}</p>
+              {% endif %}
+              {% if block.settings.detail != blank %}
+                <p class="aurelle-craftsmanship__stat-detail">{{ block.settings.detail | escape }}</p>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+{% stylesheet %}
+  .aurelle-craftsmanship {
+    width: 100%;
+    padding: 84px 44px;
+    color: var(--aurelle-craftsmanship-foreground);
+    background: var(--aurelle-craftsmanship-background);
+  }
+
+  .aurelle-craftsmanship__inner {
+    display: grid;
+    width: min(1440px, 100%);
+    grid-template-columns: minmax(0, 1.04fr) minmax(0, 1fr);
+    align-items: center;
+    gap: clamp(40px, 5vw, 72px);
+    margin-inline: auto;
+  }
+
+  .aurelle-craftsmanship__visual {
+    position: relative;
+    min-width: 0;
+    margin: 0 18px 24px 0;
+  }
+
+  .aurelle-craftsmanship__image-wrap {
+    width: 100%;
+    overflow: hidden;
+    aspect-ratio: 0.8;
+    border-radius: 2px;
+    background: #e8e4de;
+  }
+
+  .aurelle-craftsmanship__image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    transition: transform 700ms cubic-bezier(0.2, 0.65, 0.3, 1);
+  }
+
+  .aurelle-craftsmanship__visual:hover .aurelle-craftsmanship__image {
+    transform: scale(1.025);
+  }
+
+  .aurelle-craftsmanship__placeholder {
+    display: grid;
+    width: 100%;
+    height: 100%;
+    align-content: center;
+    justify-items: center;
+    gap: 16px;
+    padding: 24px;
+    color: var(--aurelle-craftsmanship-muted);
+    background: linear-gradient(145deg, #ebe8e2, #d8d2c9);
+    text-align: center;
+  }
+
+  .aurelle-craftsmanship__placeholder-svg {
+    display: block;
+    width: min(50%, 240px);
+    height: auto;
+    fill: rgb(87 78 66 / 18%);
+  }
+
+  .aurelle-craftsmanship__placeholder span {
+    max-width: 250px;
+    font-family: var(--font-primary--family);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .aurelle-craftsmanship__badge {
+    position: absolute;
+    right: -20px;
+    bottom: -4px;
+    width: min(280px, 62%);
+    padding: 22px 24px 20px;
+    background: #fff;
+    box-shadow: 0 8px 24px rgb(31 29 26 / 12%);
+  }
+
+  .aurelle-craftsmanship__badge-eyebrow,
+  .aurelle-craftsmanship__badge-heading {
+    margin: 0;
+  }
+
+  .aurelle-craftsmanship__badge-eyebrow {
+    color: var(--aurelle-craftsmanship-accent);
+    font-family: var(--font-primary--family);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    line-height: 1.4;
+    text-transform: uppercase;
+  }
+
+  .aurelle-craftsmanship__badge-heading {
+    margin-top: 7px;
+    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+    font-size: clamp(17px, 1.8vw, 21px);
+    line-height: 1.28;
+  }
+
+  .aurelle-craftsmanship__content {
+    max-width: 590px;
+    padding: 8px 0 0;
+  }
+
+  .aurelle-craftsmanship__eyebrow {
+    margin: 0 0 9px;
+    color: var(--aurelle-craftsmanship-accent);
+    font-family: var(--font-primary--family);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.13em;
+    line-height: 1.4;
+    text-transform: uppercase;
+  }
+
+  .aurelle-craftsmanship__heading {
+    max-width: 620px;
+    margin: 0;
+    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+    font-size: clamp(34px, 3.25vw, 48px);
+    font-weight: 400;
+    letter-spacing: -0.035em;
+    line-height: 1.17;
+  }
+
+  .aurelle-craftsmanship__description {
+    margin-top: 20px;
+    color: var(--aurelle-craftsmanship-muted);
+    font-family: var(--font-primary--family);
+    font-size: 14px;
+    line-height: 1.62;
+  }
+
+  .aurelle-craftsmanship__description p {
+    margin: 0;
+  }
+
+  .aurelle-craftsmanship__description p + p {
+    margin-top: 14px;
+    font-size: 12px;
+    line-height: 1.65;
+  }
+
+  .aurelle-craftsmanship__stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: clamp(24px, 5vw, 72px);
+    row-gap: 22px;
+    margin: 54px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .aurelle-craftsmanship__stat {
+    min-width: 0;
+  }
+
+  .aurelle-craftsmanship__stat-value {
+    margin: 0 0 1px;
+    color: var(--aurelle-craftsmanship-accent);
+    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+    font-size: clamp(25px, 2.4vw, 32px);
+    font-weight: 400;
+    line-height: 1.05;
+  }
+
+  .aurelle-craftsmanship__stat-label {
+    margin: 0;
+    color: var(--aurelle-craftsmanship-foreground);
+    font-family: var(--font-primary--family);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.035em;
+    line-height: 1.45;
+    text-transform: uppercase;
+  }
+
+  .aurelle-craftsmanship__stat-detail {
+    margin: 2px 0 0;
+    color: var(--aurelle-craftsmanship-muted);
+    font-family: var(--font-primary--family);
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  .aurelle-craftsmanship--motion .aurelle-craftsmanship__visual,
+  .aurelle-craftsmanship--motion .aurelle-craftsmanship__content {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 650ms ease, transform 650ms cubic-bezier(0.2, 0.65, 0.3, 1);
+  }
+
+  .aurelle-craftsmanship--motion .aurelle-craftsmanship__content {
+    transition-delay: 100ms;
+  }
+
+  .aurelle-craftsmanship--motion.is-visible .aurelle-craftsmanship__visual,
+  .aurelle-craftsmanship--motion.is-visible .aurelle-craftsmanship__content {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @media screen and (max-width: 900px) {
+    .aurelle-craftsmanship {
+      padding: 64px 32px;
+    }
+
+    .aurelle-craftsmanship__inner {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 42px;
+    }
+
+    .aurelle-craftsmanship__visual {
+      width: min(640px, calc(100% - 18px));
+      margin: 0 18px 24px 0;
+    }
+
+    .aurelle-craftsmanship__image-wrap {
+      aspect-ratio: 0.95;
+    }
+
+    .aurelle-craftsmanship__content {
+      max-width: 680px;
+      padding: 0;
+    }
+
+    .aurelle-craftsmanship__heading {
+      max-width: 640px;
+      font-size: clamp(34px, 6vw, 46px);
+    }
+
+    .aurelle-craftsmanship__stats {
+      margin-top: 38px;
+      column-gap: 40px;
+    }
+  }
+
+  @media screen and (max-width: 600px) {
+    .aurelle-craftsmanship {
+      padding: 48px 20px 56px;
+    }
+
+    .aurelle-craftsmanship__inner {
+      gap: 32px;
+    }
+
+    .aurelle-craftsmanship__visual {
+      width: calc(100% - 10px);
+      margin-right: 10px;
+      margin-bottom: 18px;
+    }
+
+    .aurelle-craftsmanship__image-wrap {
+      aspect-ratio: 0.9;
+    }
+
+    .aurelle-craftsmanship__badge {
+      right: -10px;
+      bottom: -8px;
+      width: min(250px, 72%);
+      padding: 16px 17px;
+    }
+
+    .aurelle-craftsmanship__badge-eyebrow {
+      font-size: 8px;
+    }
+
+    .aurelle-craftsmanship__badge-heading {
+      font-size: 17px;
+    }
+
+    .aurelle-craftsmanship__eyebrow {
+      margin-bottom: 8px;
+      font-size: 8px;
+    }
+
+    .aurelle-craftsmanship__heading {
+      font-size: clamp(30px, 9vw, 40px);
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+    }
+
+    .aurelle-craftsmanship__description {
+      margin-top: 16px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .aurelle-craftsmanship__description p + p {
+      margin-top: 12px;
+      font-size: 12px;
+    }
+
+    .aurelle-craftsmanship__stats {
+      margin-top: 32px;
+      column-gap: 18px;
+      row-gap: 20px;
+    }
+
+    .aurelle-craftsmanship__stat-value {
+      font-size: 26px;
+    }
+
+    .aurelle-craftsmanship__stat-label {
+      font-size: 8px;
+    }
+
+    .aurelle-craftsmanship__stat-detail {
+      font-size: 10px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .aurelle-craftsmanship__image,
+    .aurelle-craftsmanship--motion .aurelle-craftsmanship__visual,
+    .aurelle-craftsmanship--motion .aurelle-craftsmanship__content {
+      transition: none;
+    }
+
+    .aurelle-craftsmanship__visual:hover .aurelle-craftsmanship__image,
+    .aurelle-craftsmanship--motion .aurelle-craftsmanship__visual,
+    .aurelle-craftsmanship--motion .aurelle-craftsmanship__content {
+      opacity: 1;
+      transform: none;
+    }
+  }
+{% endstylesheet %}
+
+{% javascript %}
+  (() => {
+    const selector = '[data-aurelle-craftsmanship]';
+    let observer;
+
+    const initializeCraftsmanship = (root = document) => {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+      const sections = [];
+      if (root.matches?.(selector)) sections.push(root);
+      sections.push(...root.querySelectorAll(selector));
+
+      if (!sections.length) return;
+
+      sections.forEach((section) => {
+        if (section.classList.contains('aurelle-craftsmanship--motion')) return;
+        section.classList.add('aurelle-craftsmanship--motion');
+      });
+
+      if (!('IntersectionObserver' in window)) {
+        sections.forEach((section) => section.classList.add('is-visible'));
+        return;
+      }
+
+      if (!observer) {
+        observer = new IntersectionObserver(
+          (entries, activeObserver) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                activeObserver.unobserve(entry.target);
+              }
+            });
+          },
+          { threshold: 0.12, rootMargin: '0px 0px -24px 0px' },
+        );
+      }
+
+      sections.forEach((section) => observer.observe(section));
+    };
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => initializeCraftsmanship(), { once: true });
+    } else {
+      initializeCraftsmanship();
+    }
+
+    document.addEventListener('shopify:section:load', (event) => initializeCraftsmanship(event.target));
+  })();
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "AURELLE craftsmanship",
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Workshop photograph",
+      "info": "The workshop photograph from the design reference is not in this theme. Select or upload the actual image here."
+    },
+    {
+      "type": "text",
+      "id": "image_alt",
+      "label": "Image alternative text",
+      "default": "A jewellery artisan working at a jeweller's bench"
+    },
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "THE AURELLE PHILOSOPHY"
+    },
+    {
+      "type": "textarea",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Born in Place Vendôme, perfected for everyday grace."
+    },
+    {
+      "type": "richtext",
+      "id": "description",
+      "label": "Description",
+      "default": "<p>Every AURELLE piece is cast in certified 100% recycled 18-karat gold and set with individually hand-inspected stones. We unite centuries of French haute joaillerie mastery with contemporary architectural lightness.</p><p>We refuse unnecessary markups and industrial shortcuts. From the initial pencil sketch to final hallmarking, our creations belong to you for an eternity of wear.</p>",
+      "info": "Reference design copy. Verify sourcing, certification, and production claims with your business before publishing."
+    },
+    {
+      "type": "text",
+      "id": "badge_eyebrow",
+      "label": "Image badge eyebrow",
+      "default": "ARTISANAL HERITAGE",
+      "info": "The production-time claim below comes from the design reference; verify it before publishing."
+    },
+    {
+      "type": "text",
+      "id": "badge_heading",
+      "label": "Image badge heading",
+      "default": "32 Hours of Hand Polish Per Creation"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Section background",
+      "default": "#FCF9F4"
+    },
+    {
+      "type": "color",
+      "id": "foreground_color",
+      "label": "Primary text",
+      "default": "#24221F"
+    },
+    {
+      "type": "color",
+      "id": "muted_color",
+      "label": "Secondary text",
+      "default": "#625D55"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Muted gold accent",
+      "default": "#806122"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "stat",
+      "name": "Craftsmanship proof point",
+      "settings": [
+        {
+          "type": "text",
+          "id": "value",
+          "label": "Value",
+          "default": "100%",
+          "info": "Design-reference claim; verify before publishing."
+        },
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Label",
+          "default": "RECYCLED GOLD"
+        },
+        {
+          "type": "text",
+          "id": "detail",
+          "label": "Supporting text",
+          "default": "Zero newly mined bullion"
+        }
+      ]
+    }
+  ],
+  "max_blocks": 4,
+  "presets": [
+    {
+      "name": "AURELLE craftsmanship",
+      "blocks": [
+        { "type": "stat", "settings": { "value": "100%", "label": "RECYCLED GOLD", "detail": "Zero newly mined bullion" } },
+        { "type": "stat", "settings": { "value": "KPCS", "label": "CONFLICT-FREE", "detail": "Kimberley Process certified" } },
+        { "type": "stat", "settings": { "value": "Paris", "label": "HAND-FINISHED", "detail": "Place Vendôme masters" } },
+        { "type": "stat", "settings": { "value": "∞", "label": "LIFETIME CARE", "detail": "Complimentary cleaning & prongs" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

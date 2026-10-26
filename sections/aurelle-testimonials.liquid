@@ -1,0 +1,476 @@
+<section
+  class="aurelle-testimonials full-width"
+  style="--aurelle-testimonials-background: {{ section.settings.background_color }}; --aurelle-testimonials-card-background: {{ section.settings.card_background_color }}; --aurelle-testimonials-foreground: {{ section.settings.foreground_color }}; --aurelle-testimonials-muted: {{ section.settings.muted_color }}; --aurelle-testimonials-accent: {{ section.settings.accent_color }};"
+  aria-label="{{ section.settings.accessible_label | escape }}"
+>
+  <div class="aurelle-testimonials__inner">
+    {% if section.settings.heading != blank %}
+      <h2 class="aurelle-testimonials__heading">{{ section.settings.heading | escape }}</h2>
+    {% endif %}
+    {% if section.blocks.size > 0 %}
+      <div class="aurelle-testimonials__slider" data-testimonials-slider>
+        <div class="aurelle-testimonials__track swiper" data-testimonials-track data-swiper-src="{{ 'swiper-bundle.min.js' | asset_url }}">
+          <div class="swiper-wrapper" role="list" aria-label="{{ section.settings.accessible_label | escape }}">
+        {% for block in section.blocks %}
+          {% assign testimonial_name = block.settings.customer_name %}
+          {% assign testimonial_alt = block.settings.avatar_alt | default: testimonial_name %}
+          {% assign testimonial_rating = block.settings.rating | default: 5 %}
+          <article class="aurelle-testimonials__card swiper-slide" role="listitem" {{ block.shopify_attributes }}>
+            <div class="aurelle-testimonials__stars" aria-label="{{ testimonial_rating }} out of 5 stars">
+              {% for star in (1..testimonial_rating) %}
+                <span aria-hidden="true">&#9733;</span>
+              {% endfor %}
+            </div>
+            {% if block.settings.quote != blank %}
+              <blockquote class="aurelle-testimonials__quote">
+                {{ block.settings.quote | escape | newline_to_br | prepend: '“' | append: '”' }}
+              </blockquote>
+            {% endif %}
+            <footer class="aurelle-testimonials__customer">
+              {% if block.settings.avatar != blank %}
+                {{ block.settings.avatar | image_url: width: 96, height: 96, crop: 'center' | image_tag: class: 'aurelle-testimonials__avatar', alt: testimonial_alt, widths: '48, 72, 96', sizes: '40px', loading: 'lazy' }}
+              {% else %}
+                <span class="aurelle-testimonials__avatar aurelle-testimonials__avatar--initials" aria-hidden="true">{{ block.settings.initials | escape }}</span>
+              {% endif %}
+              <span class="aurelle-testimonials__customer-copy">
+                {% if testimonial_name != blank %}
+                  <span class="aurelle-testimonials__customer-name">{{ testimonial_name | escape }}</span>
+                {% endif %}
+                {% if block.settings.verification != blank %}
+                  <span class="aurelle-testimonials__verification">{{ block.settings.verification | escape }}</span>
+                {% endif %}
+              </span>
+            </footer>
+          </article>
+        {% endfor %}
+          </div>
+        </div>
+        <div class="aurelle-testimonials__navigation" aria-label="Testimonial navigation">
+          <button class="aurelle-testimonials__arrow" type="button" data-testimonials-prev aria-label="Previous testimonials">
+            <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m10 3-5 5 5 5" /></svg>
+          </button>
+          <button class="aurelle-testimonials__arrow" type="button" data-testimonials-next aria-label="Next testimonials">
+            <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m6 3 5 5-5 5" /></svg>
+          </button>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+{% stylesheet %}
+  .aurelle-testimonials .swiper {
+    position: relative;
+    z-index: 1;
+    display: block;
+    overflow: hidden;
+    width: 100%;
+    padding: 8px 2px 14px;
+  }
+
+  .aurelle-testimonials .swiper-horizontal {
+    touch-action: pan-y;
+  }
+
+  .aurelle-testimonials .swiper-wrapper {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    width: 100%;
+    height: 100%;
+    box-sizing: content-box;
+    transition-property: transform;
+  }
+
+  .aurelle-testimonials .swiper-slide {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    flex-shrink: 0;
+    transition-property: transform;
+  }
+
+  .aurelle-testimonials .swiper-backface-hidden .swiper-slide {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  .aurelle-testimonials .swiper-notification {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1000;
+    overflow: hidden;
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
+    opacity: 0;
+  }
+
+  .aurelle-testimonials__slider.is-fallback .swiper {
+    overflow: visible;
+  }
+
+  .aurelle-testimonials__slider.is-fallback .swiper-wrapper {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+    gap: 16px;
+    transform: none !important;
+  }
+
+  .aurelle-testimonials__slider.is-fallback .swiper-slide {
+    width: auto;
+  }
+
+  .aurelle-testimonials {
+    width: 100%;
+    padding: 12px 42px 32px;
+    color: var(--aurelle-testimonials-foreground);
+    background: var(--aurelle-testimonials-background);
+  }
+
+  .aurelle-testimonials__inner {
+    width: min(1280px, 100%);
+    margin-inline: auto;
+  }
+
+  .aurelle-testimonials__heading {
+    margin: 0 0 32px;
+    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+    font-size: clamp(28px, 3vw, 40px);
+    font-weight: 400;
+    text-align: center;
+  }
+
+  .aurelle-testimonials__track {
+    width: 100%;
+    height: auto;
+    padding: 8px 2px 14px;
+  }
+
+  .aurelle-testimonials__card {
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+    height: auto;
+    flex-direction: column;
+    padding: 34px 34px 16px;
+    background: var(--aurelle-testimonials-card-background);
+    transition: transform 240ms cubic-bezier(0.2, 0.65, 0.3, 1), box-shadow 240ms ease;
+  }
+
+  .aurelle-testimonials__card:hover {
+    box-shadow: 0 12px 28px rgb(37 31 24 / 8%);
+    transform: translateY(-4px);
+  }
+
+  .aurelle-testimonials__stars {
+    display: flex;
+    gap: 2px;
+    color: var(--aurelle-testimonials-accent);
+    font-size: 14px;
+    letter-spacing: 0.08em;
+    line-height: 1;
+  }
+
+  .aurelle-testimonials__quote {
+    margin: 14px 0 22px;
+    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+    font-size: clamp(18px, 1.75vw, 23px);
+    font-style: italic;
+    font-weight: 400;
+    line-height: 1.34;
+  }
+
+  .aurelle-testimonials__customer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 0;
+    padding-top: 14px;
+    border-top: 1px solid rgb(44 39 33 / 9%);
+  }
+
+  .aurelle-testimonials__avatar {
+    display: grid;
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
+    place-items: center;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .aurelle-testimonials__avatar--initials {
+    color: var(--aurelle-testimonials-foreground);
+    background: #ddd5c8;
+    font-family: var(--font-primary--family);
+    font-size: 10px;
+    font-weight: 600;
+  }
+
+  .aurelle-testimonials__customer-copy {
+    display: grid;
+    gap: 3px;
+    text-align: right;
+  }
+
+  .aurelle-testimonials__customer-name {
+    font-family: var(--font-primary--family);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  .aurelle-testimonials__verification {
+    color: var(--aurelle-testimonials-muted);
+    font-family: var(--font-primary--family);
+    font-size: 9px;
+    line-height: 1.35;
+  }
+
+  .aurelle-testimonials__navigation {
+    display: none;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .aurelle-testimonials__slider.is-ready:not(.is-locked) .aurelle-testimonials__navigation {
+    display: flex;
+  }
+
+  .aurelle-testimonials__arrow {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    border: 1px solid rgb(37 34 31 / 20%);
+    border-radius: 50%;
+    color: var(--aurelle-testimonials-foreground);
+    background: transparent;
+    cursor: pointer;
+    transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease, transform 180ms ease;
+  }
+
+  .aurelle-testimonials__arrow svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.5;
+  }
+
+  .aurelle-testimonials__arrow:not(:disabled):hover {
+    border-color: var(--aurelle-testimonials-foreground);
+    color: var(--aurelle-testimonials-card-background);
+    background: var(--aurelle-testimonials-foreground);
+    transform: translateY(-2px);
+  }
+
+  .aurelle-testimonials__arrow:focus-visible,
+  .aurelle-testimonials__track:focus-visible {
+    outline: 2px solid var(--aurelle-testimonials-accent);
+    outline-offset: 3px;
+  }
+
+  .aurelle-testimonials__arrow:disabled,
+  .aurelle-testimonials__arrow.swiper-button-disabled {
+    opacity: 0.38;
+    cursor: default;
+  }
+
+  @media screen and (max-width: 900px) {
+    .aurelle-testimonials {
+      padding: 8px 28px 28px;
+    }
+
+    .aurelle-testimonials__card {
+      min-height: 0;
+      padding: 28px 26px 16px;
+    }
+
+    .aurelle-testimonials__quote {
+      font-size: 20px;
+    }
+  }
+
+  @media screen and (max-width: 600px) {
+    .aurelle-testimonials {
+      padding: 8px 20px 20px;
+    }
+
+    .aurelle-testimonials__card {
+      min-height: 0;
+      padding: 26px 24px 16px;
+    }
+
+    .aurelle-testimonials__quote {
+      margin-bottom: 20px;
+      font-size: 21px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .aurelle-testimonials__card {
+      transition: none;
+    }
+
+    .aurelle-testimonials__arrow {
+      transition: none;
+    }
+
+    .aurelle-testimonials__card:hover {
+      transform: none;
+    }
+  }
+{% endstylesheet %}
+
+{% javascript %}
+  (() => {
+    const sliderSelector = '[data-testimonials-slider]';
+    let swiperPromise;
+    let swiperObserver;
+
+    const loadSwiper = (source) => {
+      if (window.Swiper) return Promise.resolve(window.Swiper);
+      if (swiperPromise) return swiperPromise;
+
+      swiperPromise = new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = source;
+        script.async = true;
+        script.addEventListener('load', () => resolve(window.Swiper), { once: true });
+        script.addEventListener('error', () => reject(new Error('Swiper asset failed to load.')), { once: true });
+        document.head.append(script);
+      });
+
+      return swiperPromise;
+    };
+
+    const hydrateSlider = (slider) => {
+      const swiperElement = slider.querySelector('[data-testimonials-track]');
+      const previous = slider.querySelector('[data-testimonials-prev]');
+      const next = slider.querySelector('[data-testimonials-next]');
+      if (!swiperElement || !previous || !next || swiperElement.swiper) return;
+
+      loadSwiper(swiperElement.dataset.swiperSrc)
+        .then((Swiper) => {
+          if (!Swiper || !swiperElement.isConnected || swiperElement.swiper) return;
+
+          const swiper = new Swiper(swiperElement, {
+            slidesPerView: 1.08,
+            spaceBetween: 14,
+            speed: 650,
+            rewind: true,
+            grabCursor: true,
+            watchOverflow: true,
+            keyboard: { enabled: true, onlyInViewport: true },
+            a11y: { prevSlideMessage: 'Previous testimonial', nextSlideMessage: 'Next testimonial' },
+            navigation: { prevEl: previous, nextEl: next },
+            breakpoints: {
+              601: { slidesPerView: 2, spaceBetween: 16 },
+              901: { slidesPerView: 2, spaceBetween: 22 },
+            },
+          });
+
+          const updateSliderState = () => {
+            slider.classList.add('is-ready');
+            slider.classList.toggle('is-locked', swiper.isLocked);
+          };
+
+          swiper.on('lock', updateSliderState);
+          swiper.on('unlock', updateSliderState);
+          updateSliderState();
+        })
+        .catch(() => slider.classList.add('is-fallback'));
+    };
+
+    const initializeTestimonials = (root = document) => {
+      const sliders = [];
+      if (root.matches?.(sliderSelector)) sliders.push(root);
+      sliders.push(...root.querySelectorAll(sliderSelector));
+
+      sliders.forEach((slider) => {
+        const swiperElement = slider.querySelector('[data-testimonials-track]');
+        if (!swiperElement || swiperElement.swiper || slider.dataset.swiperPending === 'true') return;
+
+        if (!('IntersectionObserver' in window)) {
+          hydrateSlider(slider);
+          return;
+        }
+
+        slider.dataset.swiperPending = 'true';
+        swiperObserver ||= new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            swiperObserver.unobserve(entry.target);
+            delete entry.target.dataset.swiperPending;
+            hydrateSlider(entry.target);
+          });
+        }, { rootMargin: '500px 0px' });
+        swiperObserver.observe(slider);
+      });
+    };
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => initializeTestimonials(), { once: true });
+    } else {
+      initializeTestimonials();
+    }
+
+    document.addEventListener('shopify:section:load', (event) => initializeTestimonials(event.target));
+
+    document.addEventListener('shopify:section:unload', (event) => {
+      event.target.querySelectorAll('[data-testimonials-track]').forEach((swiperElement) => {
+        swiperObserver?.unobserve(swiperElement.closest(sliderSelector));
+        if (swiperElement.swiper) swiperElement.swiper.destroy(true, true);
+      });
+    });
+  })();
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "AURELLE testimonials",
+  "settings": [
+    { "type": "text", "id": "accessible_label", "label": "Accessible section label", "default": "Client testimonials" },
+    { "type": "text", "id": "heading", "label": "Optional heading" },
+    { "type": "color", "id": "background_color", "label": "Section background", "default": "#FCF9F4" },
+    { "type": "color", "id": "card_background_color", "label": "Card background", "default": "#F5F2EE" },
+    { "type": "color", "id": "foreground_color", "label": "Primary text", "default": "#25221F" },
+    { "type": "color", "id": "muted_color", "label": "Secondary text", "default": "#77716A" },
+    { "type": "color", "id": "accent_color", "label": "Star accent", "default": "#806122" }
+  ],
+  "blocks": [
+    {
+      "type": "testimonial",
+      "name": "Client testimonial",
+      "settings": [
+        { "type": "textarea", "id": "quote", "label": "Quote", "default": "The weight of the 18k gold is astonishing. It feels like an ancient talisman rendered for modern life. I haven't taken off my solitaire since it arrived.", "info": "Design-reference sample only. Replace with a genuine customer review and obtain permission before publishing." },
+        { "type": "range", "id": "rating", "label": "Star rating", "min": 1, "max": 5, "step": 1, "default": 5 },
+        { "type": "text", "id": "customer_name", "label": "Customer name", "default": "Camille V.", "info": "Sample identity from design reference; replace with a real, authorized review attribution." },
+        { "type": "text", "id": "verification", "label": "Customer detail", "default": "Verified Buyer · Paris" },
+        { "type": "image_picker", "id": "avatar", "label": "Customer photo", "info": "Optional. Use a photo only with the customer's permission." },
+        { "type": "text", "id": "avatar_alt", "label": "Customer photo alternative text" },
+        { "type": "text", "id": "initials", "label": "Initials shown if no photo", "default": "CV" }
+      ]
+    }
+  ],
+  "max_blocks": 6,
+  "presets": [
+    {
+      "name": "AURELLE testimonials",
+      "blocks": [
+        { "type": "testimonial", "settings": { "quote": "The weight of the 18k gold is astonishing. It feels like an ancient talisman rendered for modern life. I haven't taken off my solitaire since it arrived.", "rating": 5, "customer_name": "Camille V.", "verification": "Verified Buyer · Paris", "initials": "CV" } },
+        { "type": "testimonial", "settings": { "quote": "Purchased the Aura Tennis Necklace for our 10th anniversary. The fluidity of the setting sits perfectly flat against the collarbone without twisting.", "rating": 5, "customer_name": "Eleanor M.", "verification": "Verified Buyer · New York", "initials": "EM" } },
+        { "type": "testimonial", "settings": { "quote": "The bespoke packaging alone is worth noting—heavy silk, wax seal, and the GIA dossier. AURELLE treats jewellery purchasing with proper dignity.", "rating": 5, "customer_name": "Marcus K.", "verification": "Verified Buyer · Geneva", "initials": "MK" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

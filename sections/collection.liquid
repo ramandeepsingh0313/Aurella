@@ -35,7 +35,32 @@
 {% stylesheet %}
   .collection-products {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+    gap: clamp(16px, 2vw, 28px);
+  }
+
+  .collection-product {
+    min-width: 0;
+  }
+
+  .collection-product__image {
+    background: #f2efeb;
+  }
+
+  .collection-product__content {
+    display: grid;
+    gap: 6px;
+    padding-block: 12px;
+  }
+
+  .collection-product__content p {
+    margin: 0;
+    font-size: clamp(13px, 1.1vw, 16px);
+    line-height: 1.5;
+  }
+
+  .collection-products {
+    align-items: start;
   }
 {% endstylesheet %}
 

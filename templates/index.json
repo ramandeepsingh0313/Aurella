@@ -108,12 +108,224 @@
       "blocks": {},
       "block_order": [],
       "settings": {}
+    },
+    "aurelle_craftsmanship": {
+      "type": "aurelle-craftsmanship",
+      "blocks": {
+        "recycled_gold": {
+          "type": "stat",
+          "settings": {
+            "value": "100%",
+            "label": "RECYCLED GOLD",
+            "detail": "Zero newly mined bullion"
+          }
+        },
+        "conflict_free": {
+          "type": "stat",
+          "settings": {
+            "value": "KPCS",
+            "label": "CONFLICT-FREE",
+            "detail": "Kimberley Process certified"
+          }
+        },
+        "hand_finished": {
+          "type": "stat",
+          "settings": {
+            "value": "Paris",
+            "label": "HAND-FINISHED",
+            "detail": "Place Vendôme masters"
+          }
+        },
+        "lifetime_care": {
+          "type": "stat",
+          "settings": {
+            "value": "∞",
+            "label": "LIFETIME CARE",
+            "detail": "Complimentary cleaning & prongs"
+          }
+        }
+      },
+      "block_order": [
+        "recycled_gold",
+        "conflict_free",
+        "hand_finished",
+        "lifetime_care"
+      ],
+      "settings": {}
+    },
+    "aurelle_occasions": {
+      "type": "aurelle-occasions",
+      "blocks": {
+        "everyday_refinement": {
+          "type": "occasion",
+          "settings": {
+            "eyebrow": "Capsule Collection",
+            "heading": "Everyday Refinement",
+            "link_label": "Explore edit"
+          }
+        },
+        "wedding_bridal": {
+          "type": "occasion",
+          "settings": {
+            "eyebrow": "Ceremony & Vows",
+            "heading": "Wedding & Bridal",
+            "link_label": "Explore edit"
+          }
+        },
+        "milestones_anniversaries": {
+          "type": "occasion",
+          "settings": {
+            "eyebrow": "Heirlooms of Love",
+            "heading": "Milestones & Anniversaries",
+            "link_label": "Explore edit"
+          }
+        },
+        "black_tie_suite": {
+          "type": "occasion",
+          "settings": {
+            "eyebrow": "Evening Gala",
+            "heading": "The Black-Tie Suite",
+            "link_label": "Explore edit"
+          }
+        }
+      },
+      "block_order": [
+        "everyday_refinement",
+        "wedding_bridal",
+        "milestones_anniversaries",
+        "black_tie_suite"
+      ],
+      "settings": {}
+    },
+    "aurelle_lookbook": {
+      "type": "aurelle-lookbook",
+      "blocks": {
+        "solstice_choker": {
+          "type": "product",
+          "settings": {
+            "fallback_title": "Solstice Pear Diamond Choker",
+            "detail": "6.80 ctw · 18K Yellow Gold",
+            "fallback_price": "$14,800",
+            "position_x": 60,
+            "position_y": 42
+          }
+        },
+        "solstice_earrings": {
+          "type": "product",
+          "settings": {
+            "fallback_title": "Solstice Cascading Drop Earrings",
+            "detail": "3.40 ctw · Removable Jacket",
+            "fallback_price": "$7,450",
+            "position_x": 50,
+            "position_y": 63
+          }
+        }
+      },
+      "block_order": [
+        "solstice_choker",
+        "solstice_earrings"
+      ],
+      "settings": {}
+    },
+    "aurelle_press": {
+      "type": "aurelle-press",
+      "blocks": {
+        "vogue": { "type": "publication", "settings": { "name": "VOGUE", "style": "serif_italic" } },
+        "harpers_bazaar": { "type": "publication", "settings": { "name": "Harper's BAZAAR", "style": "serif" } },
+        "elle_luxe": { "type": "publication", "settings": { "name": "ELLE LUXE", "style": "sans_bold" } },
+        "lofficiel": { "type": "publication", "settings": { "name": "L'OFFICIEL", "style": "serif_italic" } },
+        "vanity_fair": { "type": "publication", "settings": { "name": "VANITY FAIR", "style": "serif" } }
+      },
+      "block_order": ["vogue", "harpers_bazaar", "elle_luxe", "lofficiel", "vanity_fair"],
+      "settings": {}
+    },
+    "aurelle_testimonials": {
+      "type": "aurelle-testimonials",
+      "blocks": {
+        "camille": {
+          "type": "testimonial",
+          "settings": {
+            "quote": "The weight of the 18k gold is astonishing. It feels like an ancient talisman rendered for modern life. I haven't taken off my solitaire since it arrived.",
+            "rating": 5,
+            "customer_name": "Camille V.",
+            "verification": "Verified Buyer · Paris",
+            "initials": "CV"
+          }
+        },
+        "eleanor": {
+          "type": "testimonial",
+          "settings": {
+            "quote": "Purchased the Aura Tennis Necklace for our 10th anniversary. The fluidity of the setting sits perfectly flat against the collarbone without twisting.",
+            "rating": 5,
+            "customer_name": "Eleanor M.",
+            "verification": "Verified Buyer · New York",
+            "initials": "EM"
+          }
+        },
+        "marcus": {
+          "type": "testimonial",
+          "settings": {
+            "quote": "The bespoke packaging alone is worth noting—heavy silk, wax seal, and the GIA dossier. AURELLE treats jewellery purchasing with proper dignity.",
+            "rating": 5,
+            "customer_name": "Marcus K.",
+            "verification": "Verified Buyer · Geneva",
+            "initials": "MK"
+          }
+        }
+      },
+      "block_order": ["camille", "eleanor", "marcus"],
+      "settings": {}
+    },
+    "aurelle_collector_access": {
+      "type": "aurelle-collector-access",
+      "blocks": {
+        "armored_transit": {
+          "type": "benefit",
+          "settings": {
+            "icon": "transit",
+            "heading": "Armored Insured Transit",
+            "description": "Direct insured courier with mandatory biometric or physical signature upon release."
+          }
+        },
+        "atelier_adjustments": {
+          "type": "benefit",
+          "settings": {
+            "icon": "adjustments",
+            "heading": "30-Day Atelier Adjustments",
+            "description": "Complimentary sizing, vault exchanges, and full insurance returns within thirty days."
+          }
+        },
+        "gia_hallmark": {
+          "type": "benefit",
+          "settings": {
+            "icon": "gia",
+            "heading": "GIA Certified & Hallmarked",
+            "description": "Stamped with French eagle hallmarks and accompanied by full laboratory dossiers."
+          }
+        },
+        "silk_casket": {
+          "type": "benefit",
+          "settings": {
+            "icon": "casket",
+            "heading": "Signature Silk Casket",
+            "description": "Handcrafted velour jewellery trunk with personalized calligraphed wax-sealed letter."
+          }
+        }
+      },
+      "block_order": ["armored_transit", "atelier_adjustments", "gia_hallmark", "silk_casket"],
+      "settings": {}
     }
   },
   "order": [
     "main",
     "aurelle_categories",
     "aurelle_featured_editions",
-    "aurelle_iconic_products"
+    "aurelle_iconic_products",
+    "aurelle_craftsmanship",
+    "aurelle_occasions",
+    "aurelle_lookbook",
+    "aurelle_press",
+    "aurelle_testimonials",
+    "aurelle_collector_access"
   ]
 }

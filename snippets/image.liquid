@@ -13,6 +13,10 @@
   @param {number} [width] - The highest resolution width of the image to be rendered
   @param {number} [height] - The highest resolution height of the image to be rendered
   @param {string} [crop] - The crop position of the image
+  @param {string} [alt] - Alternative text for the image
+  @param {string} [sizes] - Responsive image sizes hint
+  @param {string} [loading] - Image loading behavior; defaults to lazy
+  @param {string} [fetchpriority] - Optional fetch priority for an important image
 
   @example
   {% render 'image', image: product.featured_image %}
@@ -28,9 +32,18 @@
 {% enddoc %}
 
 {% liquid
-  unless height
-    assign width = width | default: image.width
-  endunless
+  assign image_width = width | default: 1200 | at_most: image.width
+  assign image_alt = alt | default: image.alt | default: ''
+  assign image_loading = loading | default: 'lazy'
+  assign image_sizes = sizes | default: '100vw'
+
+  if image_width <= 400
+    assign image_widths = '160, 240, 320, 400'
+  elsif image_width <= 800
+    assign image_widths = '320, 480, 640, 800'
+  else
+    assign image_widths = '360, 540, 720, 960, 1200'
+  endif
 
   if url
     assign wrapper = 'a'
@@ -39,14 +52,20 @@
   endif
 %}
 
-<{{ wrapper }}
-  class="image {{ class }}"
-  {% if url %}
-    href="{{ url }}"
-  {% endif %}
->
-  {{ image | image_url: width: width, height: height, crop: crop | image_tag }}
-</{{ wrapper }}>
+{% if image != blank %}
+  <{{ wrapper }}
+    class="image {{ class }}"
+    {% if url %}
+      href="{{ url }}"
+    {% endif %}
+  >
+    {% if fetchpriority != blank %}
+      {{ image | image_url: width: image_width, height: height, crop: crop | image_tag: alt: image_alt, widths: image_widths, sizes: image_sizes, loading: image_loading, fetchpriority: fetchpriority }}
+    {% else %}
+      {{ image | image_url: width: image_width, height: height, crop: crop | image_tag: alt: image_alt, widths: image_widths, sizes: image_sizes, loading: image_loading }}
+    {% endif %}
+  </{{ wrapper }}>
+{% endif %}
 
 {% stylesheet %}
   .image {

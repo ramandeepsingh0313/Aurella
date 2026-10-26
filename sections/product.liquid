@@ -1,45 +1,209 @@
 {% comment %}
-  This section is used in the product template to render product page with
-  media, content, and add-to-cart form.
+  This section renders a responsive product gallery, product details and Shopify product form.
 
   https://shopify.dev/docs/storefronts/themes/architecture/templates/product
 {% endcomment %}
 
-<div class="product-images">
-  {% for image in product.images %}
-    {% render 'image', class: 'product-image', image: image %}
-  {% endfor %}
-</div>
+{% assign current_variant = product.selected_or_first_available_variant %}
 
-<div class="product-info">
-  <h1>{{ product.title }}</h1>
-  <p>{{ product.price | money }}</p>
-  <p>{{ product.description }}</p>
-</div>
-
-<div class="product-form">
-  {% form 'product', product %}
-    {% assign current_variant = product.selected_or_first_available_variant %}
-
-    <select name="id">
-      {% for variant in product.variants %}
-        <option
-          value="{{ variant.id }}"
-          {% if variant == current_variant %}
-            selected="selected"
-          {% endif %}
-        >
-          {{ variant.title }} - {{ variant.price | money }}
-        </option>
+<section class="aurelle-product full-width">
+  <div class="aurelle-product__layout">
+    <div class="aurelle-product__media" role="group" aria-label="{{ product.title | escape }} images">
+      {% for image in product.images %}
+        {% assign image_alt = image.alt | default: product.title %}
+        {% if forloop.first %}
+          {% render 'image',
+            class: 'aurelle-product__image',
+            image: image,
+            alt: image_alt,
+            width: 1200,
+            loading: 'eager',
+            fetchpriority: 'high',
+            sizes: '(min-width: 1000px) 50vw, 100vw'
+          %}
+        {% else %}
+          {% render 'image',
+            class: 'aurelle-product__image',
+            image: image,
+            alt: image_alt,
+            width: 1200,
+            sizes: '(min-width: 1000px) 50vw, 100vw'
+          %}
+        {% endif %}
       {% endfor %}
-    </select>
+    </div>
 
-    <input type="text" name="quantity" min="1" value="1">
+    <div class="aurelle-product__details">
+      <h1 class="aurelle-product__title">{{ product.title | escape }}</h1>
+      <p class="aurelle-product__price">{{ current_variant.price | money_with_currency }}</p>
 
-    <input type="submit" value="Add to cart">
-    {{ form | payment_button }}
-  {% endform %}
-</div>
+      {% if product.description != blank %}
+        <div class="aurelle-product__description rte">{{ product.description }}</div>
+      {% endif %}
+
+      {% form 'product', product, class: 'aurelle-product__form' %}
+        {% if product.variants.size > 1 %}
+          <label for="ProductVariant-{{ section.id }}">{{ 'products.product.choose_options' | t }}</label>
+          <select id="ProductVariant-{{ section.id }}" name="id">
+            {% for variant in product.variants %}
+              <option
+                value="{{ variant.id }}"
+                {% if variant == current_variant %}selected{% endif %}
+                {% unless variant.available %}disabled{% endunless %}
+              >
+                {{ variant.title | escape }} — {{ variant.price | money_with_currency }}
+                {% unless variant.available %} — {{ 'products.product.sold_out' | t }}{% endunless %}
+              </option>
+            {% endfor %}
+          </select>
+        {% else %}
+          <input type="hidden" name="id" value="{{ current_variant.id }}">
+        {% endif %}
+
+        <label for="ProductQuantity-{{ section.id }}">{{ 'products.product.quantity.label' | t }}</label>
+        <input id="ProductQuantity-{{ section.id }}" type="number" name="quantity" min="1" value="1" inputmode="numeric">
+
+        <button type="submit" name="add" {% unless current_variant.available %}disabled{% endunless %}>
+          {% if current_variant.available %}
+            {{ 'products.product.add_to_cart' | t }}
+          {% else %}
+            {{ 'products.product.sold_out' | t }}
+          {% endif %}
+        </button>
+
+        {{ form | payment_button }}
+      {% endform %}
+    </div>
+  </div>
+</section>
+
+{% stylesheet %}
+  .aurelle-product {
+    padding-block: clamp(36px, 6vw, 88px);
+  }
+
+  .aurelle-product__layout {
+    display: grid;
+    width: min(1280px, calc(100% - clamp(32px, 8vw, 112px)));
+    grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+    align-items: start;
+    gap: clamp(28px, 6vw, 88px);
+    margin-inline: auto;
+  }
+
+  .aurelle-product__media {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(8px, 1.5vw, 20px);
+  }
+
+  .aurelle-product__image {
+    background: #f2efeb;
+  }
+
+  .aurelle-product__media > :first-child {
+    grid-column: 1 / -1;
+  }
+
+  .aurelle-product__title {
+    font-family: 'Bodoni MT', Didot, Georgia, 'Times New Roman', serif;
+    font-size: clamp(32px, 4.4vw, 56px);
+    font-weight: 400;
+    line-height: 1.08;
+  }
+
+  .aurelle-product__price {
+    margin-top: 18px;
+    font-size: 18px;
+    line-height: 1.4;
+  }
+
+  .aurelle-product__description {
+    margin-top: 24px;
+    font-size: 15px;
+    line-height: 1.65;
+  }
+
+  .aurelle-product__description img,
+  .aurelle-product__description table {
+    max-width: 100%;
+  }
+
+  .aurelle-product__form {
+    display: grid;
+    gap: 10px;
+    margin-top: 28px;
+  }
+
+  .aurelle-product__form label {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .aurelle-product__form select,
+  .aurelle-product__form input[type='number'] {
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 12px;
+    border: 1px solid #c9c1b6;
+    background: #fff;
+    color: inherit;
+  }
+
+  .aurelle-product__form button {
+    min-height: 50px;
+    padding: 12px 20px;
+    border: 1px solid #1e1c19;
+    background: #1e1c19;
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .aurelle-product__form button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+
+  .aurelle-product__form :focus-visible {
+    outline: 2px solid #806122;
+    outline-offset: 3px;
+  }
+
+  @media screen and (max-width: 900px) {
+    .aurelle-product__layout {
+      width: min(720px, calc(100% - 48px));
+      grid-template-columns: minmax(0, 1fr);
+      gap: 32px;
+    }
+
+    .aurelle-product__details {
+      max-width: 680px;
+    }
+  }
+
+  @media screen and (max-width: 520px) {
+    .aurelle-product__layout {
+      width: calc(100% - 32px);
+      gap: 24px;
+    }
+
+    .aurelle-product__media {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .aurelle-product__media > :first-child {
+      grid-column: auto;
+    }
+
+    .aurelle-product__title {
+      font-size: clamp(32px, 9vw, 42px);
+    }
+  }
+{% endstylesheet %}
 
 {% schema %}
 {

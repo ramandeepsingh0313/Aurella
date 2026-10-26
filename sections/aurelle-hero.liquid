@@ -96,7 +96,7 @@
     <div class="aurelle-hero__visual" role="group" aria-label="Collection and atelier imagery">
       <div class="aurelle-hero__main-image">
         {% if section.settings.main_image != blank %}
-          {{ section.settings.main_image | image_url: width: 1400 | image_tag: class: 'aurelle-hero__image', alt: main_image_alt, widths: '444, 888, 1332', sizes: '(min-width: 1200px) 444px, (min-width: 761px) 42vw, 100vw', loading: 'eager' }}
+          {{ section.settings.main_image | image_url: width: 1400 | image_tag: class: 'aurelle-hero__image', alt: main_image_alt, widths: '444, 888, 1332', sizes: '(min-width: 1200px) 444px, (min-width: 1001px) 34vw, (min-width: 601px) 52vw, calc(100vw - 170px)', loading: 'eager', fetchpriority: 'high' }}
         {% else %}
           <img
             class="aurelle-hero__image"
@@ -105,6 +105,7 @@
             width="512"
             height="288"
             loading="eager"
+            fetchpriority="high"
           >
         {% endif %}
       </div>
@@ -495,7 +496,7 @@
     }
 
     .aurelle-hero__visual {
-      min-height: min(72vw, 555px);
+      min-height: max(480px, min(72vw, 555px));
     }
 
     .aurelle-hero__main-image {

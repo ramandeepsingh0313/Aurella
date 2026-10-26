@@ -1,64 +1,141 @@
 {% comment %}
-  This section is used in the article template to render the article page, which
-  displays the full content of the blog post and can optionally include a
-  comments section for customers (not shown in this example).
+  This section renders an article page and optional customer comments.
 
   https://shopify.dev/docs/storefronts/themes/architecture/templates/article
 {% endcomment %}
 
-{% if article.image %}
-  {{ article.image | image_url: width: 1000 | image_tag }}
-{% endif %}
+<article class="aurelle-article full-width">
+  <div class="aurelle-article__inner">
+    {% if article.image %}
+      {{ article.image | image_url: width: 1600 | image_tag: class: 'aurelle-article__image', alt: article.image.alt | default: article.title, widths: '480, 720, 960, 1200, 1600', sizes: '(min-width: 1100px) 1000px, calc(100vw - 40px)', loading: 'eager', fetchpriority: 'high' }}
+    {% endif %}
 
-<h1>{{ article.title }}</h1>
+    <h1>{{ article.title | escape }}</h1>
+    {% assign date = article.published_at | time_tag: format: 'date' %}
+    <p class="aurelle-article__metadata">{{ 'blog.article_metadata_html' | t: date: date, author: article.author }}</p>
+    <div class="aurelle-article__content rte">{{ article.content }}</div>
 
-{% assign date = article.published_at | time_tag: format: 'date' %}
-<p>{{ 'blog.article_metadata_html' | t: date: date, author: article.author }}</p>
+    {% if blog.comments_enabled? %}
+      <section class="aurelle-article__comments" id="comments" aria-labelledby="AurelleArticleComments-{{ section.id }}">
+        <h2 id="AurelleArticleComments-{{ section.id }}">{{ 'blog.article_comments' | t }}</h2>
 
-{{ article.content }}
+        {% paginate article.comments by 10 %}
+          {% for comment in article.comments %}
+            <article class="aurelle-article__comment">
+              <p>{{ comment.author | escape }}</p>
+              <p>{{ comment.created_at | time_tag: format: 'date' }}</p>
+              <p>{{ comment.content | escape }}</p>
+            </article>
+          {% endfor %}
+          {{ paginate | default_pagination: anchor: 'comments' }}
+        {% endpaginate %}
 
-{% if blog.comments_enabled? %}
-  <h2>{{ 'blog.article_comments' | t }}</h2>
-
-  <div id="comments">
-    {% paginate article.comments by 10 %}
-      {% for comment in article.comments %}
-        <div>
-          <p>{{ comment.author }}</p>
-          <p>
-            {{- comment.created_at | time_tag: format: 'date' -}}
-          </p>
-          <p>{{ comment.content }}</p>
-        </div>
-      {% endfor %}
-
-      {{ paginate | default_pagination: anchor: 'comments' }}
-    {% endpaginate %}
+        {% form 'new_comment', article, class: 'aurelle-article__comment-form' %}
+          <h3>{{ 'blog.comment_form_title' | t }}</h3>
+          {{ form.errors | default_errors }}
+          <label for="AurelleCommentAuthor-{{ section.id }}">{{ 'blog.comment_form_name' | t }}</label>
+          <input type="text" name="comment[author]" id="AurelleCommentAuthor-{{ section.id }}" value="{{ form.author | escape }}" autocomplete="name" required>
+          <label for="AurelleCommentEmail-{{ section.id }}">{{ 'blog.comment_form_email' | t }}</label>
+          <input type="email" name="comment[email]" id="AurelleCommentEmail-{{ section.id }}" value="{{ form.email | escape }}" autocomplete="email" required>
+          <label for="AurelleCommentBody-{{ section.id }}">{{ 'blog.comment_form_body' | t }}</label>
+          <textarea name="comment[body]" id="AurelleCommentBody-{{ section.id }}" required>{{ form.body | escape }}</textarea>
+          <button type="submit">{{ 'blog.comment_form_submit' | t }}</button>
+        {% endform %}
+      </section>
+    {% endif %}
   </div>
+</article>
 
-  {% form 'new_comment', article %}
-    <h2>{{ 'blog.comment_form_title' | t }}</h2>
+{% stylesheet %}
+  .aurelle-article {
+    padding-block: clamp(36px, 6vw, 88px);
+  }
 
-    {{ form.errors | default_errors }}
+  .aurelle-article__inner {
+    width: min(1000px, calc(100% - clamp(32px, 8vw, 112px)));
+    margin-inline: auto;
+  }
 
-    <div>
-      <label for="author">{{ 'blog.comment_form_name' | t }}</label>
-      <input type="text" name="comment[author]" id="author" value="{{ form.author }}" required>
-    </div>
+  .aurelle-article__image {
+    width: 100%;
+    height: auto;
+    margin-bottom: clamp(24px, 4vw, 48px);
+  }
 
-    <div>
-      <label for="email">{{ 'blog.comment_form_email' | t }}</label>
-      <input type="email" name="comment[email]" id="email" value="{{ form.email }}" required>
-    </div>
+  .aurelle-article__inner > h1 {
+    margin-bottom: 12px;
+    font-family: 'Bodoni MT', Didot, Georgia, 'Times New Roman', serif;
+    font-size: clamp(34px, 5vw, 60px);
+    font-weight: 400;
+    line-height: 1.08;
+  }
 
-    <div>
-      <label for="body">{{ 'blog.comment_form_body' | t }}</label>
-      <textarea name="comment[body]" id="body" required>{{ form.body }}</textarea>
-    </div>
+  .aurelle-article__metadata {
+    margin-bottom: 28px;
+    color: #77716a;
+    font-size: 13px;
+    line-height: 1.5;
+  }
 
-    <input type="submit" value="{{ 'blog.comment_form_submit' | t }}">
-  {% endform %}
-{% endif %}
+  .aurelle-article__content {
+    font-size: 16px;
+    line-height: 1.75;
+  }
+
+  .aurelle-article__content img,
+  .aurelle-article__content table,
+  .aurelle-article__comment-form input,
+  .aurelle-article__comment-form textarea {
+    max-width: 100%;
+  }
+
+  .aurelle-article__comments {
+    margin-top: 56px;
+    padding-top: 28px;
+    border-top: 1px solid #e6e1da;
+  }
+
+  .aurelle-article__comments h2,
+  .aurelle-article__comment-form h3 {
+    margin-bottom: 20px;
+    font-family: 'Bodoni MT', Didot, Georgia, 'Times New Roman', serif;
+    font-size: clamp(26px, 3vw, 36px);
+    font-weight: 400;
+  }
+
+  .aurelle-article__comment-form {
+    display: grid;
+    gap: 10px;
+    margin-top: 32px;
+  }
+
+  .aurelle-article__comment-form input,
+  .aurelle-article__comment-form textarea {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 1px solid #c9c1b6;
+  }
+
+  .aurelle-article__comment-form textarea {
+    min-height: 140px;
+  }
+
+  .aurelle-article__comment-form button {
+    min-height: 48px;
+    padding: 10px 18px;
+    border: 0;
+    color: #fff;
+    background: #1e1c19;
+    cursor: pointer;
+  }
+
+  @media screen and (max-width: 520px) {
+    .aurelle-article__inner {
+      width: calc(100% - 32px);
+    }
+  }
+{% endstylesheet %}
 
 {% schema %}
 {

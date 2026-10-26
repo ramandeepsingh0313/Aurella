@@ -15,8 +15,48 @@
       "type": "footer",
       "settings": {
         "menu": "",
+        "atelier_menu": "",
+        "collections_menu": "",
+        "care_menu": "",
+        "legal_menu": "",
+        "show_trust_strip": true,
         "show_payment_icons": true
-      }
+      },
+      "blocks": {
+        "rjc_certified": {
+          "type": "benefit",
+          "settings": {
+            "icon": "rjc",
+            "heading": "RJC Certified",
+            "description": "Responsible Jewellery Council ethics & sourcing."
+          }
+        },
+        "gia_inspected": {
+          "type": "benefit",
+          "settings": {
+            "icon": "gia",
+            "heading": "GIA Inspected",
+            "description": "Conflict-free natural & bespoke stones."
+          }
+        },
+        "recycled_gold": {
+          "type": "benefit",
+          "settings": {
+            "icon": "recycled",
+            "heading": "18K Recycled Gold",
+            "description": "100% refined circular solid gold atelier casting."
+          }
+        },
+        "insured_delivery": {
+          "type": "benefit",
+          "settings": {
+            "icon": "delivery",
+            "heading": "Insured Delivery",
+            "description": "Armored couriers and 30-day private vault returns."
+          }
+        }
+      },
+      "block_order": ["rjc_certified", "gia_inspected", "recycled_gold", "insured_delivery"]
     }
   },
   "order": [
