@@ -2,23 +2,25 @@
   Renders recipient fields inside a gift card product form.
 
   @param {string} section_id - Unique ID of the containing product section.
+  @param {form} form - Current Shopify product form.
 {% enddoc %}
 
 <div class="aurelle-gift-recipient" data-gift-recipient>
   <label class="aurelle-gift-recipient__toggle" for="GiftRecipientToggle-{{ section_id }}">
-    <input id="GiftRecipientToggle-{{ section_id }}" type="checkbox" name="properties[__shopify_send_gift_card_to_recipient]" value="true" data-gift-recipient-toggle>
+    <input id="GiftRecipientToggle-{{ section_id }}" type="checkbox" name="properties[__shopify_send_gift_card_to_recipient]" value="true" data-gift-recipient-toggle{% if form.errors %} checked{% endif %}>
     <span>{{ 'gift_card.send_to_recipient' | t }}</span>
   </label>
   <fieldset class="aurelle-gift-recipient__fields" data-gift-recipient-fields>
     <legend class="visually-hidden">{{ 'gift_card.recipient_details' | t }}</legend>
     <label for="GiftRecipientEmail-{{ section_id }}">{{ 'gift_card.recipient_email' | t }}</label>
-    <input id="GiftRecipientEmail-{{ section_id }}" type="email" name="properties[Recipient email]" autocomplete="email" data-gift-recipient-email>
+    <input id="GiftRecipientEmail-{{ section_id }}" type="email" name="properties[Recipient email]" value="{{ form.email | escape }}" autocomplete="email" data-gift-recipient-email{% if form.errors contains 'email' %} aria-invalid="true" aria-describedby="GiftRecipientEmailError-{{ section_id }}"{% endif %}>
+    {% if form.errors contains 'email' %}<small id="GiftRecipientEmailError-{{ section_id }}" role="alert">{{ form.errors.messages.email }}</small>{% endif %}
     <label for="GiftRecipientName-{{ section_id }}">{{ 'gift_card.recipient_name' | t }}</label>
-    <input id="GiftRecipientName-{{ section_id }}" type="text" name="properties[Recipient name]" maxlength="255" autocomplete="name">
+    <input id="GiftRecipientName-{{ section_id }}" type="text" name="properties[Recipient name]" value="{{ form.name | escape }}" maxlength="255" autocomplete="name">
     <label for="GiftRecipientMessage-{{ section_id }}">{{ 'gift_card.recipient_message' | t }}</label>
-    <textarea id="GiftRecipientMessage-{{ section_id }}" name="properties[Message]" maxlength="200" rows="3"></textarea>
+    <textarea id="GiftRecipientMessage-{{ section_id }}" name="properties[Message]" maxlength="200" rows="3">{{ form.message | escape }}</textarea>
     <label for="GiftRecipientDate-{{ section_id }}">{{ 'gift_card.send_on' | t }}</label>
-    <input id="GiftRecipientDate-{{ section_id }}" type="date" name="properties[Send on]" data-gift-recipient-date>
+    <input id="GiftRecipientDate-{{ section_id }}" type="date" name="properties[Send on]" value="{{ form.send_on | escape }}" pattern="\d{4}-\d{2}-\d{2}" data-gift-recipient-date>
     <input type="hidden" name="properties[__shopify_offset]" data-gift-recipient-offset>
   </fieldset>
 </div>

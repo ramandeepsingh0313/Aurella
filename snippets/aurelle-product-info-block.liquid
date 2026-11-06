@@ -1,0 +1,140 @@
+{% doc %}
+  Renders one reorderable product information block inside the main product form.
+
+  @param {string} block_type - Product information block type.
+  @param {block} [block] - Optional section block and merchant settings.
+  @param {product} product - Current product.
+  @param {variant} current_variant - Initially selected variant.
+  @param {form} form - Current product form.
+  @param {string} section_id - Parent section ID.
+  @param {string} dispatch_note - Optional dispatch copy.
+  @param {boolean} product_engravable - Whether engraving is enabled.
+  @param {string} engraving_label - Engraving property label.
+  @param {number} engraving_limit - Maximum engraving length.
+  @param {string} size_guide_link - Optional size guide URL.
+  @param {boolean} show_dynamic_checkout - Whether accelerated checkout is enabled.
+{% enddoc %}
+
+{% assign render_dynamic_checkout = show_dynamic_checkout %}
+{% if block != blank %}{% assign render_dynamic_checkout = block.settings.show_dynamic_checkout %}{% endif %}
+
+{% case block_type %}
+  {% when 'title' %}
+    <div class="aurelle-product__info-block"{% if block != blank %} {{ block.shopify_attributes }}{% endif %}>
+      <h1 class="aurelle-product__title">{{ product.title | escape }}</h1>
+      {% assign product_subtitle = product.metafields.custom.product_subtitle.value | default: product.type %}
+      {% if product_subtitle != blank %}<p class="aurelle-product__subtitle">{{ product_subtitle | escape }}</p>{% endif %}
+    </div>
+
+  {% when 'price' %}
+    <div class="aurelle-product__info-block"{% if block != blank %} {{ block.shopify_attributes }}{% endif %}>
+      <div class="aurelle-product__price-wrap" aria-live="polite">
+        <p class="aurelle-product__price" data-product-price>{{ current_variant.price | money_with_currency }}</p>
+        <s class="aurelle-product__compare-price" data-product-compare{% unless current_variant.compare_at_price > current_variant.price %} hidden{% endunless %}>{{ current_variant.compare_at_price | money_with_currency }}</s>
+      </div>
+      <p class="aurelle-product__unit-price" data-product-unit-price{% if current_variant.unit_price == blank %} hidden{% endif %}>{{ current_variant.unit_price | unit_price_with_measurement: current_variant.unit_price_measurement }}</p>
+      {% if cart.taxes_included %}<p class="aurelle-product__tax-note">{{ 'products.aurelle.taxes_included' | t }}</p>{% endif %}
+      {% if section.settings.delivery_note != blank %}<p class="aurelle-product__tax-note">{{ section.settings.delivery_note | escape }}</p>{% endif %}
+      <div class="aurelle-product__payment-terms">{{ form | payment_terms }}</div>
+    </div>
+
+  {% when 'description' %}
+    {% if product.description != blank %}<div class="aurelle-product__info-block"{% if block != blank %} {{ block.shopify_attributes }}{% endif %}><div class="aurelle-product__rule"></div><div class="aurelle-product__description rte">{{ product.description }}</div></div>{% endif %}
+
+  {% when 'variant_picker' %}
+    <div class="aurelle-product__info-block"{% if block != blank %} {{ block.shopify_attributes }}{% endif %}>
+      {% for product_option in product.options_with_values %}
+        {% assign option_position = forloop.index0 %}
+        {% assign option_name_downcase = product_option.name | downcase %}
+        {% assign render_swatch_option = false %}
+        {% for option_value in product_option.values %}{% if option_value.swatch != blank %}{% assign render_swatch_option = true %}{% endif %}{% endfor %}
+        <fieldset class="aurelle-product__option" data-option-group data-option-index="{{ option_position }}">
+          <legend>{{ product_option.name | escape }} <span data-option-current>{{ current_variant.options[option_position] | escape }}</span></legend>
+          {% if option_name_downcase contains 'size' %}
+            {% if size_guide_link != blank %}<a class="aurelle-product__size-guide" href="{{ size_guide_link }}">{{ 'products.aurelle.find_your_size' | t }}</a>{% else %}<button class="aurelle-product__size-guide" type="button" data-enquiry-open data-enquiry-title="{{ 'products.aurelle.size_advice_title' | t | escape }}" data-enquiry-type="{{ 'products.aurelle.size_advice_title' | t | escape }}">{{ 'products.aurelle.find_your_size' | t }}</button>{% endif %}
+          {% endif %}
+          {% if render_swatch_option %}
+            <div class="aurelle-product__swatches">
+              {% for option_value in product_option.values %}
+                {% assign option_value_name = option_value.name | default: option_value %}
+                {% assign option_input_id = 'AurelleOption-' | append: section_id | append: '-' | append: option_position | append: '-' | append: forloop.index %}
+                <label class="aurelle-product__swatch{% if option_value.swatch == blank %} aurelle-product__swatch--text{% endif %}" for="{{ option_input_id }}" title="{{ option_value_name | escape }}">
+                  <input id="{{ option_input_id }}" type="radio" name="AurelleOption-{{ section_id }}-{{ option_position }}" value="{{ option_value_name | escape }}" data-product-option data-option-index="{{ option_position }}" data-option-label="{{ product_option.name | escape }}"{% if option_value_name == current_variant.options[option_position] %} checked{% endif %}>
+                  {% if option_value.swatch.image != blank %}<span class="aurelle-product__swatch-dot aurelle-product__swatch-dot--image" aria-hidden="true">{{ option_value.swatch.image | image_url: width: 64 | image_tag: alt: '', widths: '32, 64', sizes: '27px', loading: 'lazy' }}</span>{% elsif option_value.swatch.color != blank %}<span class="aurelle-product__swatch-dot" style="--aurelle-swatch: {{ option_value.swatch.color }}" aria-hidden="true"></span>{% else %}<span class="aurelle-product__swatch-text">{{ option_value_name | escape }}</span>{% endif %}
+                  <span class="visually-hidden">{{ option_value_name | escape }}</span>
+                </label>
+              {% endfor %}
+            </div>
+          {% else %}
+            <label class="visually-hidden" for="AurelleSelect-{{ section_id }}-{{ option_position }}">{{ product_option.name | escape }}</label>
+            <select id="AurelleSelect-{{ section_id }}-{{ option_position }}" class="aurelle-product__select" data-product-option data-option-index="{{ option_position }}" data-option-label="{{ product_option.name | escape }}">
+              {% for option_value in product_option.values %}{% assign option_value_name = option_value.name | default: option_value %}<option value="{{ option_value_name | escape }}"{% if option_value_name == current_variant.options[option_position] %} selected{% endif %}>{{ option_value_name | escape }}</option>{% endfor %}
+            </select>
+          {% endif %}
+        </fieldset>
+      {% endfor %}
+
+      {% if product.selling_plan_groups != blank %}
+        <fieldset class="aurelle-product__selling-plans" data-selling-plans>
+          <legend>{{ block.settings.selling_plan_heading | default: 'Purchase options' | escape }}</legend>
+          {% unless product.requires_selling_plan %}<label class="aurelle-product__selling-plan"><input type="radio" name="AurellePurchaseOption-{{ section_id }}" value="" data-selling-plan-option checked><span>One-time purchase</span></label>{% endunless %}
+          {% for group in product.selling_plan_groups %}
+            <div class="aurelle-product__selling-plan-group">
+              <p>{{ group.name | escape }}</p>
+              {% for selling_plan in group.selling_plans %}
+                <label class="aurelle-product__selling-plan"><input type="radio" name="AurellePurchaseOption-{{ section_id }}" value="{{ selling_plan.id }}" data-selling-plan-option{% if product.requires_selling_plan and forloop.parentloop.first and forloop.first %} checked{% endif %}><span>{{ selling_plan.name | escape }}</span></label>
+              {% endfor %}
+            </div>
+          {% endfor %}
+        </fieldset>
+      {% endif %}
+    </div>
+
+  {% when 'inventory' %}
+    <div class="aurelle-product__info-block"{% if block != blank %} {{ block.shopify_attributes }}{% endif %}>
+      <p class="aurelle-product__availability" data-product-availability data-low-stock-threshold="{{ block.settings.low_stock_threshold | default: 5 }}" data-available-label="{{ 'products.aurelle.in_stock' | t | escape }}" data-unavailable-label="{{ 'products.product.sold_out' | t | escape }}" aria-live="polite">
+        <span class="aurelle-product__availability-dot" aria-hidden="true"></span>
+        <span data-availability-copy>{% if current_variant.available %}{{ 'products.aurelle.in_stock' | t }}{% else %}{{ 'products.product.sold_out' | t }}{% endif %}</span>
+        {% if current_variant.available and dispatch_note != blank %}<span data-dispatch-note>· {{ dispatch_note | escape }}</span>{% endif %}
+      </p>
+    </div>
+
+  {% when 'sku' %}
+    <p class="aurelle-product__sku"{% if block != blank %} {{ block.shopify_attributes }}{% endif %}{% if current_variant.sku == blank %} hidden{% endif %}>{{ block.settings.label | default: 'SKU' | escape }}: <span data-product-sku>{{ current_variant.sku | escape }}</span></p>
+
+  {% when 'quantity' %}
+    <div class="aurelle-product__quantity-block"{% if block != blank %} {{ block.shopify_attributes }}{% endif %}>
+      <label for="AurelleQuantity-{{ section_id }}">{{ block.settings.label | default: 'Quantity' | escape }}</label>
+      <div class="aurelle-product__quantity" aria-label="{{ 'products.aurelle.quantity' | t }}">
+        <button type="button" data-quantity-step="-1" aria-label="{{ 'products.aurelle.decrease_quantity' | t }}">−</button>
+        <input id="AurelleQuantity-{{ section_id }}" type="number" name="quantity" min="{{ current_variant.quantity_rule.min | default: 1 }}"{% if current_variant.quantity_rule.max != blank %} max="{{ current_variant.quantity_rule.max }}"{% endif %} step="{{ current_variant.quantity_rule.increment | default: 1 }}" value="{{ current_variant.quantity_rule.min | default: 1 }}" inputmode="numeric" data-quantity-input>
+        <button type="button" data-quantity-step="1" aria-label="{{ 'products.aurelle.increase_quantity' | t }}">+</button>
+      </div>
+    </div>
+
+  {% when 'buy_buttons' %}
+    <div class="aurelle-product__info-block"{% if block != blank %} {{ block.shopify_attributes }}{% endif %}>
+      {% if product_engravable %}
+        <label class="aurelle-product__engraving-toggle"><input type="checkbox" data-engraving-toggle><span>{{ engraving_label | escape }}</span></label>
+        <label class="visually-hidden" for="AurelleEngraving-{{ section_id }}">{{ 'products.aurelle.engraving_text' | t }}</label>
+        <input id="AurelleEngraving-{{ section_id }}" class="aurelle-product__engraving-input" type="text" name="properties[{{ engraving_label | escape }}]" maxlength="{{ engraving_limit }}" data-engraving-input hidden>
+      {% endif %}
+      {% if product.gift_card? %}{% render 'gift-card-recipient-form', section_id: section_id, form: form %}{% endif %}
+      <button class="aurelle-product__add-to-bag aurelle-product__add-to-bag--full" type="submit" name="add" data-product-atc data-label-available="{{ 'products.aurelle.add_to_bag' | t | escape }}" data-label-unavailable="{{ 'products.product.sold_out' | t | escape }}"{% unless current_variant.available %} disabled{% endunless %}>
+        <span data-atc-label>{% if current_variant.available %}{{ 'products.aurelle.add_to_bag' | t }}{% else %}{{ 'products.product.sold_out' | t }}{% endif %}</span><span aria-hidden="true">—</span><span data-atc-price>{{ current_variant.price | money_with_currency }}</span>
+      </button>
+      {% if render_dynamic_checkout %}<div class="aurelle-product__dynamic-checkout" data-dynamic-checkout>{{ form | payment_button }}</div>{% endif %}
+    </div>
+
+  {% when 'collapsible' %}
+    {% if block.settings.heading != blank %}<details class="aurelle-product__collapsible" {{ block.shopify_attributes }}><summary>{{ block.settings.heading | escape }}<span aria-hidden="true">+</span></summary><div class="rte">{{ block.settings.content }}</div></details>{% endif %}
+
+  {% when 'custom_liquid' %}
+    <div class="aurelle-product__custom-liquid" {{ block.shopify_attributes }}>{{ block.settings.custom_liquid }}</div>
+
+  {% when 'text_icon' %}
+    <div class="aurelle-product__text-icon" {{ block.shopify_attributes }}><span class="aurelle-product__text-icon-mark" aria-hidden="true">{% case block.settings.icon %}{% when 'diamond' %}◇{% when 'care' %}∞{% when 'delivery' %}→{% else %}•{% endcase %}</span><div>{% if block.settings.heading != blank %}<strong>{{ block.settings.heading | escape }}</strong>{% endif %}{% if block.settings.text != blank %}<div class="rte">{{ block.settings.text }}</div>{% endif %}</div></div>
+
+  {% when 'complementary_products' %}
+    {% if block.settings.products != blank %}<div class="aurelle-product__complementary" {{ block.shopify_attributes }}><h2>{{ block.settings.heading | default: 'Pairs beautifully with' | escape }}</h2><div class="aurelle-product__complementary-grid">{% for complementary_product in block.settings.products %}<a href="{{ complementary_product.url }}">{% if complementary_product.featured_image != blank %}{{ complementary_product.featured_image | image_url: width: 240 | image_tag: alt: complementary_product.featured_image.alt, widths: '120, 180, 240', sizes: '88px', loading: 'lazy' }}{% else %}{{ 'product-1' | placeholder_svg_tag }}{% endif %}<span><strong>{{ complementary_product.title | escape }}</strong><small>{{ complementary_product.price | money }}</small></span></a>{% endfor %}</div></div>{% endif %}
+{% endcase %}

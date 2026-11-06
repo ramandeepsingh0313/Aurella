@@ -130,18 +130,56 @@
           </a>
         {% endif %}
 
-        <details class="aurelle-header__mobile-menu">
-          <summary aria-label="Open navigation menu">
+        <details class="aurelle-header__mobile-menu" data-aurelle-mobile-menu>
+          <summary aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="AurelleMobileNavigation-{{ section.id }}">
             <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
               <path d="M3 5.5h14M3 10h14M3 14.5h14" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
             </svg>
             <span class="aurelle-header__visually-hidden">Menu</span>
           </summary>
-          <nav class="aurelle-header__mobile-panel" aria-label="Main navigation">
-            <ul>
+          <nav class="aurelle-header__mobile-panel" id="AurelleMobileNavigation-{{ section.id }}" aria-label="Main navigation" data-aurelle-mobile-navigation>
+            <ul class="aurelle-header__mobile-list aurelle-header__mobile-list--level-1">
               {% if section.settings.menu != blank %}
                 {% for link in section.settings.menu.links %}
-                  <li><a href="{{ link.url | escape }}">{{ link.title | escape }}</a></li>
+                  {% assign mobile_submenu_id = 'AurelleMobileSubmenu-' | append: section.id | append: '-' | append: forloop.index %}
+                  <li class="aurelle-header__mobile-item{% if link.current or link.child_active %} is-active{% endif %}">
+                    <div class="aurelle-header__mobile-link-row">
+                      <a href="{{ link.url | escape }}"{% if link.current %} aria-current="page"{% endif %}>{{ link.title | escape }}</a>
+                      {% if link.links != blank %}
+                        <button class="aurelle-header__submenu-toggle" type="button" aria-expanded="false" aria-controls="{{ mobile_submenu_id }}" aria-haspopup="true" data-aurelle-submenu-toggle>
+                          <span class="aurelle-header__visually-hidden">Toggle {{ link.title | escape }} submenu</span>
+                          <svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="m2.5 4.25 3.5 3.5 3.5-3.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                      {% endif %}
+                    </div>
+                    {% if link.links != blank %}
+                      <ul class="aurelle-header__mobile-list aurelle-header__mobile-list--level-2" id="{{ mobile_submenu_id }}" hidden>
+                        {% for child_link in link.links %}
+                          {% assign mobile_nested_id = mobile_submenu_id | append: '-' | append: forloop.index %}
+                          <li class="aurelle-header__mobile-item{% if child_link.current or child_link.child_active %} is-active{% endif %}">
+                            <div class="aurelle-header__mobile-link-row">
+                              <a href="{{ child_link.url | escape }}"{% if child_link.current %} aria-current="page"{% endif %}>{{ child_link.title | escape }}</a>
+                              {% if child_link.links != blank %}
+                                <button class="aurelle-header__submenu-toggle" type="button" aria-expanded="false" aria-controls="{{ mobile_nested_id }}" aria-haspopup="true" data-aurelle-submenu-toggle>
+                                  <span class="aurelle-header__visually-hidden">Toggle {{ child_link.title | escape }} submenu</span>
+                                  <svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="m2.5 4.25 3.5 3.5 3.5-3.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                </button>
+                              {% endif %}
+                            </div>
+                            {% if child_link.links != blank %}
+                              <ul class="aurelle-header__mobile-list aurelle-header__mobile-list--level-3" id="{{ mobile_nested_id }}" hidden>
+                                {% for grandchild_link in child_link.links %}
+                                  <li class="aurelle-header__mobile-item{% if grandchild_link.current %} is-active{% endif %}">
+                                    <a href="{{ grandchild_link.url | escape }}"{% if grandchild_link.current %} aria-current="page"{% endif %}>{{ grandchild_link.title | escape }}</a>
+                                  </li>
+                                {% endfor %}
+                              </ul>
+                            {% endif %}
+                          </li>
+                        {% endfor %}
+                      </ul>
+                    {% endif %}
+                  </li>
                 {% endfor %}
               {% else %}
                 <li><a href="{{ routes.all_products_collection_url }}">High Jewellery</a></li>
@@ -182,10 +220,39 @@
 
   <nav class="aurelle-header__desktop-navigation" aria-label="Main navigation">
     <div class="aurelle-header__inner">
-      <ul>
+      <ul class="aurelle-header__desktop-list">
         {% if section.settings.menu != blank %}
           {% for link in section.settings.menu.links %}
-            <li><a href="{{ link.url | escape }}">{{ link.title | escape }}</a></li>
+            {% assign desktop_submenu_id = 'AurelleDesktopSubmenu-' | append: section.id | append: '-' | append: forloop.index %}
+            <li class="aurelle-header__desktop-item{% if link.current or link.child_active %} is-active{% endif %}" data-aurelle-desktop-nav-item>
+              <div class="aurelle-header__desktop-link-row">
+                <a href="{{ link.url | escape }}"{% if link.current %} aria-current="page"{% endif %}>{{ link.title | escape }}</a>
+                {% if link.links != blank %}
+                  <button class="aurelle-header__desktop-toggle" type="button" aria-expanded="false" aria-controls="{{ desktop_submenu_id }}" aria-haspopup="true" data-aurelle-desktop-toggle>
+                    <span class="aurelle-header__visually-hidden">Toggle {{ link.title | escape }} submenu</span>
+                    <svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="m2.5 4.25 3.5 3.5 3.5-3.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                {% endif %}
+              </div>
+              {% if link.links != blank %}
+                <div class="aurelle-header__desktop-submenu" id="{{ desktop_submenu_id }}" data-aurelle-desktop-submenu>
+                  <ul class="aurelle-header__desktop-submenu-list">
+                    {% for child_link in link.links %}
+                      <li class="aurelle-header__desktop-submenu-item{% if child_link.current or child_link.child_active %} is-active{% endif %}">
+                        <a class="aurelle-header__desktop-level-2" href="{{ child_link.url | escape }}"{% if child_link.current %} aria-current="page"{% endif %}>{{ child_link.title | escape }}</a>
+                        {% if child_link.links != blank %}
+                          <ul class="aurelle-header__desktop-level-3">
+                            {% for grandchild_link in child_link.links %}
+                              <li><a href="{{ grandchild_link.url | escape }}"{% if grandchild_link.current %} aria-current="page"{% endif %}>{{ grandchild_link.title | escape }}</a></li>
+                            {% endfor %}
+                          </ul>
+                        {% endif %}
+                      </li>
+                    {% endfor %}
+                  </ul>
+                </div>
+              {% endif %}
+            </li>
           {% endfor %}
         {% else %}
           <li><a href="{{ routes.all_products_collection_url }}">High Jewellery</a></li>
@@ -341,6 +408,7 @@
   .aurelle-header__localization select:focus-visible,
   .aurelle-header__localization-submit:focus-visible,
   .aurelle-header a:focus-visible,
+  .aurelle-header button:focus-visible,
   .aurelle-header summary:focus-visible {
     outline: 2px solid var(--aurelle-header-accent);
     outline-offset: 3px;
@@ -496,16 +564,33 @@
   }
 
   .aurelle-header__desktop-navigation {
+    position: relative;
     min-height: 41.5px;
+    border-bottom: 1px solid rgb(39 37 33 / 8%);
   }
 
-  .aurelle-header__desktop-navigation ul {
+  .aurelle-header__desktop-list {
     display: flex;
     min-height: 41.5px;
     align-items: center;
     justify-content: center;
     gap: 32px;
     list-style: none;
+  }
+
+  .aurelle-header__desktop-item,
+  .aurelle-header__desktop-link-row {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+  }
+
+  .aurelle-header__desktop-item {
+    position: static;
+  }
+
+  .aurelle-header__desktop-link-row {
+    gap: 5px;
   }
 
   .aurelle-header__desktop-navigation a,
@@ -522,6 +607,39 @@
   .aurelle-header__desktop-navigation a {
     position: relative;
     display: inline-block;
+  }
+
+  .aurelle-header__desktop-link-row > a {
+    overflow-wrap: anywhere;
+  }
+
+  .aurelle-header__desktop-toggle,
+  .aurelle-header__submenu-toggle {
+    display: inline-grid;
+    place-items: center;
+    border: 0;
+    padding: 0;
+    color: inherit;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .aurelle-header__desktop-toggle {
+    width: 24px;
+    height: 32px;
+    flex: 0 0 24px;
+  }
+
+  .aurelle-header__desktop-toggle svg,
+  .aurelle-header__submenu-toggle svg {
+    width: 12px;
+    height: 12px;
+    transition: transform 180ms ease;
+  }
+
+  .aurelle-header__desktop-toggle[aria-expanded='true'] svg,
+  .aurelle-header__submenu-toggle[aria-expanded='true'] svg {
+    transform: rotate(180deg);
   }
 
   .aurelle-header__desktop-navigation a::after {
@@ -542,11 +660,84 @@
     transform: scaleX(1);
   }
 
-  .aurelle-header__desktop-navigation li + li::before {
+  .aurelle-header__desktop-list > li + li::before {
     display: inline-block;
     margin-right: 32px;
     color: var(--aurelle-header-accent);
     content: '•';
+  }
+
+  .aurelle-header__desktop-submenu {
+    position: absolute;
+    z-index: 4;
+    top: 100%;
+    left: 50%;
+    width: min(760px, calc(100vw - 48px));
+    max-height: min(70vh, 620px);
+    overflow: auto;
+    padding: 28px 32px 32px;
+    border: 1px solid rgb(39 37 33 / 10%);
+    color: var(--aurelle-header-foreground);
+    background: var(--aurelle-header-background);
+    box-shadow: 0 18px 42px rgb(39 37 33 / 13%);
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -8px);
+    visibility: hidden;
+    transition: opacity 180ms ease, transform 220ms ease, visibility 180ms ease;
+  }
+
+  .aurelle-header__desktop-item:hover > .aurelle-header__desktop-submenu,
+  .aurelle-header__desktop-item.is-open > .aurelle-header__desktop-submenu {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%, 0);
+    visibility: visible;
+  }
+
+  .aurelle-header__desktop-submenu-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+    gap: 28px 36px;
+    list-style: none;
+  }
+
+  .aurelle-header__desktop-submenu-item {
+    min-width: 0;
+  }
+
+  .aurelle-header__desktop-navigation .aurelle-header__desktop-level-2 {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+
+  .aurelle-header__desktop-level-3 {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px !important;
+    list-style: none;
+  }
+
+  .aurelle-header__desktop-navigation .aurelle-header__desktop-level-3 a {
+    color: color-mix(in srgb, var(--aurelle-header-foreground) 72%, transparent);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+    text-transform: none;
+  }
+
+  .aurelle-header__desktop-navigation [aria-current='page'] {
+    color: var(--aurelle-header-accent);
+  }
+
+  .aurelle-header__desktop-item.is-active > .aurelle-header__desktop-link-row > a,
+  .aurelle-header__desktop-toggle:hover,
+  .aurelle-header__submenu-toggle:hover {
+    color: var(--aurelle-header-accent);
   }
 
   .aurelle-header__mobile-menu {
@@ -582,25 +773,76 @@
     border-top: 1px solid rgb(39 37 33 / 8%);
     background: var(--aurelle-header-background);
     box-shadow: 0 12px 18px rgb(39 37 33 / 9%);
+    max-height: min(72vh, 680px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   .aurelle-header__mobile-menu[open] .aurelle-header__mobile-panel {
     animation: aurelle-menu-enter 240ms cubic-bezier(0.2, 0.65, 0.3, 1) both;
   }
 
-  .aurelle-header__mobile-panel ul {
+  .aurelle-header__mobile-list {
     display: grid;
     gap: 0;
     list-style: none;
   }
 
-  .aurelle-header__mobile-panel li {
+  .aurelle-header__mobile-list--level-1 > .aurelle-header__mobile-item {
     border-bottom: 1px solid rgb(39 37 33 / 8%);
   }
 
-  .aurelle-header__mobile-panel a {
-    display: block;
+  .aurelle-header__mobile-link-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 48px;
+    align-items: stretch;
+  }
+
+  .aurelle-header__mobile-link-row > a,
+  .aurelle-header__mobile-item > a {
+    display: flex;
+    min-width: 0;
+    align-items: center;
     padding: 16px 0;
+    overflow-wrap: anywhere;
+  }
+
+  .aurelle-header__submenu-toggle {
+    width: 48px;
+    min-height: 48px;
+    justify-self: end;
+  }
+
+  .aurelle-header__mobile-list[hidden] {
+    display: none;
+  }
+
+  .aurelle-header__mobile-list--level-2,
+  .aurelle-header__mobile-list--level-3 {
+    border-top: 1px solid rgb(39 37 33 / 8%);
+    padding-left: 18px !important;
+  }
+
+  .aurelle-header__mobile-list--level-2 .aurelle-header__mobile-item + .aurelle-header__mobile-item,
+  .aurelle-header__mobile-list--level-3 .aurelle-header__mobile-item + .aurelle-header__mobile-item {
+    border-top: 1px solid rgb(39 37 33 / 6%);
+  }
+
+  .aurelle-header__mobile-list--level-2 a {
+    font-size: 12px;
+    letter-spacing: 0.13em;
+  }
+
+  .aurelle-header__mobile-list--level-3 a {
+    color: color-mix(in srgb, var(--aurelle-header-foreground) 72%, transparent);
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    text-transform: none;
+  }
+
+  .aurelle-header__mobile-item.is-active > .aurelle-header__mobile-link-row > a,
+  .aurelle-header__mobile-item > a[aria-current='page'] {
+    color: var(--aurelle-header-accent);
   }
 
   .aurelle-header__visually-hidden {
@@ -757,6 +999,11 @@
     .aurelle-header__mobile-panel a {
       font-size: 14px;
     }
+
+    .aurelle-header__mobile-list--level-2 a,
+    .aurelle-header__mobile-list--level-3 a {
+      font-size: 13px;
+    }
   }
 
   @media screen and (max-width: 760px) {
@@ -895,6 +1142,9 @@
     .aurelle-header__brand,
     .aurelle-header__desktop-navigation a,
     .aurelle-header__desktop-navigation a::after,
+    .aurelle-header__desktop-submenu,
+    .aurelle-header__desktop-toggle svg,
+    .aurelle-header__submenu-toggle svg,
     .aurelle-header__mobile-panel a,
     .aurelle-header__mobile-panel,
     .shopify-section.aurelle-header-section--sticky .aurelle-header,
@@ -917,6 +1167,28 @@
     const stickyClass = 'aurelle-header-section--sticky';
     const scrolledClass = 'is-scrolled';
 
+    const setDesktopItemOpen = (item, open) => {
+      item.classList.toggle('is-open', open);
+      item.querySelector(':scope > .aurelle-header__desktop-link-row > [data-aurelle-desktop-toggle]')?.setAttribute('aria-expanded', String(open));
+    };
+
+    const closeDesktopMenus = (header, exceptItem = null) => {
+      header.querySelectorAll('[data-aurelle-desktop-nav-item].is-open').forEach((item) => {
+        if (item !== exceptItem) setDesktopItemOpen(item, false);
+      });
+    };
+
+    const setMobileSubmenuOpen = (button, open) => {
+      const submenu = document.getElementById(button.getAttribute('aria-controls'));
+      if (!submenu) return;
+      button.setAttribute('aria-expanded', String(open));
+      submenu.hidden = !open;
+    };
+
+    const resetMobileMenu = (menu) => {
+      menu.querySelectorAll('[data-aurelle-submenu-toggle][aria-expanded="true"]').forEach((button) => setMobileSubmenuOpen(button, false));
+    };
+
     const initializeHeader = (scope = document) => {
       const headers = [];
       if (scope.matches?.('[data-aurelle-header]')) headers.push(scope);
@@ -929,6 +1201,11 @@
         const stickyEnabled = header.dataset.stickyHeader === 'true';
         sectionWrapper.classList.toggle(stickyClass, stickyEnabled);
         sectionWrapper.classList.toggle(scrolledClass, stickyEnabled && window.scrollY > 0);
+
+        header.querySelectorAll('[data-aurelle-submenu-toggle]').forEach((button) => {
+          const submenu = document.getElementById(button.getAttribute('aria-controls'));
+          if (submenu) submenu.hidden = button.getAttribute('aria-expanded') !== 'true';
+        });
       });
     };
 
@@ -941,6 +1218,83 @@
     initializeHeader();
     document.addEventListener('shopify:section:load', (event) => initializeHeader(event.target));
     window.addEventListener('scroll', updateStickyHeaders, { passive: true });
+
+    document.addEventListener('toggle', (event) => {
+      const menu = event.target.closest?.('[data-aurelle-mobile-menu]');
+      if (!menu || event.target !== menu) return;
+      menu.querySelector(':scope > summary')?.setAttribute('aria-expanded', String(menu.open));
+      if (!menu.open) resetMobileMenu(menu);
+    }, true);
+
+    document.addEventListener('click', (event) => {
+      const desktopToggle = event.target.closest('[data-aurelle-desktop-toggle]');
+      if (desktopToggle) {
+        const item = desktopToggle.closest('[data-aurelle-desktop-nav-item]');
+        const header = desktopToggle.closest('[data-aurelle-header]');
+        const willOpen = desktopToggle.getAttribute('aria-expanded') !== 'true';
+        closeDesktopMenus(header, item);
+        setDesktopItemOpen(item, willOpen);
+        return;
+      }
+
+      const mobileToggle = event.target.closest('[data-aurelle-submenu-toggle]');
+      if (mobileToggle) {
+        setMobileSubmenuOpen(mobileToggle, mobileToggle.getAttribute('aria-expanded') !== 'true');
+        return;
+      }
+
+      document.querySelectorAll('[data-aurelle-header]').forEach((header) => closeDesktopMenus(header));
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape') return;
+      const header = event.target.closest?.('[data-aurelle-header]');
+      if (!header) return;
+
+      const openDesktopItem = event.target.closest('[data-aurelle-desktop-nav-item].is-open') || header.querySelector('[data-aurelle-desktop-nav-item].is-open');
+      if (openDesktopItem) {
+        const toggle = openDesktopItem.querySelector(':scope > .aurelle-header__desktop-link-row > [data-aurelle-desktop-toggle]');
+        setDesktopItemOpen(openDesktopItem, false);
+        toggle?.focus();
+        event.preventDefault();
+        return;
+      }
+
+      const expandedMobileButtons = [...header.querySelectorAll('[data-aurelle-submenu-toggle][aria-expanded="true"]')];
+      const deepestMobileButton = expandedMobileButtons.reverse().find((button) => document.getElementById(button.getAttribute('aria-controls'))?.contains(event.target)) || expandedMobileButtons[0];
+      if (deepestMobileButton) {
+        setMobileSubmenuOpen(deepestMobileButton, false);
+        deepestMobileButton.focus();
+        event.preventDefault();
+        return;
+      }
+
+      const mobileMenu = header.querySelector('[data-aurelle-mobile-menu][open]');
+      if (mobileMenu) {
+        mobileMenu.open = false;
+        mobileMenu.querySelector(':scope > summary')?.focus();
+        event.preventDefault();
+      }
+    });
+
+    document.addEventListener('focusin', (event) => {
+      const focusedHeader = event.target.closest?.('[data-aurelle-header]');
+      document.querySelectorAll('[data-aurelle-header]').forEach((header) => {
+        const focusedItem = header === focusedHeader ? event.target.closest('[data-aurelle-desktop-nav-item]') : null;
+        closeDesktopMenus(header, focusedItem);
+      });
+    });
+
+    window.addEventListener('resize', () => {
+      document.querySelectorAll('[data-aurelle-header]').forEach((header) => {
+        if (window.matchMedia('(min-width: 1001px)').matches) {
+          const mobileMenu = header.querySelector('[data-aurelle-mobile-menu]');
+          if (mobileMenu?.open) mobileMenu.open = false;
+        } else {
+          closeDesktopMenus(header);
+        }
+      });
+    }, { passive: true });
   })();
 
   document.addEventListener('change', (event) => {

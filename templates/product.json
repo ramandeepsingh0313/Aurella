@@ -13,6 +13,48 @@
       "type": "product",
       "settings": {},
       "blocks": {
+        "title": {
+          "type": "title",
+          "settings": {}
+        },
+        "price": {
+          "type": "price",
+          "settings": {}
+        },
+        "description": {
+          "type": "description",
+          "settings": {}
+        },
+        "variant-picker": {
+          "type": "variant_picker",
+          "settings": {
+            "selling_plan_heading": "Purchase options"
+          }
+        },
+        "inventory": {
+          "type": "inventory",
+          "settings": {
+            "low_stock_threshold": 5
+          }
+        },
+        "sku": {
+          "type": "sku",
+          "settings": {
+            "label": "SKU"
+          }
+        },
+        "quantity": {
+          "type": "quantity",
+          "settings": {
+            "label": "Quantity"
+          }
+        },
+        "buy-buttons": {
+          "type": "buy_buttons",
+          "settings": {
+            "show_dynamic_checkout": true
+          }
+        },
         "insured-transit": {
           "type": "service",
           "settings": {
@@ -47,6 +89,14 @@
         }
       },
       "block_order": [
+        "title",
+        "price",
+        "description",
+        "variant-picker",
+        "inventory",
+        "sku",
+        "quantity",
+        "buy-buttons",
         "insured-transit",
         "atelier-returns",
         "certified-brilliance",

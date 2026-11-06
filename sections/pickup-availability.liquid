@@ -1,0 +1,12 @@
+<div data-pickup-response>
+  {% if product_variant != blank %}
+    {% render 'aurelle-pickup-availability', variant: product_variant, section_id: section.id %}
+  {% endif %}
+</div>
+
+{% schema %}
+{
+  "name": "Pickup availability",
+  "settings": []
+}
+{% endschema %}

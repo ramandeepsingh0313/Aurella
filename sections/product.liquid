@@ -1,3 +1,4 @@
+{% # theme-check-disable LiquidComplexity %}
 {% liquid
   assign current_variant = product.selected_or_first_available_variant | default: product.variants.first
   assign active_collection = collection | default: section.settings.related_collection | default: product.collections.first
@@ -28,7 +29,7 @@
 %}
 
 {% if product != blank %}
-  <section class="aurelle-product full-width" data-aurelle-product data-section-id="{{ section.id }}" aria-label="{{ product.title | escape }}">
+  <section class="aurelle-product full-width" data-aurelle-product data-section-id="{{ section.id }}" data-requires-selling-plan="{{ product.requires_selling_plan }}" aria-label="{{ product.title | escape }}">
     <div class="aurelle-product__page-width">
       <nav class="aurelle-product__breadcrumbs" aria-label="{{ 'products.aurelle.breadcrumbs' | t }}">
         <a href="{{ routes.root_url }}">{{ 'products.aurelle.home' | t }}</a>
@@ -103,6 +104,36 @@
 
         <div class="aurelle-product__purchase">
           {% if product_eyebrow != blank %}<p class="aurelle-product__eyebrow">{{ product_eyebrow | escape }}</p>{% endif %}
+          {% assign product_info_block_count = 0 %}
+          {% for block in section.blocks %}
+            {% unless block.type == 'service' or block.type == '@app' %}{% assign product_info_block_count = product_info_block_count | plus: 1 %}{% endunless %}
+          {% endfor %}
+
+          {% if product_info_block_count > 0 %}
+            {% if rating_value != blank and review_count != blank and review_count != 0 %}
+              <a class="aurelle-product__rating" href="#AurelleReviews-{{ section.id }}" aria-label="{{ 'products.aurelle.rating_summary' | t: rating: rating_value, count: review_count }}">
+                <span class="aurelle-product__stars" aria-hidden="true">★★★★★</span>
+                <span class="aurelle-product__rating-copy">{{ rating_value | round: 1 }} · {{ review_count }} {{ 'products.aurelle.reviews' | t }}</span>
+              </a>
+            {% endif %}
+            {% assign product_form_id = 'AurelleProductForm-' | append: section.id %}
+            {% form 'product', product, id: product_form_id, class: 'aurelle-product__form' %}
+              <input type="hidden" value="{{ current_variant.id }}" data-current-variant-id>
+              <input type="hidden" name="selling_plan" value="" data-selling-plan-input disabled>
+              <label class="visually-hidden" for="AurelleVariant-{{ section.id }}">{{ 'products.product.choose_options' | t }}</label>
+              <select id="AurelleVariant-{{ section.id }}" class="aurelle-product__fallback-variant" name="id" data-variant-fallback>
+                {% for variant in product.variants %}<option value="{{ variant.id }}"{% if variant.id == current_variant.id %} selected{% endif %}{% unless variant.available %} disabled{% endunless %}>{{ variant.title | escape }} — {{ variant.price | money_with_currency }}{% unless variant.available %} — {{ 'products.product.sold_out' | t }}{% endunless %}</option>{% endfor %}
+              </select>
+              <p class="visually-hidden" role="status" aria-live="polite" data-product-status></p>
+              {% for block in section.blocks %}
+                {% unless block.type == 'service' or block.type == '@app' %}
+                  {% render 'aurelle-product-info-block', block_type: block.type, block: block, product: product, current_variant: current_variant, form: form, section_id: section.id, dispatch_note: dispatch_note, product_engravable: product_engravable, engraving_label: section.settings.engraving_label, engraving_limit: section.settings.engraving_limit, size_guide_link: section.settings.size_guide_link, show_dynamic_checkout: section.settings.show_dynamic_checkout %}
+                {% endunless %}
+              {% endfor %}
+              {% if form.errors %}<div class="aurelle-product__form-errors" role="alert">{{ form.errors | default_errors }}</div>{% endif %}
+              <div class="aurelle-product__form-errors" role="alert" data-product-error hidden></div>
+            {% endform %}
+          {% else %}
           <h1 class="aurelle-product__title">{{ product.title | escape }}</h1>
 
           {% if product_subtitle != blank %}<p class="aurelle-product__subtitle">{{ product_subtitle | escape }}</p>{% endif %}
@@ -196,7 +227,7 @@
               <input id="AurelleEngraving-{{ section.id }}" class="aurelle-product__engraving-input" type="text" name="properties[{{ section.settings.engraving_label | escape }}]" maxlength="{{ section.settings.engraving_limit }}" data-engraving-input hidden>
             {% endif %}
 
-            {% if product.gift_card? %}{% render 'gift-card-recipient-form', section_id: section.id %}{% endif %}
+            {% if product.gift_card? %}{% render 'gift-card-recipient-form', section_id: section.id, form: form %}{% endif %}
 
             <p class="aurelle-product__availability" data-product-availability data-available-label="{{ 'products.aurelle.in_stock' | t | escape }}" data-unavailable-label="{{ 'products.product.sold_out' | t | escape }}">
               <span class="aurelle-product__availability-dot" aria-hidden="true"></span>
@@ -222,6 +253,13 @@
             <div class="aurelle-product__form-errors" role="alert" data-product-error hidden></div>
             {% if section.settings.show_dynamic_checkout %}<div class="aurelle-product__dynamic-checkout" data-dynamic-checkout>{{ form | payment_button }}</div>{% endif %}
           {% endform %}
+          {% endif %}
+
+          {% if section.settings.show_pickup_availability %}
+            <div class="aurelle-product__pickup" data-pickup-container data-root-url="{{ routes.root_url }}">
+              {% render 'aurelle-pickup-availability', variant: current_variant, section_id: section.id %}
+            </div>
+          {% endif %}
 
           {% if section.settings.booking_link != blank %}
             <a class="aurelle-product__booking" href="{{ section.settings.booking_link }}">
@@ -432,13 +470,13 @@
     {% endif %}
     {% for block in section.blocks %}
       {% if block.type == '@app' %}<div class="aurelle-product__app-block aurelle-product__page-width">{% render block %}</div>{% endif %}
-      {% if block.type == 'custom_liquid' %}<div class="aurelle-product__app-block aurelle-product__page-width" {{ block.shopify_attributes }}>{{ block.settings.custom_liquid }}</div>{% endif %}
+      {% if block.type == 'custom_liquid' and product_info_block_count == 0 %}<div class="aurelle-product__app-block aurelle-product__page-width" {{ block.shopify_attributes }}>{{ block.settings.custom_liquid }}</div>{% endif %}
     {% endfor %}
 
     <script type="application/json" data-product-variants>
       [
         {% for variant in product.variants %}
-          {"id":{{ variant.id | json }},"options":{{ variant.options | json }},"price":{{ variant.price | json }},"price_text":{{ variant.price | money_with_currency | json }},"unit_price_text":{{ variant.unit_price | unit_price_with_measurement: variant.unit_price_measurement | json }},"compare_at_price":{{ variant.compare_at_price | json }},"compare_at_price_text":{{ variant.compare_at_price | money_with_currency | json }},"available":{{ variant.available | json }},"featured_media_id":{{ variant.featured_media.id | json }}}
+          {"id":{{ variant.id | json }},"options":{{ variant.options | json }},"price":{{ variant.price | json }},"price_text":{{ variant.price | money_with_currency | json }},"unit_price_text":{{ variant.unit_price | unit_price_with_measurement: variant.unit_price_measurement | json }},"compare_at_price":{{ variant.compare_at_price | json }},"compare_at_price_text":{{ variant.compare_at_price | money_with_currency | json }},"available":{{ variant.available | json }},"featured_media_id":{{ variant.featured_media.id | json }},"sku":{{ variant.sku | json }},"inventory_quantity":{{ variant.inventory_quantity | json }},"inventory_management":{{ variant.inventory_management | json }},"inventory_policy":{{ variant.inventory_policy | json }},"quantity_rule":{"min":{{ variant.quantity_rule.min | default: 1 | json }},"max":{{ variant.quantity_rule.max | json }},"increment":{{ variant.quantity_rule.increment | default: 1 | json }}},"selling_plan_allocations":[{% for allocation in variant.selling_plan_allocations %}{"selling_plan_id":{{ allocation.selling_plan.id | json }},"price":{{ allocation.price | json }},"price_text":{{ allocation.price | money_with_currency | json }},"compare_at_price":{{ allocation.compare_at_price | json }},"compare_at_price_text":{{ allocation.compare_at_price | money_with_currency | json }},"unit_price_text":{{ allocation.unit_price | unit_price_with_measurement: allocation.unit_price_measurement | json }}}{% unless forloop.last %},{% endunless %}{% endfor %}]}
           {% unless forloop.last %},{% endunless %}
         {% endfor %}
       ]
@@ -871,6 +909,12 @@
     transform: translateY(-1px);
   }
 
+  .aurelle-product__swatch.is-unavailable {
+    opacity: 0.42;
+    text-decoration: line-through;
+    cursor: not-allowed;
+  }
+
   .aurelle-product__swatch:has(input:checked) {
     border-color: var(--aurelle-product-gold);
   }
@@ -1208,6 +1252,41 @@
     color: #8a342c;
     font: 16px/1.5 var(--font-primary--family, Arial, sans-serif);
   }
+
+  .aurelle-product__info-block,
+  .aurelle-product__quantity-block,
+  .aurelle-product__custom-liquid { grid-column: 1 / -1; min-width: 0; }
+  .aurelle-product__quantity-block { display: flex; align-items: end; gap: 16px; }
+  .aurelle-product__quantity-block > label { padding-bottom: 14px; font: 15px/1.4 var(--font-primary--family, Arial, sans-serif); }
+  .aurelle-product__info-block .aurelle-product__add-to-bag--full { width: 100%; }
+  .aurelle-product__sku { margin: 0; color: var(--aurelle-product-muted); font: 14px/1.5 var(--font-primary--family, Arial, sans-serif); }
+  .aurelle-product__selling-plans { display: grid; gap: 10px; margin: 0; padding: 16px; border: 1px solid var(--aurelle-product-line); }
+  .aurelle-product__selling-plans legend { padding: 0 6px; color: var(--aurelle-product-ink); font: 600 14px/1.4 var(--font-primary--family, Arial, sans-serif); }
+  .aurelle-product__selling-plan { display: flex; align-items: start; gap: 10px; min-height: 30px; color: var(--aurelle-product-ink); font: 15px/1.5 var(--font-primary--family, Arial, sans-serif); cursor: pointer; }
+  .aurelle-product__selling-plan input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--aurelle-product-gold); }
+  .aurelle-product__collapsible { border-block: 1px solid var(--aurelle-product-line); }
+  .aurelle-product__collapsible + .aurelle-product__collapsible { border-top: 0; }
+  .aurelle-product__collapsible summary { padding: 16px 0; color: var(--aurelle-product-ink); font: 500 15px/1.4 var(--font-primary--family, Arial, sans-serif); cursor: pointer; }
+  .aurelle-product__collapsible .rte { padding-bottom: 18px; }
+  .aurelle-product__text-icon { display: flex; align-items: start; gap: 12px; color: var(--aurelle-product-muted); font: 15px/1.55 var(--font-primary--family, Arial, sans-serif); }
+  .aurelle-product__text-icon svg { width: 22px; height: 22px; flex: 0 0 22px; stroke: var(--aurelle-product-gold); fill: none; }
+  .aurelle-product__complementary { display: grid; gap: 12px; }
+  .aurelle-product__complementary h2 { margin: 0; font: 500 16px/1.4 var(--font-primary--family, Arial, sans-serif); }
+  .aurelle-product__complementary-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .aurelle-product__complementary-grid a { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 10px; align-items: center; color: inherit; text-decoration: none; }
+  .aurelle-product__complementary-grid img,
+  .aurelle-product__complementary-placeholder { width: 64px; aspect-ratio: 1; object-fit: cover; background: #f1ede6; }
+  .aurelle-product__pickup { margin-top: 18px; }
+  .aurelle-product__pickup-card { padding: 16px; border: 1px solid var(--aurelle-product-line); color: var(--aurelle-product-ink); font: 14px/1.5 var(--font-primary--family, Arial, sans-serif); }
+  .aurelle-product__pickup-card p { margin: 0 0 4px; }
+  .aurelle-product__pickup-card button { min-height: 42px; margin-top: 6px; padding: 0; border: 0; color: var(--aurelle-product-gold); background: transparent; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+  .aurelle-product__pickup-dialog { width: min(620px, calc(100% - 32px)); max-height: calc(100dvh - 32px); padding: 0; border: 0; color: var(--aurelle-product-ink); background: var(--aurelle-product-ivory); }
+  .aurelle-product__pickup-dialog::backdrop { background: rgb(20 18 15 / 55%); }
+  .aurelle-product__pickup-dialog-inner { position: relative; padding: 34px; overflow: auto; }
+  .aurelle-product__pickup-dialog [data-pickup-close] { position: absolute; top: 12px; right: 12px; width: 44px; height: 44px; border: 0; background: transparent; font-size: 28px; cursor: pointer; }
+  .aurelle-product__pickup-location { padding: 18px 0; border-top: 1px solid var(--aurelle-product-line); }
+  .aurelle-product__pickup-location h4,
+  .aurelle-product__pickup-location p { margin: 0 0 6px; }
 
   .aurelle-product__details {
     padding: 54px 0 72px;
@@ -1969,6 +2048,13 @@
       const availability = section.querySelector('[data-product-availability]');
       const availabilityCopy = section.querySelector('[data-availability-copy]');
       const dispatchNote = section.querySelector('[data-dispatch-note]');
+      const productStatus = section.querySelector('[data-product-status]');
+      const skuContainer = section.querySelector('.aurelle-product__sku');
+      const sku = section.querySelector('[data-product-sku]');
+      const quantityInput = section.querySelector('[data-quantity-input]');
+      const sellingPlanInput = section.querySelector('[data-selling-plan-input]');
+      const sellingPlanOptions = [...section.querySelectorAll('[data-selling-plan-option]')];
+      const pickupContainer = section.querySelector('[data-pickup-container]');
       const recipient = section.querySelector('[data-gift-recipient]');
       if (recipient) {
         const toggle = recipient.querySelector('[data-gift-recipient-toggle]');
@@ -2027,11 +2113,76 @@
         if (count && mediaItems.length) count.textContent = `${String(activeIndex + 1).padStart(2, '0')} / ${String(mediaItems.length).padStart(2, '0')}`;
       };
 
+      const updateOptionAvailability = () => {
+        const selected = getOptionValues();
+        section.querySelectorAll('[data-product-option]').forEach((control) => {
+          const index = Number(control.dataset.optionIndex);
+          const isCompatible = (candidateValue) => variants.some((variant) => variant.available && variant.options[index] === candidateValue && variant.options.every((value, optionIndex) => optionIndex >= index || !selected[optionIndex] || value === selected[optionIndex]));
+          if (control.tagName === 'SELECT') {
+            [...control.options].forEach((option) => { option.disabled = !isCompatible(option.value); });
+          } else {
+            const compatible = isCompatible(control.value);
+            control.disabled = !compatible;
+            control.closest('label')?.classList.toggle('is-unavailable', !compatible);
+          }
+        });
+      };
+
+      const updatePickupAvailability = async (variantId) => {
+        if (!pickupContainer || !variantId) return;
+        pickupContainer.setAttribute('aria-busy', 'true');
+        try {
+          const rootUrl = pickupContainer.dataset.rootUrl || '/';
+          const response = await fetch(`${rootUrl}variants/${variantId}/?section_id=pickup-availability`);
+          if (!response.ok) throw new Error('Pickup availability request failed');
+          const documentFragment = new DOMParser().parseFromString(await response.text(), 'text/html');
+          const responseContent = documentFragment.querySelector('[data-pickup-response]');
+          pickupContainer.innerHTML = responseContent?.innerHTML || '';
+        } catch {
+          pickupContainer.innerHTML = '';
+        } finally {
+          pickupContainer.removeAttribute('aria-busy');
+        }
+      };
+
+      const updateSellingPlans = (variant) => {
+        if (!sellingPlanOptions.length) return null;
+        const allocations = variant.selling_plan_allocations || [];
+        sellingPlanOptions.forEach((option) => {
+          if (!option.value) return;
+          option.disabled = !allocations.some((allocation) => String(allocation.selling_plan_id) === option.value);
+        });
+        let selectedOption = section.querySelector('[data-selling-plan-option]:checked');
+        if (!selectedOption || selectedOption.disabled) {
+          selectedOption = sellingPlanOptions.find((option) => !option.disabled);
+          if (selectedOption) selectedOption.checked = true;
+        }
+        const planId = selectedOption?.value || '';
+        if (sellingPlanInput) {
+          sellingPlanInput.value = planId;
+          sellingPlanInput.disabled = !planId;
+        }
+        return allocations.find((allocation) => String(allocation.selling_plan_id) === planId) || null;
+      };
+
+      const updateDisplayedPrice = (variant, allocation = null) => {
+        const displayPrice = allocation?.price_text || variant.price_text;
+        const displayComparePrice = allocation?.compare_at_price_text || variant.compare_at_price_text;
+        const displayPriceValue = allocation?.price ?? variant.price;
+        const displayCompareValue = allocation?.compare_at_price ?? variant.compare_at_price;
+        if (price) price.textContent = displayPrice;
+        const atcPrice = addButton?.querySelector('[data-atc-price]');
+        if (atcPrice) atcPrice.textContent = displayPrice;
+        if (comparePrice) {
+          comparePrice.hidden = !(displayCompareValue && displayCompareValue > displayPriceValue);
+          comparePrice.textContent = displayComparePrice || '';
+        }
+      };
+
       const updateVariant = () => {
         const optionValues = getOptionValues();
         const variant = variants.find((item) => item.options.length === optionValues.length && item.options.every((value, index) => value === optionValues[index]));
         const atcLabel = addButton?.querySelector('[data-atc-label]');
-        const atcPrice = addButton?.querySelector('[data-atc-price]');
         if (!variant) {
           if (availability) availability.classList.add('is-unavailable');
           if (availabilityCopy) availabilityCopy.textContent = availability?.dataset.unavailableLabel || '';
@@ -2039,28 +2190,46 @@
             addButton.disabled = true;
             if (atcLabel) atcLabel.textContent = addButton.dataset.labelUnavailable || '';
           }
+          if (productStatus) productStatus.textContent = 'This option combination is unavailable.';
           return;
         }
 
         variantIdInput.value = variant.id;
         variantSelect.value = String(variant.id);
         variantIdInput.dispatchEvent(new Event('change', { bubbles: true }));
-        if (price) price.textContent = variant.price_text;
-        if (atcPrice) atcPrice.textContent = variant.price_text;
-        if (comparePrice) {
-          comparePrice.hidden = !(variant.compare_at_price && variant.compare_at_price > variant.price);
-          comparePrice.textContent = variant.compare_at_price_text;
-        }
+        const sellingPlanAllocation = updateSellingPlans(variant);
+        const sellingPlanRequired = section.dataset.requiresSellingPlan === 'true';
+        const sellingPlanValid = !sellingPlanRequired || Boolean(sellingPlanAllocation);
+        updateDisplayedPrice(variant, sellingPlanAllocation);
         if (unitPrice) {
-          unitPrice.hidden = !variant.unit_price_text;
-          unitPrice.textContent = variant.unit_price_text || '';
+          const unitPriceText = sellingPlanAllocation?.unit_price_text || variant.unit_price_text;
+          unitPrice.hidden = !unitPriceText;
+          unitPrice.textContent = unitPriceText || '';
         }
         if (availability) availability.classList.toggle('is-unavailable', !variant.available);
-        if (availabilityCopy) availabilityCopy.textContent = variant.available ? availability.dataset.availableLabel : availability.dataset.unavailableLabel;
+        if (availabilityCopy) {
+          const lowStockThreshold = Number(availability?.dataset.lowStockThreshold || 5);
+          const lowStock = variant.available && variant.inventory_management && variant.inventory_policy === 'deny' && variant.inventory_quantity > 0 && variant.inventory_quantity <= lowStockThreshold;
+          availabilityCopy.textContent = lowStock ? `Only ${variant.inventory_quantity} left` : (variant.available ? availability.dataset.availableLabel : availability.dataset.unavailableLabel);
+        }
         if (dispatchNote) dispatchNote.hidden = !variant.available;
         if (addButton) {
-          addButton.disabled = !variant.available;
-          if (atcLabel) atcLabel.textContent = variant.available ? addButton.dataset.labelAvailable : addButton.dataset.labelUnavailable;
+          addButton.disabled = !variant.available || !sellingPlanValid;
+          if (atcLabel) atcLabel.textContent = variant.available && sellingPlanValid ? addButton.dataset.labelAvailable : addButton.dataset.labelUnavailable;
+        }
+        if (skuContainer && sku) {
+          sku.textContent = variant.sku || '';
+          skuContainer.hidden = !variant.sku;
+        }
+        if (quantityInput) {
+          const rule = variant.quantity_rule || { min: 1, max: null, increment: 1 };
+          quantityInput.min = String(rule.min || 1);
+          quantityInput.step = String(rule.increment || 1);
+          if (rule.max) quantityInput.max = String(rule.max);
+          else quantityInput.removeAttribute('max');
+          const currentQuantity = Number.parseInt(quantityInput.value, 10) || rule.min || 1;
+          const boundedQuantity = rule.max ? Math.min(rule.max, currentQuantity) : currentQuantity;
+          quantityInput.value = String(Math.max(rule.min || 1, boundedQuantity));
         }
 
         section.querySelectorAll('[data-option-group]').forEach((group) => {
@@ -2069,6 +2238,9 @@
           if (selected && currentValue) currentValue.textContent = selected.value;
         });
         if (variant.featured_media_id) showMedia(variant.featured_media_id);
+        updateOptionAvailability();
+        updatePickupAvailability(variant.id);
+        if (productStatus) productStatus.textContent = `${variant.options.join(', ')}. ${variant.available && sellingPlanValid ? 'Available' : 'Unavailable'}. ${sellingPlanAllocation?.price_text || variant.price_text}`;
         const url = new URL(window.location.href);
         url.searchParams.set('variant', variant.id);
         window.history.replaceState({}, '', url);
@@ -2076,6 +2248,21 @@
 
       form.addEventListener('change', (event) => {
         if (event.target.matches('[data-product-option]')) updateVariant();
+        if (event.target.matches('[data-selling-plan-option]')) {
+          const variant = variants.find((item) => String(item.id) === variantIdInput.value);
+          if (variant) updateVariant();
+        }
+      });
+
+      section.addEventListener('click', (event) => {
+        const openButton = event.target.closest('[data-pickup-open]');
+        const closeButton = event.target.closest('[data-pickup-close]');
+        if (openButton) {
+          const dialogId = openButton.getAttribute('aria-controls');
+          const pickupDialog = dialogId ? section.querySelector(`#${CSS.escape(dialogId)}`) : null;
+          if (pickupDialog && typeof pickupDialog.showModal === 'function') pickupDialog.showModal();
+        }
+        if (closeButton) closeButton.closest('[data-pickup-dialog]')?.close();
       });
       section.querySelectorAll('[data-gallery-thumb]').forEach((thumbnail) => {
         thumbnail.addEventListener('click', () => showMedia(thumbnail.dataset.mediaId));
@@ -2083,12 +2270,25 @@
 
       section.querySelectorAll('[data-quantity-step]').forEach((button) => {
         button.addEventListener('click', () => {
-          const input = section.querySelector('[data-quantity-input]');
+          const input = quantityInput;
           if (!input) return;
-          const current = Number.parseInt(input.value, 10) || 1;
-          input.value = String(Math.max(1, current + Number(button.dataset.quantityStep)));
+          const current = Number.parseInt(input.value, 10) || Number(input.min) || 1;
+          const increment = Number(input.step) || 1;
+          const minimum = Number(input.min) || 1;
+          const maximum = input.max ? Number(input.max) : Number.POSITIVE_INFINITY;
+          input.value = String(Math.min(maximum, Math.max(minimum, current + (Number(button.dataset.quantityStep) * increment))));
           input.dispatchEvent(new Event('change', { bubbles: true }));
         });
+      });
+
+      quantityInput?.addEventListener('change', () => {
+        const minimum = Number(quantityInput.min) || 1;
+        const maximum = quantityInput.max ? Number(quantityInput.max) : Number.POSITIVE_INFINITY;
+        const increment = Number(quantityInput.step) || 1;
+        let value = Number.parseInt(quantityInput.value, 10) || minimum;
+        value = Math.min(maximum, Math.max(minimum, value));
+        value = minimum + Math.floor((value - minimum) / increment) * increment;
+        quantityInput.value = String(value);
       });
 
       const engravingToggle = section.querySelector('[data-engraving-toggle]');
@@ -2184,6 +2384,7 @@
   "settings": [
     { "type": "text", "id": "delivery_note", "label": "Delivery note", "info": "Only add delivery claims that your store can fulfill." },
     { "type": "checkbox", "id": "show_dynamic_checkout", "label": "Show accelerated checkout button", "default": true },
+    { "type": "checkbox", "id": "show_pickup_availability", "label": "Show pickup availability", "default": true, "info": "Displays Shopify location pickup information when the selected variant supports pickup." },
     { "type": "text", "id": "gift_note", "label": "Gift presentation note", "default": "Presented in our signature Aurèle box, with a certificate of authenticity and a personal note.", "info": "Verify packaging and certificate details before publishing." },
     { "type": "text", "id": "dispatch_note", "label": "Dispatch estimate", "info": "Optional fallback. The product's custom.dispatch_note metafield takes precedence." },
     { "type": "url", "id": "size_guide_link", "label": "Size guide link" },
@@ -2211,7 +2412,18 @@
   ],
   "blocks": [
     { "type": "@app" },
+    { "type": "title", "name": "Product title", "limit": 1, "settings": [] },
+    { "type": "price", "name": "Price", "limit": 1, "settings": [] },
+    { "type": "description", "name": "Description", "limit": 1, "settings": [] },
+    { "type": "variant_picker", "name": "Variant and purchase options", "limit": 1, "settings": [ { "type": "text", "id": "selling_plan_heading", "label": "Purchase options heading", "default": "Purchase options" } ] },
+    { "type": "inventory", "name": "Inventory status", "limit": 1, "settings": [ { "type": "range", "id": "low_stock_threshold", "label": "Low stock threshold", "min": 1, "max": 20, "step": 1, "default": 5 } ] },
+    { "type": "sku", "name": "SKU", "limit": 1, "settings": [ { "type": "text", "id": "label", "label": "Label", "default": "SKU" } ] },
+    { "type": "quantity", "name": "Quantity selector", "limit": 1, "settings": [ { "type": "text", "id": "label", "label": "Label", "default": "Quantity" } ] },
+    { "type": "buy_buttons", "name": "Buy buttons", "limit": 1, "settings": [ { "type": "checkbox", "id": "show_dynamic_checkout", "label": "Show accelerated checkout", "default": true } ] },
+    { "type": "collapsible", "name": "Collapsible details", "settings": [ { "type": "text", "id": "heading", "label": "Heading", "default": "Materials and care" }, { "type": "richtext", "id": "content", "label": "Content" } ] },
     { "type": "custom_liquid", "name": "Custom Liquid", "settings": [ { "type": "liquid", "id": "custom_liquid", "label": "Custom Liquid" } ] },
+    { "type": "text_icon", "name": "Text with icon", "settings": [ { "type": "select", "id": "icon", "label": "Icon", "options": [ { "value": "diamond", "label": "Diamond" }, { "value": "care", "label": "Lifetime care" }, { "value": "delivery", "label": "Delivery" }, { "value": "bullet", "label": "Bullet" } ], "default": "diamond" }, { "type": "text", "id": "heading", "label": "Heading" }, { "type": "richtext", "id": "text", "label": "Text" } ] },
+    { "type": "complementary_products", "name": "Complementary products", "settings": [ { "type": "text", "id": "heading", "label": "Heading", "default": "Pairs beautifully with" }, { "type": "product_list", "id": "products", "label": "Products", "limit": 4 } ] },
     {
       "type": "service",
       "name": "Client service",
@@ -2222,7 +2434,8 @@
       ]
     }
   ],
-  "max_blocks": 8,
+  "max_blocks": 24,
   "disabled_on": { "groups": ["header", "footer"] }
 }
 {% endschema %}
+{% # theme-check-enable LiquidComplexity %}

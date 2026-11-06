@@ -1,0 +1,31 @@
+{% doc %}
+  Renders pickup availability for a selected variant.
+
+  @param {variant} variant - Selected product variant.
+  @param {string} section_id - Unique section ID for dialog controls.
+{% enddoc %}
+
+{% assign pickup_locations = variant.store_availabilities | where: 'pick_up_enabled', true %}
+{% if variant != blank and pickup_locations.size > 0 %}
+  {% assign available_pickup = pickup_locations | where: 'available', true | first %}
+  <div class="aurelle-product__pickup-card">
+    <span class="aurelle-product__pickup-dot{% unless available_pickup %} is-unavailable{% endunless %}" aria-hidden="true"></span>
+    <div>
+      <p>{% if available_pickup %}Pickup available at {{ available_pickup.location.name | escape }}{% else %}Pickup currently unavailable{% endif %}</p>
+      {% if available_pickup.pick_up_time != blank %}<small>{{ available_pickup.pick_up_time | escape }}</small>{% endif %}
+      <button type="button" aria-haspopup="dialog" aria-controls="AurellePickupDialog-{{ section_id }}" data-pickup-open>View store information</button>
+    </div>
+  </div>
+  <dialog class="aurelle-product__pickup-dialog" id="AurellePickupDialog-{{ section_id }}" aria-labelledby="AurellePickupTitle-{{ section_id }}" data-pickup-dialog>
+    <div class="aurelle-product__pickup-dialog-inner">
+      <button type="button" aria-label="Close pickup availability" data-pickup-close>×</button>
+      <h2 id="AurellePickupTitle-{{ section_id }}">Pickup availability</h2>
+      {% unless variant.title == 'Default Title' %}<p>{{ variant.title | escape }}</p>{% endunless %}
+      <ul role="list">
+        {% for availability in pickup_locations %}
+          <li><strong>{{ availability.location.name | escape }}</strong><span>{% if availability.available %}Available{% else %}Unavailable{% endif %}{% if availability.pick_up_time != blank %} — {{ availability.pick_up_time | escape }}{% endif %}</span>{% if availability.location.address != blank %}<div>{{ availability.location.address | format_address }}</div>{% endif %}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </dialog>
+{% endif %}
