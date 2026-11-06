@@ -1,0 +1,309 @@
+{% liquid
+  assign active_sort = collection.sort_by | default: collection.default_sort_by
+  assign hero_image = section.settings.hero_image | default: collection.image
+  assign hero_image_alt = section.settings.hero_image_alt | default: hero_image.alt | default: section.settings.hero_heading | default: collection.title
+  assign editorial_image_alt = section.settings.editorial_image_alt | default: section.settings.editorial_image.alt | default: section.settings.editorial_heading
+  assign category_filter = blank
+  assign active_filter_count = 0
+  for filter in collection.filters
+    assign filter_name = filter.label | downcase
+    if category_filter == blank and filter.type == 'list'
+      if filter_name contains 'category' or filter_name contains 'product type'
+        assign category_filter = filter
+      endif
+    endif
+    assign active_filter_count = active_filter_count | plus: filter.active_values.size
+    if filter.type == 'price_range' and filter.min_value.value != nil
+      assign active_filter_count = active_filter_count | plus: 1
+    endif
+    if filter.type == 'price_range' and filter.max_value.value != nil
+      assign active_filter_count = active_filter_count | plus: 1
+    endif
+  endfor
+%}
+
+<section class="ac full-width" data-aurelle-collection aria-labelledby="ac-title-{{ section.id }}">
+  <div class="ac__inner">
+    <nav class="ac__breadcrumbs" aria-label="Breadcrumb">
+      <a href="{{ routes.root_url }}">Home</a><span aria-hidden="true">/</span><span>Collections</span><span aria-hidden="true">/</span><span aria-current="page">{{ collection.title | escape }}</span>
+    </nav>
+
+    <header class="ac__hero">
+      <div class="ac__hero-copy">
+        {% if section.settings.eyebrow != blank %}<p class="ac__eyebrow">{{ section.settings.eyebrow | escape }}</p>{% endif %}
+        <h1 id="ac-title-{{ section.id }}">{{ section.settings.hero_heading | default: collection.title | escape }}</h1>
+        {% if collection.description != blank %}<div class="ac__hero-description">{{ collection.description }}</div>{% elsif section.settings.hero_description != blank %}<p class="ac__hero-description">{{ section.settings.hero_description | escape }}</p>{% endif %}
+        {% if section.settings.hero_note != blank %}<p class="ac__hero-note">{{ section.settings.hero_note | escape }}</p>{% endif %}
+      </div>
+      <div class="ac__hero-visual">
+        {% if hero_image != blank %}
+          {{ hero_image | image_url: width: 1700 | image_tag: class: 'ac__hero-image', alt: hero_image_alt, widths: '600, 900, 1200, 1700', sizes: '(min-width: 700px) 62vw, 100vw', loading: 'eager' }}
+        {% else %}
+          <img class="ac__hero-image" src="{{ 'aurelle-hero-main.jpeg' | asset_url }}" width="512" height="286" alt="AURELLE jewellery editorial portrait" fetchpriority="high">
+        {% endif %}
+      </div>
+    </header>
+
+    <nav class="ac__categories" aria-label="Collection categories">
+      <a href="{{ collection.url }}"{% if category_filter == blank or category_filter.active_values.size == 0 %} aria-current="page"{% endif %}>All creations ({{ collection.all_products_count }})</a>
+      {% if category_filter != blank %}
+        {% for value in category_filter.values %}
+          <a href="{% if value.active %}{{ value.url_to_remove }}{% else %}{{ value.url_to_add }}{% endif %}"{% if value.active %} aria-current="page"{% endif %}>{{ value.label | escape }}</a>
+        {% endfor %}
+      {% else %}
+        {% for block in section.blocks %}
+          {% if block.settings.collection != blank and block.settings.collection.handle != collection.handle %}<a href="{{ block.settings.collection.url }}" {{ block.shopify_attributes }}>{{ block.settings.label | default: block.settings.collection.title | escape }}</a>{% endif %}
+        {% endfor %}
+      {% endif %}
+    </nav>
+
+    {% paginate collection.products by section.settings.products_per_page %}
+      <div class="ac__toolbar">
+        <div class="ac__filter-controls">
+          <button class="ac__filter-trigger" type="button" data-open-dialog="ac-filters-{{ section.id }}" aria-label="Filter and refine products">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 5h16M2 10h16M2 15h16M7 3v4m6 1v4m-4 1v4" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+            Filter &amp; refine{% if active_filter_count > 0 %} ({{ active_filter_count }}){% endif %}
+          </button>
+          {% for filter in collection.filters limit: 4 %}<button class="ac__filter-shortcut" type="button" data-open-dialog="ac-filters-{{ section.id }}">{{ filter.label | escape }} <span aria-hidden="true">⌄</span></button>{% endfor %}
+        </div>
+        <span class="ac__result-count" aria-live="polite">{{ collection.products_count }} {% if collection.products_count == 1 %}creation{% else %}creations{% endif %}</span>
+        <button class="ac__sort-trigger" type="button" data-open-dialog="ac-sort-{{ section.id }}">Sort by: {% for option in collection.sort_options %}{% if option.value == active_sort %}{{ option.name | escape }}{% endif %}{% endfor %} <span aria-hidden="true">⌄</span></button>
+      </div>
+
+      {% if active_filter_count > 0 %}
+        <div class="ac__active-filters" aria-label="Active filters">
+          {% for filter in collection.filters %}
+            {% for value in filter.active_values %}<a href="{{ value.url_to_remove }}">{{ value.label | escape }} <span aria-hidden="true">×</span></a>{% endfor %}
+            {% if filter.type == 'price_range' and filter.min_value.value != nil %}<a href="{{ filter.url_to_remove }}">From {{ filter.min_value.value | money }} <span aria-hidden="true">×</span></a>{% endif %}
+            {% if filter.type == 'price_range' and filter.max_value.value != nil %}<a href="{{ filter.url_to_remove }}">Under {{ filter.max_value.value | money }} <span aria-hidden="true">×</span></a>{% endif %}
+          {% endfor %}
+          <a class="ac__active-clear" href="{{ collection.url }}?sort_by={{ active_sort | url_encode }}">Clear all</a>
+        </div>
+      {% endif %}
+
+      {% if collection.products_count > 0 %}
+        <div class="ac__grid">
+          {% for product in collection.products %}
+            {% render 'aurelle-collection-card', product: product, section_id: section.id, collection_title: collection.title, dispatch_note: section.settings.dispatch_note, size_guide_page: section.settings.size_guide_page %}
+            {% if forloop.index == 4 and paginate.current_page == 1 and section.settings.show_editorial %}
+              <aside class="ac__editorial" aria-label="Collection story">
+                <div class="ac__editorial-visual">
+                  {% if section.settings.editorial_image != blank %}{{ section.settings.editorial_image | image_url: width: 1400 | image_tag: class: 'ac__editorial-image', alt: editorial_image_alt, widths: '500, 800, 1100, 1400', sizes: '(min-width: 700px) 43vw, 100vw', loading: 'lazy' }}{% else %}<div class="ac__media-placeholder" role="img" aria-label="{{ editorial_image_alt | escape }}"><span aria-hidden="true">◇</span></div>{% endif %}
+                </div>
+                <div class="ac__editorial-copy">
+                  {% if section.settings.editorial_eyebrow != blank %}<p class="ac__eyebrow">{{ section.settings.editorial_eyebrow | escape }}</p>{% endif %}
+                  {% if section.settings.editorial_heading != blank %}<h2>{{ section.settings.editorial_heading | escape }}</h2>{% endif %}
+                  {% if section.settings.editorial_text != blank %}<p>{{ section.settings.editorial_text | escape }}</p>{% endif %}
+                  {% if section.settings.editorial_link != blank and section.settings.editorial_link_label != blank %}<a href="{{ section.settings.editorial_link }}">{{ section.settings.editorial_link_label | escape }} <span aria-hidden="true">→</span></a>{% endif %}
+                </div>
+              </aside>
+            {% endif %}
+          {% endfor %}
+        </div>
+        {% if collection.products.size < 4 and paginate.current_page == 1 and section.settings.show_editorial %}
+          <aside class="ac__editorial ac__editorial--after" aria-label="Collection story">
+            <div class="ac__editorial-visual">{% if section.settings.editorial_image != blank %}{{ section.settings.editorial_image | image_url: width: 1400 | image_tag: class: 'ac__editorial-image', alt: editorial_image_alt, widths: '500, 800, 1100, 1400', sizes: '(min-width: 700px) 43vw, 100vw', loading: 'lazy' }}{% else %}<div class="ac__media-placeholder" role="img" aria-label="{{ editorial_image_alt | escape }}"><span aria-hidden="true">◇</span></div>{% endif %}</div>
+            <div class="ac__editorial-copy">{% if section.settings.editorial_eyebrow != blank %}<p class="ac__eyebrow">{{ section.settings.editorial_eyebrow | escape }}</p>{% endif %}{% if section.settings.editorial_heading != blank %}<h2>{{ section.settings.editorial_heading | escape }}</h2>{% endif %}{% if section.settings.editorial_text != blank %}<p>{{ section.settings.editorial_text | escape }}</p>{% endif %}{% if section.settings.editorial_link != blank and section.settings.editorial_link_label != blank %}<a href="{{ section.settings.editorial_link }}">{{ section.settings.editorial_link_label | escape }} →</a>{% endif %}</div>
+          </aside>
+        {% endif %}
+      {% else %}
+        <div class="ac__empty">
+          <div class="ac__empty-head"><span>{{ collection.title | escape }}</span><span>0 creations</span></div>
+          {% if active_filter_count > 0 %}<div class="ac__empty-chips">{% for filter in collection.filters %}{% for value in filter.active_values %}<a href="{{ value.url_to_remove }}">{{ value.label | escape }} ×</a>{% endfor %}{% if filter.type == 'price_range' and filter.min_value.value != nil %}<a href="{{ filter.url_to_remove }}">From {{ filter.min_value.value | money }} ×</a>{% endif %}{% if filter.type == 'price_range' and filter.max_value.value != nil %}<a href="{{ filter.url_to_remove }}">Under {{ filter.max_value.value | money }} ×</a>{% endif %}{% endfor %}</div>{% endif %}
+          <svg class="ac__empty-icon" viewBox="0 0 36 36" aria-hidden="true"><circle cx="15" cy="15" r="9" fill="none" stroke="currentColor"/><path d="m22 22 8 8" fill="none" stroke="currentColor"/></svg>
+          {% if active_filter_count > 0 %}<h2>A little more room to discover.</h2><p>No creations match this combination. Try removing a filter or widening your price range to find your next heirloom.</p><a class="ac__empty-button" href="{{ collection.url }}">Clear all filters</a><a class="ac__empty-link" href="{{ collection.url }}">Explore all {{ collection.all_products_count }} creations</a>{% else %}<h2>More creations are coming.</h2><p>Explore the rest of the atelier while this collection is being prepared.</p><a class="ac__empty-link" href="{{ routes.all_products_collection_url }}">Explore all creations</a>{% endif %}
+        </div>
+      {% endif %}
+
+      {% if collection.products_count > 0 %}
+        {% assign first_item = paginate.current_offset | plus: 1 %}
+        {% assign last_item = paginate.current_offset | plus: collection.products.size %}
+        <p class="ac__pagination-count">Showing {{ first_item }}–{{ last_item }} of {{ collection.products_count }} creations</p>
+        {% if paginate.pages > 1 %}<nav class="ac__pagination" aria-label="Collection pages">
+          {% if paginate.previous %}<a href="{{ paginate.previous.url }}" aria-label="Previous page">‹</a>{% else %}<span class="ac__pagination-disabled" aria-hidden="true">‹</span>{% endif %}
+          {% for part in paginate.parts %}{% if part.is_link %}<a href="{{ part.url }}" aria-label="Page {{ part.title }}">{{ part.title }}</a>{% elsif part.title == paginate.current_page %}<span aria-current="page">{{ part.title }}</span>{% else %}<span>{{ part.title }}</span>{% endif %}{% endfor %}
+          {% if paginate.next %}<a href="{{ paginate.next.url }}" aria-label="Next page">›</a>{% else %}<span class="ac__pagination-disabled" aria-hidden="true">›</span>{% endif %}
+        </nav>{% endif %}
+      {% endif %}
+    {% endpaginate %}
+  </div>
+
+  <dialog class="ac__drawer ac__drawer--filter" id="ac-filters-{{ section.id }}" aria-label="Filter and refine">
+    <div class="ac__drawer-head"><div><h2>Filter &amp; refine</h2><p>{{ collection.title | escape }}</p></div><button type="button" aria-label="Close filters" data-dialog-close>×</button></div>
+    {% if collection.filters.size > 0 %}
+      <form action="{{ collection.url }}" method="get" class="ac__filter-form">
+        <input type="hidden" name="sort_by" value="{{ active_sort | escape }}">
+        {% if active_filter_count > 0 %}<div class="ac__drawer-active">{% for filter in collection.filters %}{% for value in filter.active_values %}<a href="{{ value.url_to_remove }}">{{ value.label | escape }} ×</a>{% endfor %}{% if filter.type == 'price_range' and filter.min_value.value != nil %}<a href="{{ filter.url_to_remove }}">From {{ filter.min_value.value | money }} ×</a>{% endif %}{% if filter.type == 'price_range' and filter.max_value.value != nil %}<a href="{{ filter.url_to_remove }}">Under {{ filter.max_value.value | money }} ×</a>{% endif %}{% endfor %}<a href="{{ collection.url }}">Clear all</a></div>{% endif %}
+        {% for filter in collection.filters %}
+          {% assign filter_name = filter.label | downcase %}
+          <details class="ac__filter-group"{% if filter.active_values.size > 0 or filter_name contains 'category' or filter_name contains 'metal' or filter.min_value.value != nil or filter.max_value.value != nil %} open{% endif %}>
+            <summary>{{ filter.label | escape }}{% if filter.type == 'price_range' %} ({{ cart.currency.iso_code }}){% endif %}<span aria-hidden="true"></span></summary>
+            {% case filter.type %}
+              {% when 'list' %}
+                <div class="ac__filter-values">{% for value in filter.values %}<label><input type="checkbox" name="{{ value.param_name }}" value="{{ value.value | escape }}"{% if value.active %} checked{% endif %}{% if value.count == 0 and value.active == false %} disabled{% endif %}><span>{{ value.label | escape }}</span><small>{{ value.count }}</small></label>{% endfor %}</div>
+              {% when 'boolean' %}
+                <div class="ac__filter-values">{% if filter.true_value %}<label><input type="checkbox" name="{{ filter.true_value.param_name }}" value="{{ filter.true_value.value | escape }}"{% if filter.true_value.active %} checked{% endif %}{% if filter.true_value.count == 0 and filter.true_value.active == false %} disabled{% endif %}><span>{{ filter.true_value.label | escape }}</span><small>{{ filter.true_value.count }}</small></label>{% endif %}{% if filter.false_value %}<label><input type="checkbox" name="{{ filter.false_value.param_name }}" value="{{ filter.false_value.value | escape }}"{% if filter.false_value.active %} checked{% endif %}{% if filter.false_value.count == 0 and filter.false_value.active == false %} disabled{% endif %}><span>{{ filter.false_value.label | escape }}</span><small>{{ filter.false_value.count }}</small></label>{% endif %}</div>
+              {% when 'price_range' %}
+                <div class="ac__price-fields"><label>Minimum<input type="number" step="0.01" min="0" name="{{ filter.min_value.param_name }}"{% if filter.min_value.value != nil %} value="{{ filter.min_value.value | money_without_currency | replace: ',', '' }}"{% endif %} placeholder="0"></label><label>Maximum<input type="number" step="0.01" min="0" name="{{ filter.max_value.param_name }}"{% if filter.max_value.value != nil %} value="{{ filter.max_value.value | money_without_currency | replace: ',', '' }}"{% endif %} placeholder="{{ filter.range_max | money_without_currency | replace: ',', '' }}"></label></div>
+            {% endcase %}
+          </details>
+        {% endfor %}
+        <button class="ac__filter-submit" type="submit">Show creations</button>
+      </form>
+    {% else %}<p class="ac__no-filters">Filters will appear here when configured in Shopify Admin for this collection.</p>{% endif %}
+  </dialog>
+
+  <dialog class="ac__drawer ac__drawer--sort" id="ac-sort-{{ section.id }}" aria-label="Sort products">
+    <div class="ac__drawer-head"><h2>Sort by</h2><button type="button" aria-label="Close sorting" data-dialog-close>×</button></div>
+    <form action="{{ collection.url }}" method="get" class="ac__sort-form">
+      {% for filter in collection.filters %}
+        {% if filter.type == 'price_range' %}
+          {% if filter.min_value.value != nil %}<input type="hidden" name="{{ filter.min_value.param_name }}" value="{{ filter.min_value.value | money_without_currency | replace: ',', '' }}">{% endif %}
+          {% if filter.max_value.value != nil %}<input type="hidden" name="{{ filter.max_value.param_name }}" value="{{ filter.max_value.value | money_without_currency | replace: ',', '' }}">{% endif %}
+        {% else %}{% for value in filter.active_values %}<input type="hidden" name="{{ value.param_name }}" value="{{ value.value | escape }}">{% endfor %}{% endif %}
+      {% endfor %}
+      {% for option in collection.sort_options %}
+        {% if option.value == 'manual' or option.value == 'best-selling' or option.value == 'created-descending' or option.value == 'price-ascending' or option.value == 'price-descending' %}
+          <label><span>{{ option.name | escape }}</span><input type="radio" name="sort_by" value="{{ option.value | escape }}"{% if option.value == active_sort %} checked{% endif %} data-sort-option></label>
+        {% endif %}
+      {% endfor %}
+      <button class="ac__sort-submit" type="submit">Apply sort</button>
+    </form>
+  </dialog>
+  <span class="ac__sr-only" role="status" aria-live="polite" data-wishlist-status></span>
+</section>
+
+{% stylesheet %}
+  .ac{--ac-ivory:#faf7f2;--ac-paper:#f4f0ea;--ac-ink:#26231f;--ac-muted:#77726c;--ac-gold:#79612d;--ac-line:#e4ded5;width:100%;background:var(--ac-ivory);color:var(--ac-ink);font-family:var(--font-primary--family),Arial,sans-serif}
+  .ac *{box-sizing:border-box}.ac a{color:inherit}.ac__inner{width:min(100%,1536px);margin:auto;padding:0 48px 80px}.ac__sr-only,.acq__visually-hidden{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  .ac__breadcrumbs{display:flex;align-items:center;gap:13px;min-height:65px;color:#8c877f;font-size:12px}.ac__breadcrumbs a{text-decoration:none}.ac__breadcrumbs [aria-current]{color:var(--ac-ink)}
+  .ac__hero{display:grid;grid-template-columns:38% 62%;min-height:420px;margin-inline:-48px;background:#f2eee9}.ac__hero-copy{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:42px clamp(42px,5vw,96px) 42px 64px}.ac__eyebrow{margin:0 0 22px;color:var(--ac-gold);font-size:11px;font-weight:600;letter-spacing:.15em;line-height:1.4;text-transform:uppercase}.ac__hero h1,.ac__editorial h2,.ac__empty h2,.acq h2,.acq h3,.ac__drawer h2{font-family:Georgia,'Times New Roman',serif;font-weight:400;letter-spacing:-.035em}.ac__hero h1{max-width:510px;margin:0;font-size:clamp(46px,4vw,62px);line-height:1.04}.ac__hero-description{max-width:420px;margin:22px 0 0;color:#4f4b46;font-size:15px;line-height:1.7}.ac__hero-description p{margin:0}.ac__hero-note{margin:18px 0 0;color:var(--ac-gold);font-size:10px;letter-spacing:.12em;text-transform:uppercase}.ac__hero-visual{min-width:0;min-height:420px;background:#c6bbae}.ac__hero-image{display:block;width:100%;height:100%;object-fit:cover}
+  .ac__categories{display:flex;align-items:center;justify-content:center;gap:42px;min-height:104px;overflow-x:auto;border-bottom:1px solid var(--ac-line);white-space:nowrap;scrollbar-width:thin}.ac__categories a{display:inline-flex;align-items:center;min-height:43px;border-bottom:1px solid transparent;color:#68635e;font-size:12px;text-decoration:none}.ac__categories a:hover,.ac__categories a[aria-current]{border-color:var(--ac-gold);color:var(--ac-gold)}
+  .ac__toolbar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;min-height:64px;border-bottom:1px solid var(--ac-line)}.ac__filter-controls{display:flex;align-items:center;gap:28px;min-width:0}.ac__toolbar button{display:inline-flex;align-items:center;gap:9px;padding:8px 0;border:0;background:none;color:var(--ac-ink);font:inherit;font-size:12px;text-transform:uppercase;white-space:nowrap;cursor:pointer}.ac__filter-trigger svg{width:17px;height:17px}.ac__filter-shortcut{color:#5a554f!important;text-transform:none!important}.ac__result-count{color:#8b857e;font-size:12px}.ac__sort-trigger{justify-self:end;text-transform:none!important}.ac__active-filters{display:flex;gap:8px;flex-wrap:wrap;padding:14px 0}.ac__active-filters a{padding:8px 12px;background:var(--ac-paper);font-size:12px;text-decoration:none}.ac__active-filters .ac__active-clear{margin-left:auto;background:none;text-decoration:underline}
+  .ac__grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:48px 24px;padding-top:32px}.ac__card{min-width:0;border:1px solid var(--ac-line);background:#fff}.ac__card-media{position:relative;aspect-ratio:4/4.65;overflow:hidden;background:#e4ded4}.ac__card-image-link{display:block;width:100%;height:100%}.ac__card-image{display:block;width:100%;height:100%;object-fit:cover;transition:transform .55s ease,opacity .4s ease}.ac__card-image--hover{position:absolute;inset:0;opacity:0}.ac__card:hover .ac__card-image:not(.ac__card-image--hover){transform:scale(1.035)}.ac__card:hover .ac__card-image--hover{opacity:1;transform:scale(1.035)}.ac__badge{position:absolute;top:14px;left:14px;max-width:calc(100% - 68px);padding:6px 9px;background:rgb(255 255 255 / 94%);color:var(--ac-gold);font-size:10px;letter-spacing:.06em;text-transform:uppercase}.ac__wishlist{position:absolute;top:12px;right:12px;display:grid;width:36px;height:36px;place-items:center;border:0;border-radius:50%;background:#fff;color:var(--ac-ink);cursor:pointer}.ac__wishlist svg{width:19px;height:19px}.ac__wishlist[aria-pressed=true] svg path{fill:var(--ac-gold);stroke:var(--ac-gold)}.ac__card-actions{position:absolute;right:11px;bottom:11px;left:11px;display:grid;grid-template-columns:1fr 1fr;min-height:42px;opacity:0;transform:translateY(8px);transition:opacity .25s,transform .25s}.ac__card:hover .ac__card-actions,.ac__card:focus-within .ac__card-actions{opacity:1;transform:none}.ac__card-actions form{min-width:0}.ac__card-actions button{width:100%;height:42px;padding:5px;border:0;background:#fff;color:var(--ac-gold);font:inherit;font-size:11px;letter-spacing:.04em;text-transform:uppercase;cursor:pointer}.ac__card-actions .ac__quick-add{background:var(--ac-gold);color:#fff}.ac__card-copy{display:flex;min-height:173px;flex-direction:column;padding:15px 16px 16px}.ac__card-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;color:#8d8880;font-size:11px}.ac__metal-dot{flex:0 0 auto;width:10px;height:10px;border-radius:50%;background:var(--ac-metal)}.ac__card h3{min-height:52px;margin:8px 0;font-family:Georgia,'Times New Roman',serif;font-size:21px;font-weight:400;line-height:1.2}.ac__card h3 a{text-decoration:none}.ac__card h3 a:hover{color:var(--ac-gold)}.ac__card-detail{overflow:hidden;margin:auto 0 10px;color:#8d8880;font-size:11px;text-overflow:ellipsis;white-space:nowrap}.ac__card-price{display:flex;align-items:center;gap:8px;margin:auto 0 0;padding-top:10px;border-top:1px solid var(--ac-line);font-size:14px}.ac__card-price s{color:#9b948b;font-size:12px}
+  .ac__editorial{grid-column:1/-1;display:grid;grid-template-columns:43.5% 56.5%;min-height:350px;background:#f3efe9}.ac__editorial--after{margin-top:44px}.ac__editorial-visual{min-width:0}.ac__editorial-image{display:block;width:100%;height:100%;min-height:350px;object-fit:cover}.ac__media-placeholder{display:grid;width:100%;height:100%;min-height:350px;place-items:center;color:var(--ac-gold);background:radial-gradient(circle at 50% 44%,rgb(255 255 255 / 70%) 0 15%,transparent 16%),linear-gradient(145deg,#eee8de,#d4c9b9)}.ac__media-placeholder span{font-family:Georgia,'Times New Roman',serif;font-size:clamp(76px,9vw,132px);line-height:1;opacity:.52}.ac__editorial-copy{align-self:center;padding:40px clamp(38px,4vw,68px)}.ac__editorial .ac__eyebrow{margin-bottom:18px}.ac__editorial h2{max-width:570px;margin:0;font-size:clamp(34px,3.5vw,50px);line-height:1.15}.ac__editorial-copy>p:not(.ac__eyebrow){max-width:610px;margin:17px 0;color:#5e5852;font-size:13px;line-height:1.7}.ac__editorial-copy a{display:inline-block;margin-top:5px;color:var(--ac-gold);font-size:11px;letter-spacing:.07em;text-decoration:none;text-transform:uppercase}.ac__pagination-count{margin:54px 0 14px;color:#8b857e;font-size:12px;text-align:center}.ac__pagination{display:flex;align-items:center;justify-content:center;gap:8px}.ac__pagination>*{display:grid;min-width:40px;height:40px;place-items:center;border:1px solid var(--ac-line);font-size:13px;text-decoration:none}.ac__pagination>*:first-child,.ac__pagination>*:last-child{border-color:transparent}.ac__pagination [aria-current]{border-color:var(--ac-gold);background:var(--ac-gold);color:#fff}.ac__pagination-disabled{color:#b5aea4}
+  .ac__drawer{position:fixed;inset:0 0 0 auto;width:min(420px,100vw);max-width:none;height:100dvh;max-height:none;margin:0;padding:28px 24px;border:0;background:var(--ac-ivory);color:var(--ac-ink);box-shadow:-10px 0 50px rgb(0 0 0 / 13%)}.ac__drawer::backdrop,.acq::backdrop{background:rgb(31 28 24 / 44%)}.ac__drawer-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding-bottom:20px;border-bottom:1px solid var(--ac-line)}.ac__drawer-head h2{margin:0;font-size:28px}.ac__drawer-head p{margin:5px 0 0;color:#918980;font-size:11px}.ac__drawer-head button,.acq__heading button{border:0;background:none;color:var(--ac-ink);font-size:27px;line-height:1;cursor:pointer}.ac__filter-form{display:flex;height:calc(100% - 78px);flex-direction:column;overflow-y:auto}.ac__drawer-active{display:flex;gap:6px;flex-wrap:wrap;padding:15px 0}.ac__drawer-active a{padding:9px 10px;background:var(--ac-paper);font-size:11px;text-decoration:none}.ac__drawer-active a:last-child{margin-left:auto;background:none;text-decoration:underline}.ac__filter-group{padding:20px 0;border-bottom:1px solid var(--ac-line)}.ac__filter-group summary{display:flex;justify-content:space-between;cursor:pointer;color:var(--ac-gold);font-size:11px;font-weight:600;letter-spacing:.15em;list-style:none;text-transform:uppercase}.ac__filter-group summary::-webkit-details-marker{display:none}.ac__filter-group summary span:after{content:'+';font-size:18px;font-weight:400}.ac__filter-group[open] summary span:after{content:'−'}.ac__filter-values{display:grid;gap:14px;padding-top:21px}.ac__filter-values label{display:flex;align-items:center;gap:10px;color:#5b554f;font-size:13px;cursor:pointer}.ac__filter-values input{accent-color:var(--ac-gold)}.ac__filter-values small{margin-left:auto;color:#9d968b}.ac__price-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:19px}.ac__price-fields label{color:#8c857b;font-size:11px}.ac__price-fields input{width:100%;min-height:48px;margin-top:6px;padding:8px;border:1px solid var(--ac-line);background:transparent;color:var(--ac-ink);font:inherit;font-size:13px}.ac__filter-submit{position:sticky;bottom:0;width:100%;min-height:48px;margin-top:auto;border:0;background:var(--ac-gold);color:#fff;font:inherit;font-size:12px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}.ac__no-filters{padding:24px 0;color:var(--ac-muted);font-size:14px;line-height:1.6}.ac__sort-form{display:grid;padding-top:9px}.ac__sort-form label{display:flex;align-items:center;justify-content:space-between;min-height:50px;color:#534e48;font-size:13px;cursor:pointer}.ac__sort-form input{accent-color:var(--ac-gold)}.ac__sort-submit{min-height:44px;margin-top:12px;border:1px solid var(--ac-line);background:transparent;color:var(--ac-ink);font:inherit;cursor:pointer}.ac__sort-form.is-enhanced .ac__sort-submit{display:none}
+  .acq{position:fixed;inset:0;width:min(920px,calc(100% - 28px));max-width:none;max-height:min(710px,calc(100dvh - 28px));padding:28px;border:0;background:var(--ac-ivory);color:var(--ac-ink);box-shadow:0 25px 70px rgb(0 0 0 / 18%)}.acq__heading{display:flex;align-items:center;justify-content:space-between;padding-bottom:20px;border-bottom:1px solid var(--ac-line)}.acq__heading h2{margin:0;font-size:29px}.acq__body{display:grid;grid-template-columns:47% 53%;gap:32px;padding-top:22px}.acq__visual{min-width:0}.acq__image{display:block;width:100%;height:470px;object-fit:cover}.acq__visual>p{color:#aaa299;font-size:11px}.acq__content{align-self:start;min-width:0;padding-right:18px}.acq__content .ac__eyebrow{margin:4px 0 18px}.acq__content h3{margin:0;font-size:clamp(30px,3vw,39px);line-height:1.1}.acq__price{margin:17px 0;font-family:Georgia,'Times New Roman',serif;font-size:24px}.acq__description{margin:0 0 17px;color:#5e5852;font-size:13px;line-height:1.6}.acq__option-group{min-width:0;margin:14px 0;padding:0;border:0}.acq__option-group legend{margin-bottom:10px;font-size:12px}.acq__choices{display:flex;gap:8px;flex-wrap:wrap}.acq__choice{min-width:52px;min-height:42px;padding:6px 10px;border:1px solid var(--ac-line);background:transparent;color:var(--ac-ink);font:inherit;font-size:12px;cursor:pointer}.acq__choice[aria-pressed=true]{border-color:var(--ac-gold);background:var(--ac-gold);color:#fff}.acq__choices--metal .acq__choice{display:grid;width:36px;min-width:36px;height:36px;min-height:36px;place-items:center;padding:3px;border-radius:50%;background:transparent}.acq__choices--metal .acq__choice[aria-pressed=true]{outline:1px solid var(--ac-gold);outline-offset:2px}.acq__swatch{width:25px;height:25px;border-radius:50%;background:var(--ac-choice-color)}.acq__option-groups,.acq__size-guide{display:none}.acq.is-enhanced .acq__option-groups{display:block}.acq__native-label{display:block;margin:10px 0;font-size:12px}.acq__variant-select{width:100%;min-height:42px;border:1px solid var(--ac-line);background:transparent}.acq.is-enhanced .acq__native-label,.acq.is-enhanced .acq__variant-select{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}.acq.is-enhanced .acq__size-guide{display:inline-block;margin:4px 0 12px;color:var(--ac-gold);font-size:11px;text-decoration:underline}.acq__stock{margin:12px 0;color:var(--ac-gold);font-size:11px}.acq__add{width:100%;min-height:48px;border:0;background:var(--ac-gold);color:#fff;font:inherit;font-size:12px;letter-spacing:.05em;text-transform:uppercase;cursor:pointer}.acq__add:disabled{opacity:.5;cursor:not-allowed}.acq__details{display:inline-block;margin-top:18px;color:var(--ac-gold);font-size:11px;text-underline-offset:3px;text-transform:uppercase}
+  .ac__empty{min-height:490px;padding:22px 0 60px;text-align:center}.ac__empty-head{display:flex;justify-content:space-between;color:var(--ac-gold);font-size:11px;letter-spacing:.12em;text-transform:uppercase}.ac__empty-head span:last-child{color:#8d867d;letter-spacing:0;text-transform:none}.ac__empty-chips{display:flex;gap:10px;margin:24px 0}.ac__empty-chips a{padding:11px 13px;background:var(--ac-paper);color:var(--ac-gold);font-size:12px;text-decoration:none}.ac__empty-icon{width:34px;height:34px;margin:50px auto 18px;color:var(--ac-gold)}.ac__empty h2{margin:0;font-size:36px}.ac__empty>p{max-width:550px;margin:15px auto 18px;color:#69635d;font-size:14px;line-height:1.7}.ac__empty-button{display:grid;width:min(250px,100%);min-height:48px;place-items:center;margin:0 auto;background:var(--ac-gold);color:#fff!important;font-size:11px;letter-spacing:.07em;text-decoration:none;text-transform:uppercase}.ac__empty-link{display:inline-block;margin-top:20px;color:var(--ac-gold)!important;font-size:12px;text-underline-offset:3px}
+  .ac :focus-visible{outline:2px solid var(--ac-gold);outline-offset:3px}
+  @media(max-width:1100px){.ac__inner{padding-inline:30px}.ac__hero{margin-inline:-30px}.ac__hero-copy{padding-left:42px}.ac__grid{gap:24px 16px}.ac__card h3{font-size:18px}.ac__filter-shortcut:nth-of-type(n+4){display:none}}
+  @media(max-width:760px){.ac__inner{padding:0 18px 65px}.ac__breadcrumbs{min-height:50px;font-size:11px}.ac__hero{grid-template-columns:1fr;margin-inline:-18px}.ac__hero-copy{min-height:280px;padding:36px 25px}.ac__hero h1{font-size:clamp(40px,11vw,56px)}.ac__hero-visual{min-height:260px;height:65vw;max-height:410px}.ac__categories{justify-content:flex-start;gap:24px;min-height:72px}.ac__toolbar{grid-template-columns:1fr auto;min-height:58px}.ac__filter-shortcut,.ac__result-count{display:none}.ac__filter-trigger{font-size:11px!important}.ac__sort-trigger{grid-column:2;font-size:11px!important}.ac__grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 10px;padding-top:20px}.ac__card-media{aspect-ratio:4/5}.ac__card-copy{min-height:165px;padding:11px 10px}.ac__card h3{font-size:17px}.ac__card-actions{right:5px;bottom:5px;left:5px;min-height:34px;opacity:1;transform:none}.ac__card-actions button{height:34px;font-size:9px}.ac__wishlist{top:7px;right:7px;width:32px;height:32px}.ac__badge{top:8px;left:8px;font-size:8px}.ac__editorial{grid-template-columns:1fr}.ac__editorial-image{min-height:280px;max-height:340px}.ac__editorial-copy{padding:30px 24px}.ac__editorial h2{font-size:36px}.acq{overflow-y:auto;padding:18px}.acq__body{grid-template-columns:1fr;gap:16px}.acq__image{height:290px}.acq__content{padding:0 0 15px}.acq__content h3{font-size:31px}.ac__empty h2{font-size:32px}}
+  @media(max-width:390px){.ac__inner{padding-inline:14px}.ac__hero{margin-inline:-14px}.ac__card h3{font-size:16px}.ac__card-meta,.ac__card-detail{font-size:10px}.ac__card-actions button{font-size:8px}.ac__hero-description{font-size:14px}}
+  .ac__drawer[open]{animation:ac-drawer-enter .24s ease-out both}.acq[open]{animation:ac-quick-view-enter .24s ease-out both}
+  @keyframes ac-drawer-enter{from{opacity:.6;transform:translateX(28px)}to{opacity:1;transform:translateX(0)}}
+  @keyframes ac-quick-view-enter{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  @media(prefers-reduced-motion:reduce){.ac__card-image,.ac__card-actions{transition:none}.ac__drawer[open],.acq[open]{animation:none}}
+{% endstylesheet %}
+
+{% javascript %}
+  (function () {
+    const wishlistKey = 'aurelle-wishlist-products';
+    function savedProducts() { try { return JSON.parse(localStorage.getItem(wishlistKey) || '[]'); } catch (_) { return []; } }
+    function setup(section) {
+      section.querySelectorAll('.acq').forEach(dialog => {
+        dialog.classList.add('is-enhanced');
+        const select = dialog.querySelector('[data-quick-view-variant]');
+        if (select) select.tabIndex = -1;
+      });
+      section.querySelectorAll('.ac__sort-form').forEach(form => form.classList.add('is-enhanced'));
+      const saved = savedProducts();
+      section.querySelectorAll('[data-wishlist-product]').forEach(button => button.setAttribute('aria-pressed', String(saved.includes(button.dataset.wishlistProduct))));
+    }
+    document.querySelectorAll('[data-aurelle-collection]').forEach(setup);
+    document.addEventListener('shopify:section:load', event => {
+      if (event.target.matches?.('[data-aurelle-collection]')) setup(event.target);
+      event.target.querySelectorAll('[data-aurelle-collection]').forEach(setup);
+    });
+    document.addEventListener('click', event => {
+      const section = event.target.closest('[data-aurelle-collection]');
+      if (!section) return;
+      if (event.target.matches('dialog.ac__drawer, dialog.acq')) {
+        const bounds = event.target.getBoundingClientRect();
+        if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) event.target.close();
+      }
+      const opener = event.target.closest('[data-open-dialog],[data-quick-view-open]');
+      if (opener) document.getElementById(opener.dataset.openDialog || opener.dataset.quickViewOpen)?.showModal();
+      const closer = event.target.closest('[data-dialog-close]');
+      if (closer) closer.closest('dialog')?.close();
+      const wishlist = event.target.closest('[data-wishlist-product]');
+      if (wishlist) {
+        const saved = new Set(savedProducts());
+        const id = wishlist.dataset.wishlistProduct;
+        saved.has(id) ? saved.delete(id) : saved.add(id);
+        try { localStorage.setItem(wishlistKey, JSON.stringify([...saved])); } catch (_) {}
+        section.querySelectorAll('[data-wishlist-product="' + id + '"]').forEach(button => button.setAttribute('aria-pressed', String(saved.has(id))));
+        const status = section.querySelector('[data-wishlist-status]');
+        if (status) status.textContent = saved.has(id) ? 'Saved to your wishlist on this device.' : 'Removed from your wishlist on this device.';
+      }
+      const choice = event.target.closest('[data-option-value]');
+      if (choice) {
+        const dialog = choice.closest('.acq');
+        const group = choice.closest('[data-option-position]');
+        group.querySelectorAll('[data-option-value]').forEach(button => button.setAttribute('aria-pressed', String(button === choice)));
+        group.querySelector('[data-selected-label]').textContent = choice.dataset.optionValue;
+        const selected = [...dialog.querySelectorAll('[data-option-position]')].map(item => item.querySelector('[aria-pressed="true"]')?.dataset.optionValue || '');
+        const select = dialog.querySelector('[data-quick-view-variant]');
+        const match = [...select.options].find(option => [option.dataset.option1, option.dataset.option2, option.dataset.option3].slice(0, selected.length).every((value, index) => value === selected[index]));
+        const add = dialog.querySelector('[data-quick-view-add]');
+        const stock = dialog.querySelector('[data-quick-view-stock]');
+        if (match) {
+          select.value = match.value;
+          const available = match.dataset.available === 'true';
+          add.disabled = !available;
+          stock.textContent = available ? 'In stock' : 'Sold out';
+          dialog.querySelector('[data-quick-view-price]').textContent = match.dataset.price;
+          dialog.querySelector('[data-quick-view-add-price]').textContent = match.dataset.price;
+        } else { add.disabled = true; stock.textContent = 'Combination unavailable'; }
+      }
+    });
+    document.addEventListener('change', event => {
+      const radio = event.target.closest('[data-sort-option]');
+      if (radio) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('sort_by', radio.value);
+        url.searchParams.delete('page');
+        window.location.assign(url.toString());
+      }
+      const select = event.target.closest('[data-quick-view-variant]');
+      if (select) {
+        const dialog = select.closest('.acq');
+        const option = select.selectedOptions[0];
+        dialog.querySelector('[data-quick-view-price]').textContent = option.dataset.price;
+        dialog.querySelector('[data-quick-view-add-price]').textContent = option.dataset.price;
+      }
+    });
+  })();
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "AURELLE collection",
+  "settings": [
+    { "type": "header", "content": "Collection hero" },
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "Maison Joaillerie Parisienne" },
+    { "type": "text", "id": "hero_heading", "label": "Heading override" },
+    { "type": "textarea", "id": "hero_description", "label": "Description fallback", "default": "Explore the creations of our Parisian atelier." },
+    { "type": "text", "id": "hero_note", "label": "Small closing line", "default": "Everyday heirlooms. Extraordinary light." },
+    { "type": "image_picker", "id": "hero_image", "label": "Hero image override" },
+    { "type": "text", "id": "hero_image_alt", "label": "Hero image alternative text", "info": "Optional. Falls back to the image alt text or collection title." },
+    { "type": "range", "id": "products_per_page", "label": "Products per page", "min": 4, "max": 24, "step": 4, "default": 8 },
+    { "type": "page", "id": "size_guide_page", "label": "Size guide page" },
+    { "type": "text", "id": "dispatch_note", "label": "Dispatch message for available products" },
+    { "type": "header", "content": "Editorial story" },
+    { "type": "checkbox", "id": "show_editorial", "label": "Show editorial story", "default": true },
+    { "type": "image_picker", "id": "editorial_image", "label": "Editorial image override" },
+    { "type": "text", "id": "editorial_image_alt", "label": "Editorial image alternative text", "info": "Optional. Falls back to the image alt text or editorial heading." },
+    { "type": "text", "id": "editorial_eyebrow", "label": "Editorial eyebrow", "default": "The art of eternal reflection" },
+    { "type": "text", "id": "editorial_heading", "label": "Editorial heading", "default": "Born in Place Vendôme, made for your story." },
+    { "type": "textarea", "id": "editorial_text", "label": "Editorial text", "default": "A curve refined by hand. A diamond chosen for its light. Each creation carries the quiet signature of our atelier." },
+    { "type": "text", "id": "editorial_link_label", "label": "Editorial link label" },
+    { "type": "url", "id": "editorial_link", "label": "Editorial link" }
+  ],
+  "blocks": [
+    { "type": "category", "name": "Category collection", "settings": [
+      { "type": "collection", "id": "collection", "label": "Collection" },
+      { "type": "text", "id": "label", "label": "Optional label" }
+    ] }
+  ]
+}
+{% endschema %}

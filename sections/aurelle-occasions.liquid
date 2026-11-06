@@ -24,6 +24,13 @@
           {% liquid
             assign occasion_title = block.settings.heading
             assign occasion_alt = block.settings.image_alt | default: occasion_title
+            assign occasion_image = block.settings.image
+            if occasion_image == blank and block.settings.collection != blank
+              assign occasion_image = block.settings.collection.image
+              if occasion_image == blank
+                assign occasion_image = block.settings.collection.products.first.featured_image
+              endif
+            endif
             assign occasion_url = block.settings.link
             if block.settings.collection != blank
               assign occasion_url = block.settings.collection.url
@@ -38,12 +45,11 @@
             {{ block.shopify_attributes }}
           >
             <div class="aurelle-occasions__media">
-              {% if block.settings.image != blank %}
-                {{ block.settings.image | image_url: width: 1000 | image_tag: class: 'aurelle-occasions__image', alt: occasion_alt, widths: '320, 480, 640, 800, 1000', sizes: '(min-width: 1100px) 25vw, (min-width: 701px) 50vw, 78vw', loading: 'lazy' }}
+              {% if occasion_image != blank %}
+                {{ occasion_image | image_url: width: 1000 | image_tag: class: 'aurelle-occasions__image', alt: occasion_alt, widths: '320, 480, 640, 800, 1000', sizes: '(min-width: 1100px) 25vw, (min-width: 701px) 50vw, 78vw', loading: 'lazy' }}
               {% else %}
-                <div class="aurelle-occasions__placeholder" aria-hidden="true">
-                  {{ 'image' | placeholder_svg_tag: 'aurelle-occasions__placeholder-svg' }}
-                  {% if request.design_mode %}<span>Add an occasion photograph in this card's settings.</span>{% endif %}
+                <div class="aurelle-occasions__placeholder" role="img" aria-label="{{ occasion_alt | escape }}">
+                  <span class="aurelle-occasions__placeholder-mark" aria-hidden="true">◇</span>
                 </div>
               {% endif %}
               <span class="aurelle-occasions__shade" aria-hidden="true"></span>
@@ -90,7 +96,7 @@
     margin: 0 0 8px;
     color: var(--aurelle-occasions-accent);
     font-family: var(--font-primary--family);
-    font-size: 9px;
+    font-size: 13px;
     font-weight: 600;
     letter-spacing: 0.12em;
     line-height: 1.4;
@@ -110,7 +116,7 @@
     margin: 8px 0 0;
     color: color-mix(in srgb, var(--aurelle-occasions-foreground) 72%, transparent);
     font-family: var(--font-primary--family);
-    font-size: 12px;
+    font-size: 16px;
     line-height: 1.5;
   }
 
@@ -173,8 +179,16 @@
   .aurelle-occasions__placeholder span {
     max-width: 210px;
     font-family: var(--font-primary--family);
-    font-size: 11px;
+    font-size: 15px;
     line-height: 1.45;
+  }
+
+  .aurelle-occasions__placeholder-mark {
+    color: var(--aurelle-occasions-accent);
+    font-family: Georgia, 'Times New Roman', serif !important;
+    font-size: clamp(64px, 7vw, 104px) !important;
+    line-height: 1 !important;
+    opacity: 0.5;
   }
 
   .aurelle-occasions__shade {
@@ -197,7 +211,7 @@
   .aurelle-occasions__card-eyebrow {
     color: #e2c786;
     font-family: var(--font-primary--family);
-    font-size: 8px;
+    font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.11em;
     line-height: 1.4;
@@ -217,7 +231,7 @@
     gap: 5px;
     margin-top: 6px;
     font-family: var(--font-primary--family);
-    font-size: 9px;
+    font-size: 13px;
     font-weight: 500;
     letter-spacing: 0.045em;
     line-height: 1.4;
@@ -267,7 +281,7 @@
     .aurelle-occasions__description {
       max-width: 340px;
       margin-inline: auto;
-      font-size: 11px;
+      font-size: 15px;
     }
 
     .aurelle-occasions__grid {
@@ -318,7 +332,7 @@
       "type": "occasion",
       "name": "Occasion card",
       "settings": [
-        { "type": "image_picker", "id": "image", "label": "Card photograph" },
+        { "type": "image_picker", "id": "image", "label": "Card photograph", "info": "Optional. If blank, the selected collection image or its first product image is used, followed by a neutral placeholder." },
         { "type": "text", "id": "image_alt", "label": "Image alternative text" },
         { "type": "text", "id": "eyebrow", "label": "Card eyebrow", "default": "Capsule Collection" },
         { "type": "text", "id": "heading", "label": "Card heading", "default": "Everyday Refinement" },

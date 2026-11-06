@@ -15,3 +15,31 @@ node_modules/
 ## Release files
 release
 *.zip
+
+# Local secrets and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Local agent tooling
+.agents/
+skills-lock.json
+
+# Editor files
+.vscode/
+.idea/
+*.code-workspace
+*.suo
+*.user
+
+# Temporary and diagnostic files
+*.log
+*.tmp
+*.temp
+*.swp
+*.swo
+*~

@@ -14,25 +14,24 @@
           assign edition_link = routes.search_url | append: '?q=' | append: encoded_search_terms | append: '&type=product'
         endif
 
-        assign edition_image = 'aurelle-hero-main.jpeg'
-        if block.settings.fallback_image == 'earrings'
-          assign edition_image = 'aurelle-category-earrings.jpg'
+        assign edition_image = block.settings.image
+        if edition_image == blank and block.settings.collection != blank
+          assign edition_image = block.settings.collection.image
+          if edition_image == blank
+            assign edition_image = block.settings.collection.products.first.featured_image
+          endif
         endif
+        assign edition_alt = edition_image.alt | default: block.settings.heading
       %}
 
       <article class="aurelle-featured-editions__card" {{ block.shopify_attributes }}>
         <div class="aurelle-featured-editions__image-wrap">
-          {% if block.settings.image != blank %}
-            {{ block.settings.image | image_url: width: 1600 | image_tag: class: 'aurelle-featured-editions__image', alt: '', widths: '580, 900, 1200, 1600', sizes: '(min-width: 761px) calc((100vw - 120px) / 2), calc(100vw - 40px)', loading: 'lazy' }}
+          {% if edition_image != blank %}
+            {{ edition_image | image_url: width: 1600 | image_tag: class: 'aurelle-featured-editions__image', alt: edition_alt, widths: '580, 900, 1200, 1600', sizes: '(min-width: 761px) calc((100vw - 120px) / 2), calc(100vw - 40px)', loading: 'lazy' }}
           {% else %}
-            <img
-              class="aurelle-featured-editions__image"
-              src="{{ edition_image | asset_url }}"
-              width="580"
-              height="521"
-              alt=""
-              loading="lazy"
-            >
+            <div class="aurelle-featured-editions__placeholder" role="img" aria-label="{{ block.settings.heading | escape }}">
+              <span aria-hidden="true">◇</span>
+            </div>
           {% endif %}
         </div>
         <div class="aurelle-featured-editions__gradient" aria-hidden="true"></div>
@@ -108,6 +107,22 @@
     transition: transform 700ms cubic-bezier(0.2, 0.65, 0.3, 1);
   }
 
+  .aurelle-featured-editions__placeholder {
+    display: grid;
+    width: 100%;
+    height: 100%;
+    place-items: center;
+    color: #f1dfb7;
+    background: linear-gradient(145deg, #87745c, #302a25);
+  }
+
+  .aurelle-featured-editions__placeholder span {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(80px, 10vw, 150px);
+    line-height: 1;
+    opacity: 0.4;
+  }
+
   .aurelle-featured-editions__card:hover .aurelle-featured-editions__image,
   .aurelle-featured-editions__card:focus-within .aurelle-featured-editions__image {
     transform: scale(1.035);
@@ -126,7 +141,7 @@
     margin: 0 0 8px;
     color: var(--aurelle-editions-accent);
     font-family: var(--font-primary--family);
-    font-size: 11px;
+    font-size: 14px;
     font-weight: 600;
     letter-spacing: 0.25em;
     line-height: 16.5px;
@@ -147,7 +162,7 @@
     margin: 0 0 18px;
     color: rgb(252 249 244 / 90%);
     font-family: var(--font-primary--family);
-    font-size: 15px;
+    font-size: 17px;
     font-weight: 400;
     line-height: 1.625;
   }
@@ -163,7 +178,7 @@
     background: #fcf9f4;
     box-shadow: 0 4px 6px -1px rgb(0 0 0 / 10%), 0 2px 4px -2px rgb(0 0 0 / 10%);
     font-family: var(--font-primary--family);
-    font-size: 11px;
+    font-size: 14px;
     font-weight: 400;
     letter-spacing: 0.1em;
     line-height: 16.5px;
@@ -216,7 +231,7 @@
     }
 
     .aurelle-featured-editions__description {
-      font-size: 14px;
+      font-size: 16px;
     }
   }
 
@@ -266,17 +281,7 @@
           "type": "image_picker",
           "id": "image",
           "label": "Feature image",
-          "info": "Optional. If blank, the chosen existing AURELLE image is used."
-        },
-        {
-          "type": "select",
-          "id": "fallback_image",
-          "label": "Existing image fallback",
-          "options": [
-            { "value": "hero", "label": "AURELLE editorial portrait" },
-            { "value": "earrings", "label": "Gold earrings portrait" }
-          ],
-          "default": "hero"
+          "info": "Optional. If blank, the selected collection image or its first product image is used, followed by a neutral placeholder."
         },
         {
           "type": "text",
@@ -332,7 +337,6 @@
         {
           "type": "edition",
           "settings": {
-            "fallback_image": "hero",
             "eyebrow": "The High Jewellery Capsule",
             "heading": "Heirlooms for every day",
             "description": "Sculpted silhouettes for slow mornings, salon evenings, and everything in between.",
@@ -343,7 +347,6 @@
         {
           "type": "edition",
           "settings": {
-            "fallback_image": "earrings",
             "eyebrow": "Modern Solid Gold",
             "heading": "Thoughtful layers",
             "description": "Substantial chains, fluid pavé solitaires, and refined accents designed to layer and live in.",

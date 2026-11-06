@@ -39,6 +39,13 @@
                   {% render 'image', class: 'search-result__image', image: featured_image, url: result.url, width: 400, sizes: '(min-width: 1000px) 25vw, (min-width: 600px) 33vw, 100vw' %}
                 {% endif %}
                 <div class="search-result__content">
+                  <span class="search-result__type">
+                    {% case result.object_type %}
+                      {% when 'product' %}{{ 'search.product' | t }}
+                      {% when 'article' %}{{ 'search.article' | t }}
+                      {% when 'page' %}{{ 'search.page' | t }}
+                    {% endcase %}
+                  </span>
                   <p>
                     {{ result.title | link_to: result.url }}
                     {% if result.price %}

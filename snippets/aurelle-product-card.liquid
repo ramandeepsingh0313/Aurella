@@ -20,7 +20,7 @@
   assign color_option_index = -1
   for product_option in product.options_with_values
     assign option_name = product_option.name | downcase
-    if option_name contains 'color' or option_name contains 'colour'
+    if option_name contains 'color' or option_name contains 'colour' or option_name contains 'metal'
       assign color_option_index = forloop.index0
       break
     endif

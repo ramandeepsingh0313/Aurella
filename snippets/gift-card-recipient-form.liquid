@@ -1,0 +1,35 @@
+{% doc %}
+  Renders recipient fields inside a gift card product form.
+
+  @param {string} section_id - Unique ID of the containing product section.
+{% enddoc %}
+
+<div class="aurelle-gift-recipient" data-gift-recipient>
+  <label class="aurelle-gift-recipient__toggle" for="GiftRecipientToggle-{{ section_id }}">
+    <input id="GiftRecipientToggle-{{ section_id }}" type="checkbox" name="properties[__shopify_send_gift_card_to_recipient]" value="true" data-gift-recipient-toggle>
+    <span>{{ 'gift_card.send_to_recipient' | t }}</span>
+  </label>
+  <fieldset class="aurelle-gift-recipient__fields" data-gift-recipient-fields>
+    <legend class="visually-hidden">{{ 'gift_card.recipient_details' | t }}</legend>
+    <label for="GiftRecipientEmail-{{ section_id }}">{{ 'gift_card.recipient_email' | t }}</label>
+    <input id="GiftRecipientEmail-{{ section_id }}" type="email" name="properties[Recipient email]" autocomplete="email" data-gift-recipient-email>
+    <label for="GiftRecipientName-{{ section_id }}">{{ 'gift_card.recipient_name' | t }}</label>
+    <input id="GiftRecipientName-{{ section_id }}" type="text" name="properties[Recipient name]" maxlength="255" autocomplete="name">
+    <label for="GiftRecipientMessage-{{ section_id }}">{{ 'gift_card.recipient_message' | t }}</label>
+    <textarea id="GiftRecipientMessage-{{ section_id }}" name="properties[Message]" maxlength="200" rows="3"></textarea>
+    <label for="GiftRecipientDate-{{ section_id }}">{{ 'gift_card.send_on' | t }}</label>
+    <input id="GiftRecipientDate-{{ section_id }}" type="date" name="properties[Send on]" data-gift-recipient-date>
+    <input type="hidden" name="properties[__shopify_offset]" data-gift-recipient-offset>
+  </fieldset>
+</div>
+
+{% stylesheet %}
+  .aurelle-gift-recipient { margin-block: 18px; }
+  .aurelle-gift-recipient__toggle { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  .aurelle-gift-recipient__fields { display: grid; gap: 8px; min-width: 0; margin: 16px 0 0; padding: 0; border: 0; }
+  .aurelle-gift-recipient__fields:disabled { display: none; }
+  .aurelle-gift-recipient__fields label { margin-top: 8px; }
+  .aurelle-gift-recipient__fields :is(input, textarea) { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid #d7d0c5; background: transparent; color: inherit; }
+  .aurelle-gift-recipient__fields :is(input, textarea):focus-visible,
+  .aurelle-gift-recipient__toggle input:focus-visible { outline: 2px solid #806122; outline-offset: 2px; }
+{% endstylesheet %}

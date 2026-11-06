@@ -1,0 +1,122 @@
+{% doc %}
+  Renders one live Shopify product in the AURELLE collection grid and quick view.
+
+  @param {product} product - Product from the current collection.
+  @param {string} section_id - Parent section ID for unique form and dialog IDs.
+  @param {string} collection_title - Current collection title for quick-view context.
+  @param {string} [dispatch_note] - Merchant-provided dispatch copy.
+  @param {page} [size_guide_page] - Optional page for a size guide.
+{% enddoc %}
+
+{% liquid
+  assign current_variant = product.selected_or_first_available_variant
+  assign card_form_id = 'ac-card-' | append: section_id | append: '-' | append: product.id
+  assign dialog_form_id = 'ac-dialog-' | append: section_id | append: '-' | append: product.id
+  assign dialog_id = 'ac-view-' | append: section_id | append: '-' | append: product.id
+  assign card_subtitle = product.metafields.custom.card_subtitle.value | default: product.metafields.custom.metal.value | default: product.type
+  assign card_detail = product.metafields.custom.card_description.value | default: product.metafields.custom.short_description.value
+  if card_detail == blank and product.description != blank
+    assign card_detail = product.description | strip_html | truncate: 62
+  endif
+  assign card_badge = blank
+  for tag in product.tags
+    assign tag_prefix = tag | slice: 0, 6 | downcase
+    if tag_prefix == 'badge:'
+      assign card_badge = tag | remove_first: 'Badge:' | remove_first: 'badge:' | strip
+      break
+    endif
+  endfor
+%}
+
+<article class="ac__card">
+  <div class="ac__card-media">
+    <a href="{{ product.url }}" class="ac__card-image-link" aria-label="View {{ product.title | escape }}">
+      {% if product.featured_image != blank %}
+        {{ product.featured_image | image_url: width: 900 | image_tag: class: 'ac__card-image', alt: product.featured_image.alt, widths: '320, 500, 700, 900', sizes: '(min-width: 1200px) 25vw, (min-width: 700px) 33vw, 50vw', loading: 'lazy' }}
+        {% if product.images[1] != blank %}{{ product.images[1] | image_url: width: 900 | image_tag: class: 'ac__card-image ac__card-image--hover', alt: '', widths: '320, 500, 700, 900', sizes: '(min-width: 1200px) 25vw, (min-width: 700px) 33vw, 50vw', loading: 'lazy' }}{% endif %}
+      {% else %}
+        {{ 'product-1' | placeholder_svg_tag: 'ac__card-image' }}
+      {% endif %}
+    </a>
+    {% if card_badge != blank %}<span class="ac__badge">{{ card_badge | escape }}</span>{% elsif product.available == false %}<span class="ac__badge">Sold out</span>{% endif %}
+    <button class="ac__wishlist" type="button" data-wishlist-product="{{ product.id }}" aria-label="Save {{ product.title | escape }}" aria-pressed="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 20.2 4.4 12.9C-1.5 7.3 7 1.2 12 6.8c5-5.6 13.5.5 7.6 6.1L12 20.2Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="ac__card-actions">
+      {% if product.available and product.has_only_default_variant and product.requires_selling_plan == false %}
+        {% form 'product', product, id: card_form_id %}<input type="hidden" name="id" value="{{ current_variant.id }}"><button class="ac__quick-add" type="submit">Quick add +</button>{% endform %}
+      {% else %}
+        <button class="ac__quick-add" type="button" data-quick-view-open="{{ dialog_id }}">{% if product.available %}Choose options{% else %}View details{% endif %}</button>
+      {% endif %}
+      <button type="button" data-quick-view-open="{{ dialog_id }}">Quick view</button>
+    </div>
+  </div>
+
+  <div class="ac__card-copy">
+    <div class="ac__card-meta"><span>{{ card_subtitle | escape }}</span>
+      {% for option in product.options_with_values %}
+        {% assign option_name = option.name | downcase %}
+        {% if option_name contains 'metal' or option_name contains 'color' or option_name contains 'colour' %}
+          {% assign metal_name = current_variant.options[forloop.index0] | downcase %}
+          {% assign metal_color = '#c5a35f' %}
+          {% if metal_name contains 'white' or metal_name contains 'silver' or metal_name contains 'platinum' %}{% assign metal_color = '#d2d1ce' %}{% elsif metal_name contains 'rose' %}{% assign metal_color = '#dca592' %}{% endif %}
+          <span class="ac__metal-dot" style="--ac-metal:{{ metal_color }}" aria-label="{{ current_variant.options[forloop.index0] | escape }}"></span>
+          {% break %}
+        {% endif %}
+      {% endfor %}
+    </div>
+    <h3><a href="{{ product.url }}">{{ product.title | escape }}</a></h3>
+    {% if card_detail != blank %}<p class="ac__card-detail">{{ card_detail | escape }}</p>{% endif %}
+    <p class="ac__card-price">{{ product.price | money }}{% if product.compare_at_price > product.price %}<s>{{ product.compare_at_price | money }}</s>{% endif %}</p>
+  </div>
+
+  <dialog class="acq" id="{{ dialog_id }}" aria-label="Quick view: {{ product.title | escape }}">
+    <div class="acq__heading"><h2>A closer look</h2><button type="button" aria-label="Close quick view" data-dialog-close>×</button></div>
+    <div class="acq__body">
+      <div class="acq__visual">
+        {% if product.featured_image != blank %}{{ product.featured_image | image_url: width: 1000 | image_tag: class: 'acq__image', alt: product.featured_image.alt, widths: '400, 700, 1000', sizes: '(min-width: 700px) 43vw, 90vw', loading: 'lazy' }}{% else %}{{ 'product-1' | placeholder_svg_tag: 'acq__image' }}{% endif %}
+        <p>{{ product.title | escape }} · {{ collection_title | escape }}</p>
+      </div>
+      <div class="acq__content">
+        <p class="ac__eyebrow">{{ collection_title | escape }}</p>
+        <h3>{{ product.title | escape }}</h3>
+        <p class="acq__price" data-quick-view-price>{{ current_variant.price | money }}</p>
+        {% if product.description != blank %}<p class="acq__description">{{ product.description | strip_html | truncate: 220 | escape }}</p>{% endif %}
+
+        {% if product.available and product.requires_selling_plan == false %}
+          {% form 'product', product, id: dialog_form_id %}
+            {% unless product.has_only_default_variant %}
+              <div class="acq__option-groups">
+                {% for option in product.options_with_values %}
+                  {% assign option_index = forloop.index0 %}
+                  {% assign selected_option_value = current_variant.options[option_index] %}
+                  {% assign option_name = option.name | downcase %}
+                  <fieldset class="acq__option-group" data-option-position="{{ option.position }}">
+                    <legend>{{ option.name | escape }}: <span data-selected-label>{{ selected_option_value | escape }}</span></legend>
+                    <div class="acq__choices{% if option_name contains 'metal' or option_name contains 'color' or option_name contains 'colour' %} acq__choices--metal{% endif %}">
+                      {% for value in option.values %}
+                        {% assign option_label = value.name | default: value %}
+                        {% assign normalized_value = option_label | downcase %}
+                        {% assign swatch_color = '#c5a35f' %}
+                        {% if normalized_value contains 'white' or normalized_value contains 'silver' or normalized_value contains 'platinum' %}{% assign swatch_color = '#d2d1ce' %}{% elsif normalized_value contains 'rose' %}{% assign swatch_color = '#dca592' %}{% endif %}
+                        <button type="button" class="acq__choice" data-option-value="{{ option_label | escape }}" aria-pressed="{% if option_label == selected_option_value %}true{% else %}false{% endif %}" title="{{ option_label | escape }}" style="--ac-choice-color:{{ swatch_color }}">{% if option_name contains 'metal' or option_name contains 'color' or option_name contains 'colour' %}<span class="acq__swatch"></span><span class="acq__visually-hidden">{{ option_label | escape }}</span>{% else %}{{ option_label | escape }}{% endif %}</button>
+                      {% endfor %}
+                    </div>
+                  </fieldset>
+                {% endfor %}
+              </div>
+              <label class="acq__native-label" for="acq-variant-{{ section_id }}-{{ product.id }}">Choose variant</label>
+              <select class="acq__variant-select" id="acq-variant-{{ section_id }}-{{ product.id }}" name="id" data-quick-view-variant required>
+                {% for variant in product.variants %}<option value="{{ variant.id }}" data-option1="{{ variant.option1 | escape }}" data-option2="{{ variant.option2 | escape }}" data-option3="{{ variant.option3 | escape }}" data-price="{{ variant.price | money | escape }}" data-available="{{ variant.available }}"{% if variant.id == current_variant.id %} selected{% endif %}{% unless variant.available %} disabled{% endunless %}>{{ variant.title | escape }}{% unless variant.available %} — Sold out{% endunless %}</option>{% endfor %}
+              </select>
+            {% else %}<input type="hidden" name="id" value="{{ current_variant.id }}">{% endunless %}
+            {% if size_guide_page != blank %}<a class="acq__size-guide" href="{{ size_guide_page.url }}">Size guide</a>{% endif %}
+            <p class="acq__stock" data-quick-view-stock>{% if current_variant.available %}In stock{% else %}Sold out{% endif %}{% if current_variant.available and dispatch_note != blank %} · {{ dispatch_note | escape }}{% endif %}</p>
+            <button class="acq__add" type="submit" data-quick-view-add{% unless current_variant.available %} disabled{% endunless %}>Add to bag — <span data-quick-view-add-price>{{ current_variant.price | money }}</span></button>
+          {% endform %}
+        {% elsif product.requires_selling_plan %}<p>View the product page to choose a purchase plan.</p>{% else %}<p>Sold out</p>{% endif %}
+        <a class="acq__details" href="{{ product.url }}">View full creation details →</a>
+      </div>
+    </div>
+  </dialog>
+</article>

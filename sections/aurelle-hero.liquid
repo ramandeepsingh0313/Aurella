@@ -1,9 +1,8 @@
 {% liquid
   assign show_hero_actions = false
+  assign primary_cta_link = section.settings.primary_cta_link | default: routes.all_products_collection_url
   if section.settings.primary_cta_label != blank
-    if section.settings.primary_cta_link != blank
-      assign show_hero_actions = true
-    endif
+    assign show_hero_actions = true
   endif
 
   if section.settings.secondary_cta_label != blank
@@ -49,8 +48,8 @@
 
       {% if show_hero_actions %}
         <div class="aurelle-hero__actions">
-          {% if section.settings.primary_cta_label != blank and section.settings.primary_cta_link != blank %}
-            <a class="aurelle-hero__button" href="{{ section.settings.primary_cta_link | escape }}">
+          {% if section.settings.primary_cta_label != blank %}
+            <a class="aurelle-hero__button" href="{{ primary_cta_link | escape }}">
               {{ section.settings.primary_cta_label | escape }}
             </a>
           {% endif %}
@@ -137,6 +136,41 @@
         {% endif %}
       </div>
 
+      {% for block in section.blocks %}
+        {% if block.type == 'product_hotspot' %}
+          {% assign hotspot_product = block.settings.product %}
+          {% if hotspot_product != blank or request.design_mode %}
+            <details
+              class="aurelle-hero__hotspot"
+              name="aurelle-hero-hotspots-{{ section.id }}"
+              style="--aurelle-hotspot-x: {{ block.settings.position_x }}%; --aurelle-hotspot-y: {{ block.settings.position_y }}%;"
+              {{ block.shopify_attributes }}
+            >
+              <summary class="aurelle-hero__hotspot-trigger" aria-label="{% if hotspot_product != blank %}View {{ hotspot_product.title | escape }}{% else %}Select a product for hotspot {{ forloop.index }}{% endif %}">
+                <span aria-hidden="true">{{ forloop.index | prepend: '0' }}</span>
+              </summary>
+              <div class="aurelle-hero__hotspot-panel">
+                {% if hotspot_product != blank %}
+                  {% if hotspot_product.featured_image != blank %}
+                    {% assign hotspot_image_alt = hotspot_product.featured_image.alt | default: hotspot_product.title %}
+                    {{ hotspot_product.featured_image | image_url: width: 180 | image_tag: class: 'aurelle-hero__hotspot-image', alt: hotspot_image_alt, widths: '90, 180', sizes: '72px', loading: 'lazy' }}
+                  {% endif %}
+                  <div class="aurelle-hero__hotspot-copy">
+                    {% if section.settings.hotspot_label != blank %}
+                      <p class="aurelle-hero__hotspot-label">{{ section.settings.hotspot_label | escape }}</p>
+                    {% endif %}
+                    <a href="{{ hotspot_product.url }}">{{ hotspot_product.title | escape }}</a>
+                    <span>{{ hotspot_product.price | money }}</span>
+                  </div>
+                {% else %}
+                  <p class="aurelle-hero__hotspot-empty">Choose a product in this hotspot block to connect the image to a real creation.</p>
+                {% endif %}
+              </div>
+            </details>
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+
       {% if section.settings.appointment_badge != blank %}
         {% if section.settings.appointment_link != blank %}
           <a class="aurelle-hero__appointment" href="{{ section.settings.appointment_link | escape }}">
@@ -200,7 +234,7 @@
     margin: 0 0 22px;
     color: var(--aurelle-hero-accent);
     font-family: var(--font-primary--family);
-    font-size: 10px;
+    font-size: 13px;
     letter-spacing: 0.14em;
     line-height: 1.4;
     text-transform: uppercase;
@@ -237,7 +271,7 @@
     margin-top: 16px;
     color: rgb(39 37 33 / 78%);
     font-family: var(--font-primary--family);
-    font-size: 16px;
+    font-size: 17px;
     line-height: 1.62;
   }
 
@@ -259,7 +293,7 @@
     color: #fff;
     background: #171716;
     font-family: var(--font-primary--family);
-    font-size: 11px;
+    font-size: 14px;
     letter-spacing: 0.12em;
     line-height: 1.2;
     text-align: center;
@@ -281,7 +315,7 @@
     padding: 0 8px;
     color: var(--aurelle-hero-foreground);
     font-family: var(--font-primary--family);
-    font-size: 11px;
+    font-size: 14px;
     letter-spacing: 0.12em;
     line-height: 1.2;
     text-decoration: none;
@@ -321,7 +355,7 @@
     gap: 8px;
     color: rgb(39 37 33 / 82%);
     font-family: var(--font-primary--family);
-    font-size: 10px;
+    font-size: 13px;
     letter-spacing: 0.04em;
     line-height: 1.4;
     text-transform: uppercase;
@@ -371,6 +405,103 @@
     transform: scale(1.035);
   }
 
+  .aurelle-hero__hotspot-trigger {
+    position: absolute;
+    z-index: 3;
+    top: var(--aurelle-hotspot-y);
+    left: var(--aurelle-hotspot-x);
+    display: grid;
+    width: 44px;
+    height: 44px;
+    place-items: center;
+    border: 1px solid rgb(255 255 255 / 85%);
+    border-radius: 50%;
+    color: #fff;
+    background: var(--aurelle-hero-accent);
+    box-shadow: 0 0 0 5px rgb(255 255 255 / 28%), 0 4px 16px rgb(0 0 0 / 22%);
+    cursor: pointer;
+    font-family: var(--font-primary--family);
+    font-size: 12px;
+    letter-spacing: 0.03em;
+    list-style: none;
+    transform: translate(-50%, -50%);
+    transition: box-shadow 180ms ease, scale 180ms ease;
+  }
+
+  .aurelle-hero__hotspot-trigger::-webkit-details-marker {
+    display: none;
+  }
+
+  .aurelle-hero__hotspot-trigger:hover,
+  .aurelle-hero__hotspot[open] .aurelle-hero__hotspot-trigger {
+    box-shadow: 0 0 0 7px rgb(255 255 255 / 40%), 0 7px 20px rgb(0 0 0 / 24%);
+    scale: 1.06;
+  }
+
+  .aurelle-hero__hotspot-trigger:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 5px;
+  }
+
+  .aurelle-hero__hotspot-panel {
+    position: absolute;
+    z-index: 5;
+    top: clamp(12px, calc(var(--aurelle-hotspot-y) + 30px), calc(100% - 150px));
+    left: clamp(8px, calc(var(--aurelle-hotspot-x) - 130px), calc(100% - 268px));
+    display: flex;
+    width: 260px;
+    min-height: 112px;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    color: var(--aurelle-hero-foreground);
+    background: #fff;
+    box-shadow: 0 10px 28px rgb(39 37 33 / 22%);
+    animation: aurelle-hotspot-reveal 180ms ease-out;
+  }
+
+  .aurelle-hero__hotspot-image {
+    width: 72px;
+    height: 88px;
+    flex: 0 0 72px;
+    object-fit: cover;
+  }
+
+  .aurelle-hero__hotspot-copy {
+    display: grid;
+    min-width: 0;
+    gap: 4px;
+  }
+
+  .aurelle-hero__hotspot-label {
+    margin: 0;
+    color: var(--aurelle-hero-accent);
+    font-size: 10px;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+  }
+
+  .aurelle-hero__hotspot-copy a {
+    color: inherit;
+    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+    font-size: 17px;
+    line-height: 1.2;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+
+  .aurelle-hero__hotspot-copy span,
+  .aurelle-hero__hotspot-empty {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  @keyframes aurelle-hotspot-reveal {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
   .aurelle-hero__placeholder {
     display: block;
     width: 100%;
@@ -386,7 +517,7 @@
     padding: 8px 10px;
     color: var(--aurelle-hero-foreground);
     background: rgb(247 244 239 / 90%);
-    font-size: 11px;
+    font-size: 14px;
     line-height: 1.4;
     text-align: center;
   }
@@ -428,7 +559,7 @@
     margin: 0;
     color: var(--aurelle-hero-foreground);
     font-family: var(--font-primary--family);
-    font-size: 12px;
+    font-size: 14px;
     line-height: 1.35;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -436,7 +567,7 @@
 
   .aurelle-hero__caption p {
     color: var(--aurelle-hero-accent);
-    font-size: 10px;
+    font-size: 13px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
   }
@@ -457,7 +588,7 @@
     background: #fff;
     box-shadow: 0 5px 14px rgb(39 37 33 / 12%);
     font-family: var(--font-primary--family);
-    font-size: 10px;
+    font-size: 13px;
     letter-spacing: 0.12em;
     line-height: 1.35;
     text-decoration: none;
@@ -516,7 +647,7 @@
 
     .aurelle-hero__eyebrow {
       margin-bottom: 16px;
-      font-size: 9px;
+      font-size: 12px;
     }
 
     .aurelle-hero__heading {
@@ -526,7 +657,7 @@
 
     .aurelle-hero__description {
       margin-top: 14px;
-      font-size: 15px;
+      font-size: 16px;
       line-height: 1.55;
     }
 
@@ -538,12 +669,12 @@
     .aurelle-hero__button {
       min-height: 46px;
       padding-inline: 18px;
-      font-size: 10px;
+      font-size: 14px;
     }
 
     .aurelle-hero__text-link {
       padding-inline: 0;
-      font-size: 10px;
+      font-size: 14px;
     }
 
     .aurelle-hero__proof-points {
@@ -553,7 +684,7 @@
 
     .aurelle-hero__proof-points li:not(.aurelle-hero__proof-separator) {
       gap: 6px;
-      font-size: 9px;
+      font-size: 13px;
     }
 
     .aurelle-hero__proof-points svg {
@@ -595,7 +726,16 @@
       max-width: calc(100% - 4px);
       min-height: 36px;
       padding-inline: 12px;
-      font-size: 8px;
+      font-size: 12px;
+    }
+
+    .aurelle-hero__hotspot-panel {
+      top: auto;
+      right: 8px;
+      bottom: 28px;
+      left: 8px;
+      width: auto;
+      min-height: 90px;
     }
   }
 
@@ -609,8 +749,13 @@
     .aurelle-hero__button,
     .aurelle-hero__text-link svg,
     .aurelle-hero__image,
-    .aurelle-hero__appointment {
+    .aurelle-hero__appointment,
+    .aurelle-hero__hotspot-trigger {
       transition: none;
+    }
+
+    .aurelle-hero__hotspot-panel {
+      animation: none;
     }
 
     .aurelle-hero__button:hover,
@@ -712,13 +857,13 @@
       "type": "text",
       "id": "primary_cta_label",
       "label": "Primary button label",
-      "default": "Explore High Jewellery"
+      "default": "Explore creations"
     },
     {
       "type": "url",
       "id": "primary_cta_link",
       "label": "Primary button link",
-      "info": "Leave blank to hide this button until a destination is selected."
+      "info": "Defaults to all products when no destination is selected."
     },
     {
       "type": "text",
@@ -771,6 +916,12 @@
       "default": "Private salon appointments open"
     },
     {
+      "type": "text",
+      "id": "hotspot_label",
+      "label": "Product hotspot label",
+      "default": "From the atelier"
+    },
+    {
       "type": "url",
       "id": "appointment_link",
       "label": "Appointment badge link",
@@ -812,9 +963,24 @@
       "info": "Approximate muted-gold implementation default; adjust to the approved brand color."
     }
   ],
+  "blocks": [
+    {
+      "type": "product_hotspot",
+      "name": "Product hotspot",
+      "limit": 3,
+      "settings": [
+        { "type": "product", "id": "product", "label": "Product", "info": "Only selected products appear as hotspots on the storefront." },
+        { "type": "range", "id": "position_x", "label": "Horizontal position", "min": 10, "max": 90, "step": 1, "unit": "%", "default": 35 },
+        { "type": "range", "id": "position_y", "label": "Vertical position", "min": 10, "max": 90, "step": 1, "unit": "%", "default": 50 }
+      ]
+    }
+  ],
   "presets": [
     {
-      "name": "AURELLE hero"
+      "name": "AURELLE hero",
+      "blocks": [
+        { "type": "product_hotspot" }
+      ]
     }
   ]
 }

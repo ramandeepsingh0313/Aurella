@@ -11,7 +11,47 @@
   "sections": {
     "main": {
       "type": "product",
-      "settings": {}
+      "settings": {},
+      "blocks": {
+        "insured-transit": {
+          "type": "service",
+          "settings": {
+            "icon": "truck",
+            "title": "Insured global transit",
+            "description": "Complimentary, fully insured delivery. Dispatched in 2–3 business days."
+          }
+        },
+        "atelier-returns": {
+          "type": "service",
+          "settings": {
+            "icon": "return",
+            "title": "30-Day Atelier Returns",
+            "description": "Time to fall in love. Complimentary returns on non-engraved creations."
+          }
+        },
+        "certified-brilliance": {
+          "type": "service",
+          "settings": {
+            "icon": "diamond",
+            "title": "Certified Brilliance",
+            "description": "Conflict-free natural diamonds, with a certificate of authenticity."
+          }
+        },
+        "lifetime-care": {
+          "type": "service",
+          "settings": {
+            "icon": "infinity",
+            "title": "Lifetime Care",
+            "description": "Expert cleaning and annual inspections, for a lifetime of brilliance."
+          }
+        }
+      },
+      "block_order": [
+        "insured-transit",
+        "atelier-returns",
+        "certified-brilliance",
+        "lifetime-care"
+      ]
     }
   },
   "order": [

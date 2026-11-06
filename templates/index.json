@@ -11,6 +11,17 @@
   "sections": {
     "main": {
       "type": "aurelle-hero",
+      "blocks": {
+        "editorial_creation_one": {
+          "type": "product_hotspot",
+          "settings": { "position_x": 34, "position_y": 48 }
+        },
+        "editorial_creation_two": {
+          "type": "product_hotspot",
+          "settings": { "position_x": 73, "position_y": 55 }
+        }
+      },
+      "block_order": ["editorial_creation_one", "editorial_creation_two"],
       "settings": {}
     },
     "aurelle_categories": {
@@ -77,7 +88,7 @@
         "high_jewellery": {
           "type": "edition",
           "settings": {
-            "fallback_image": "hero",
+            "fallback_image": "diamond_editorial",
             "eyebrow": "The High Jewellery Capsule",
             "heading": "Heirlooms for every day",
             "description": "Sculpted silhouettes for slow mornings, salon evenings, and everything in between.",
@@ -88,7 +99,7 @@
         "modern_gold": {
           "type": "edition",
           "settings": {
-            "fallback_image": "earrings",
+            "fallback_image": "gold_editorial",
             "eyebrow": "Modern Solid Gold",
             "heading": "Thoughtful layers",
             "description": "Substantial chains, fluid pavé solitaires, and refined accents designed to layer and live in.",
@@ -159,6 +170,7 @@
         "everyday_refinement": {
           "type": "occasion",
           "settings": {
+            "fallback_image": "everyday",
             "eyebrow": "Capsule Collection",
             "heading": "Everyday Refinement",
             "link_label": "Explore edit"
@@ -167,6 +179,7 @@
         "wedding_bridal": {
           "type": "occasion",
           "settings": {
+            "fallback_image": "bridal",
             "eyebrow": "Ceremony & Vows",
             "heading": "Wedding & Bridal",
             "link_label": "Explore edit"
@@ -175,6 +188,7 @@
         "milestones_anniversaries": {
           "type": "occasion",
           "settings": {
+            "fallback_image": "milestones",
             "eyebrow": "Heirlooms of Love",
             "heading": "Milestones & Anniversaries",
             "link_label": "Explore edit"
@@ -183,6 +197,7 @@
         "black_tie_suite": {
           "type": "occasion",
           "settings": {
+            "fallback_image": "gala",
             "eyebrow": "Evening Gala",
             "heading": "The Black-Tie Suite",
             "link_label": "Explore edit"
@@ -319,8 +334,8 @@
   "order": [
     "main",
     "aurelle_categories",
-    "aurelle_featured_editions",
     "aurelle_iconic_products",
+    "aurelle_featured_editions",
     "aurelle_craftsmanship",
     "aurelle_occasions",
     "aurelle_lookbook",

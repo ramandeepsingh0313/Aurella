@@ -31,6 +31,16 @@
                   <span class="aurelle-cart__item-copy">
                     <a href="{{ item.url }}">{{ item.product.title | escape }}</a>
                     {% unless item.variant.title == 'Default Title' %}<span>{{ item.variant.title | escape }}</span>{% endunless %}
+                    {% for property in item.properties %}
+                      {% assign property_first_character = property.first | slice: 0 %}
+                      {% if property.last != blank and property_first_character != '_' %}
+                        <span>{{ property.first | escape }}: {{ property.last | escape }}</span>
+                      {% endif %}
+                    {% endfor %}
+                    {% if item.selling_plan_allocation != blank %}<span>{{ item.selling_plan_allocation.selling_plan.name | escape }}</span>{% endif %}
+                    {% for discount_allocation in item.line_level_discount_allocations %}
+                      <span class="aurelle-cart__discount">{{ discount_allocation.discount_application.title | escape }}: -{{ discount_allocation.amount | money }}</span>
+                    {% endfor %}
                     {{ 'cart.remove' | t | link_to: item.url_to_remove }}
                   </span>
                 </td>
@@ -38,17 +48,34 @@
                   <label class="visually-hidden" for="CartQuantity-{{ item.index | plus: 1 }}">{{ 'cart.quantity' | t }} — {{ item.product.title | escape }}</label>
                   <input id="CartQuantity-{{ item.index | plus: 1 }}" type="number" name="updates[]" min="0" value="{{ item.quantity }}" inputmode="numeric">
                 </td>
-                <td class="aurelle-cart__line-total">{{ item.final_line_price | money_with_currency }}</td>
+                <td class="aurelle-cart__line-total">
+                  {% if item.original_line_price > item.final_line_price %}<s>{{ item.original_line_price | money_with_currency }}</s>{% endif %}
+                  {{ item.final_line_price | money_with_currency }}
+                </td>
               </tr>
             {% endfor %}
           </tbody>
         </table>
 
+        <div class="aurelle-cart__note">
+          <label for="AurelleCartNote-{{ section.id }}">{{ 'cart.note' | t }}</label>
+          <textarea id="AurelleCartNote-{{ section.id }}" name="note" rows="3">{{ cart.note | escape }}</textarea>
+        </div>
+
         <div class="aurelle-cart__summary">
           <button class="aurelle-cart__update" type="submit" name="update">{{ 'cart.update' | t }}</button>
-          <p>{{ 'cart.total' | t }} <strong>{{ cart.total_price | money_with_currency }}</strong></p>
+          <div class="aurelle-cart__totals">
+            <p>{{ 'cart.subtotal' | t }} <strong>{{ cart.items_subtotal_price | money_with_currency }}</strong></p>
+            {% for discount_application in cart.cart_level_discount_applications %}
+              <p class="aurelle-cart__discount">{{ discount_application.title | escape }} <strong>-{{ discount_application.total_allocated_amount | money_with_currency }}</strong></p>
+            {% endfor %}
+            <p>{{ 'cart.total' | t }} <strong>{{ cart.total_price | money_with_currency }}</strong></p>
+          </div>
           <button class="aurelle-cart__checkout" type="submit" name="checkout">{{ 'cart.checkout' | t }}</button>
         </div>
+        {% if additional_checkout_buttons %}
+          <div class="aurelle-cart__accelerated-checkout">{{ content_for_additional_checkout_buttons }}</div>
+        {% endif %}
       </form>
     {% endif %}
   </div>
@@ -121,7 +148,7 @@
   .aurelle-cart__item-copy span,
   .aurelle-cart__item-copy a:last-child {
     color: #77716a;
-    font-size: 13px;
+    font-size: 16px;
   }
 
   .aurelle-cart__quantity input {
@@ -138,6 +165,15 @@
     gap: 16px;
     margin-top: 24px;
   }
+
+  .aurelle-cart__note { display: grid; gap: 8px; max-width: 520px; margin-top: 28px; }
+  .aurelle-cart__note textarea { width: 100%; padding: 10px 12px; border: 1px solid #c9c1b6; resize: vertical; }
+  .aurelle-cart__totals { display: grid; gap: 6px; margin-right: auto; }
+  .aurelle-cart__totals p { display: flex; justify-content: space-between; gap: 24px; }
+  .aurelle-cart__discount { color: #806122 !important; }
+  .aurelle-cart__line-total s { display: block; color: #77716a; font-size: 14px; }
+  .aurelle-cart__accelerated-checkout { margin-top: 18px; }
+  .aurelle-cart :is(input, textarea, button, a):focus-visible { outline: 2px solid #806122; outline-offset: 3px; }
 
   .aurelle-cart__summary p {
     margin: 0 auto 0 0;

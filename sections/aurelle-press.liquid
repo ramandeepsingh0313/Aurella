@@ -1,3 +1,4 @@
+{% if section.settings.show_verified_content %}
 <section
   class="aurelle-press full-width"
   style="--aurelle-press-background: {{ section.settings.background_color }}; --aurelle-press-foreground: {{ section.settings.foreground_color }}; --aurelle-press-muted: {{ section.settings.muted_color }};"
@@ -23,6 +24,7 @@
     {% endif %}
   </div>
 </section>
+{% endif %}
 
 {% stylesheet %}
   .aurelle-press {
@@ -41,7 +43,7 @@
     margin: 0 0 22px;
     color: var(--aurelle-press-foreground);
     font-family: var(--font-primary--family);
-    font-size: 9px;
+    font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.1em;
     line-height: 1.4;
@@ -161,6 +163,7 @@
 {
   "name": "AURELLE press mentions",
   "settings": [
+    { "type": "checkbox", "id": "show_verified_content", "label": "Show approved press mentions", "default": false, "info": "Enable only after confirming each publication mention and permission to use its name or logo." },
     { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "As Celebrated In" },
     { "type": "color", "id": "background_color", "label": "Section background", "default": "#FCF9F4" },
     { "type": "color", "id": "foreground_color", "label": "Primary text", "default": "#39352F" },

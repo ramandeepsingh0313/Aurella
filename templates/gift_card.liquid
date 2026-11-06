@@ -12,12 +12,19 @@
     {% # Social, title, etc. %}
     {% render 'meta-tags' %}
 
+    <script src="{{ 'vendor/qrcode.js' | shopify_asset_url }}" defer></script>
+
     {% style %}
       main {
         text-align: center;
       }
       main img {
         display: unset;
+      }
+      #gift-card-qr {
+        display: flex;
+        justify-content: center;
+        margin: 24px auto;
       }
     {% endstyle %}
 
@@ -56,6 +63,17 @@
         <h2>{{ shop.name }}</h2>
         <p>{{ 'gift_card.use_at_checkout' | t }}</p>
         <p>{{ gift_card.code | format_code }}</p>
+
+        <div id="gift-card-qr" aria-label="{{ 'gift_card.qr_code' | t }}"></div>
+        <script>
+          document.addEventListener('DOMContentLoaded', function () {
+            new QRCode(document.getElementById('gift-card-qr'), {
+              text: {{ gift_card.qr_identifier | json }},
+              width: 120,
+              height: 120
+            });
+          });
+        </script>
 
         {% if gift_card.pass_url %}
           <a href="{{ gift_card.pass_url }}">

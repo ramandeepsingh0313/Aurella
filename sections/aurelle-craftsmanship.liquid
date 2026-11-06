@@ -14,11 +14,9 @@
         {% if section.settings.image != blank %}
           {{ section.settings.image | image_url: width: 1600 | image_tag: class: 'aurelle-craftsmanship__image', alt: craftsmanship_image_alt, widths: '480, 720, 960, 1200, 1600', sizes: '(min-width: 1000px) 46vw, (min-width: 701px) 80vw, 100vw', loading: 'lazy' }}
         {% else %}
-          <div class="aurelle-craftsmanship__placeholder" aria-hidden="true">
-            {{ 'image' | placeholder_svg_tag: 'aurelle-craftsmanship__placeholder-svg' }}
-            {% if request.design_mode %}
-              <span>Select a workshop photograph in this section's settings.</span>
-            {% endif %}
+          <div class="aurelle-craftsmanship__placeholder" role="img" aria-label="{{ craftsmanship_image_alt | escape }}">
+            <span class="aurelle-craftsmanship__placeholder-mark" aria-hidden="true">◇</span>
+            <span>Choose an atelier image in the theme editor</span>
           </div>
         {% endif %}
       </div>
@@ -47,7 +45,7 @@
       {% endif %}
 
       {% if section.settings.description != blank %}
-        <div class="aurelle-craftsmanship__description rte">{{ section.settings.description }}</div>
+        <div class="aurelle-craftsmanship__description">{{ section.settings.description }}</div>
       {% endif %}
 
       {% if section.blocks.size > 0 %}
@@ -135,10 +133,18 @@
     fill: rgb(87 78 66 / 18%);
   }
 
+  .aurelle-craftsmanship__placeholder-mark {
+    color: var(--aurelle-craftsmanship-accent);
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(72px, 9vw, 128px) !important;
+    line-height: 1 !important;
+    opacity: 0.5;
+  }
+
   .aurelle-craftsmanship__placeholder span {
     max-width: 250px;
     font-family: var(--font-primary--family);
-    font-size: 13px;
+    font-size: 16px;
     line-height: 1.5;
   }
 
@@ -160,7 +166,7 @@
   .aurelle-craftsmanship__badge-eyebrow {
     color: var(--aurelle-craftsmanship-accent);
     font-family: var(--font-primary--family);
-    font-size: 9px;
+    font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.12em;
     line-height: 1.4;
@@ -183,7 +189,7 @@
     margin: 0 0 9px;
     color: var(--aurelle-craftsmanship-accent);
     font-family: var(--font-primary--family);
-    font-size: 9px;
+    font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.13em;
     line-height: 1.4;
@@ -204,7 +210,7 @@
     margin-top: 20px;
     color: var(--aurelle-craftsmanship-muted);
     font-family: var(--font-primary--family);
-    font-size: 14px;
+    font-size: 17px;
     line-height: 1.62;
   }
 
@@ -214,7 +220,7 @@
 
   .aurelle-craftsmanship__description p + p {
     margin-top: 14px;
-    font-size: 12px;
+    font-size: 16px;
     line-height: 1.65;
   }
 
@@ -245,7 +251,7 @@
     margin: 0;
     color: var(--aurelle-craftsmanship-foreground);
     font-family: var(--font-primary--family);
-    font-size: 9px;
+    font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.035em;
     line-height: 1.45;
@@ -256,7 +262,7 @@
     margin: 2px 0 0;
     color: var(--aurelle-craftsmanship-muted);
     font-family: var(--font-primary--family);
-    font-size: 11px;
+    font-size: 14px;
     line-height: 1.5;
   }
 
@@ -339,7 +345,7 @@
     }
 
     .aurelle-craftsmanship__badge-eyebrow {
-      font-size: 8px;
+      font-size: 12px;
     }
 
     .aurelle-craftsmanship__badge-heading {
@@ -348,7 +354,7 @@
 
     .aurelle-craftsmanship__eyebrow {
       margin-bottom: 8px;
-      font-size: 8px;
+      font-size: 12px;
     }
 
     .aurelle-craftsmanship__heading {
@@ -359,13 +365,13 @@
 
     .aurelle-craftsmanship__description {
       margin-top: 16px;
-      font-size: 13px;
+      font-size: 16px;
       line-height: 1.6;
     }
 
     .aurelle-craftsmanship__description p + p {
       margin-top: 12px;
-      font-size: 12px;
+      font-size: 16px;
     }
 
     .aurelle-craftsmanship__stats {
@@ -379,11 +385,11 @@
     }
 
     .aurelle-craftsmanship__stat-label {
-      font-size: 8px;
+      font-size: 12px;
     }
 
     .aurelle-craftsmanship__stat-detail {
-      font-size: 10px;
+      font-size: 13px;
     }
   }
 
@@ -462,7 +468,7 @@
       "type": "image_picker",
       "id": "image",
       "label": "Workshop photograph",
-      "info": "The workshop photograph from the design reference is not in this theme. Select or upload the actual image here."
+      "info": "Optional. If blank, a neutral atelier placeholder is shown."
     },
     {
       "type": "text",

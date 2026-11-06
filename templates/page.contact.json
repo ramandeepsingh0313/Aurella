@@ -1,0 +1,7 @@
+{
+  "sections": {
+    "main": { "type": "page", "settings": {} },
+    "contact_form": { "type": "aurelle-contact-form", "settings": {} }
+  },
+  "order": ["main", "contact_form"]
+}

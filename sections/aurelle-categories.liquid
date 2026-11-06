@@ -52,33 +52,24 @@
               assign category_badge = block.settings.collection.products_count | append: ' Pieces'
             endif
 
-            assign fallback_asset = 'aurelle-category-rings.jpg'
-            case block.settings.fallback_image
-              when 'earrings'
-                assign fallback_asset = 'aurelle-category-earrings.jpg'
-              when 'necklaces'
-                assign fallback_asset = 'aurelle-category-necklaces.jpg'
-              when 'bangles'
-                assign fallback_asset = 'aurelle-category-bangles.jpg'
-              when 'bridal'
-                assign fallback_asset = 'aurelle-category-bridal.jpg'
-            endcase
+            assign category_image = block.settings.image
+            if category_image == blank and block.settings.collection != blank
+              assign category_image = block.settings.collection.image
+              if category_image == blank
+                assign category_image = block.settings.collection.products.first.featured_image
+              endif
+            endif
           %}
 
           <a class="aurelle-categories__card{% if block.settings.hover_image != blank %} aurelle-categories__card--has-hover-image{% endif %}" href="{{ category_link | escape }}" role="listitem" {{ block.shopify_attributes }}>
             <div class="aurelle-categories__media">
               <div class="aurelle-categories__image-wrap">
-                {% if block.settings.image != blank %}
-                  {{ block.settings.image | image_url: width: 896 | image_tag: class: 'aurelle-categories__image', alt: category_alt, widths: '224, 448, 672, 896', sizes: '(min-width: 1100px) 224px, (min-width: 701px) 30vw, 76vw', loading: 'lazy' }}
+                {% if category_image != blank %}
+                  {{ category_image | image_url: width: 896 | image_tag: class: 'aurelle-categories__image', alt: category_alt, widths: '224, 448, 672, 896', sizes: '(min-width: 1100px) 224px, (min-width: 701px) 30vw, 76vw', loading: 'lazy' }}
                 {% else %}
-                  <img
-                    class="aurelle-categories__image"
-                    src="{{ fallback_asset | asset_url }}"
-                    width="224"
-                    height="280"
-                    alt="{{ category_alt | escape }}"
-                    loading="lazy"
-                  >
+                  <div class="aurelle-categories__placeholder" role="img" aria-label="{{ category_alt | escape }}">
+                    <span aria-hidden="true">◇</span>
+                  </div>
                 {% endif %}
                 {% if block.settings.hover_image != blank %}
                   {{ block.settings.hover_image | image_url: width: 896 | image_tag: class: 'aurelle-categories__image aurelle-categories__image--hover', alt: '', widths: '224, 448, 672, 896', sizes: '(min-width: 1100px) 224px, (min-width: 701px) 30vw, 76vw', loading: 'lazy', attrs: 'aria-hidden="true"' }}
@@ -139,10 +130,10 @@
     margin: 0;
     color: var(--aurelle-categories-accent);
     font-family: var(--font-primary--family);
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.1em;
-    line-height: 14px;
+    line-height: 1.4;
     text-transform: uppercase;
   }
 
@@ -163,10 +154,10 @@
     gap: 8px;
     color: var(--aurelle-categories-foreground);
     font-family: var(--font-primary--family);
-    font-size: 11px;
+    font-size: 14px;
     font-weight: 600;
     letter-spacing: 0.1em;
-    line-height: 16px;
+    line-height: 1.4;
     text-decoration: none;
     text-transform: uppercase;
   }
@@ -227,6 +218,24 @@
     transition: opacity 420ms ease, transform 650ms cubic-bezier(0.2, 0.65, 0.3, 1);
   }
 
+  .aurelle-categories__placeholder {
+    display: grid;
+    width: 100%;
+    height: 100%;
+    place-items: center;
+    color: var(--aurelle-categories-accent);
+    background:
+      radial-gradient(circle at 50% 42%, rgb(255 255 255 / 72%) 0 16%, transparent 17%),
+      linear-gradient(145deg, #f7f2e9, var(--aurelle-categories-card-background));
+  }
+
+  .aurelle-categories__placeholder span {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(56px, 7vw, 92px);
+    line-height: 1;
+    opacity: 0.58;
+  }
+
   .aurelle-categories__image--hover {
     position: absolute;
     inset: 0;
@@ -283,7 +292,7 @@
     background: rgb(255 255 255 / 80%);
     backdrop-filter: blur(2px);
     font-family: var(--font-primary--family);
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.05em;
     line-height: 14px;
@@ -306,9 +315,9 @@
     margin: 0;
     color: var(--aurelle-categories-muted);
     font-family: var(--font-primary--family);
-    font-size: 12px;
+    font-size: 15px;
     font-weight: 400;
-    line-height: 18px;
+    line-height: 1.5;
   }
 
   @media screen and (max-width: 1100px) {
@@ -339,7 +348,7 @@
 
     .aurelle-categories__view-all {
       gap: 6px;
-      font-size: 9px;
+      font-size: 12px;
       letter-spacing: 0.06em;
     }
 
@@ -456,7 +465,7 @@
           "type": "image_picker",
           "id": "image",
           "label": "Card image",
-          "info": "Optional. If blank, the selected Figma artwork is used."
+          "info": "Optional. If blank, the selected collection image or its first product image is used, followed by a neutral placeholder."
         },
         {
           "type": "image_picker",
@@ -468,19 +477,6 @@
           "type": "text",
           "id": "image_alt",
           "label": "Image alternative text"
-        },
-        {
-          "type": "select",
-          "id": "fallback_image",
-          "label": "Fallback artwork",
-          "options": [
-            { "value": "rings", "label": "Rings" },
-            { "value": "earrings", "label": "Earrings" },
-            { "value": "necklaces", "label": "Necklaces" },
-            { "value": "bangles", "label": "Bangles" },
-            { "value": "bridal", "label": "Bridal" }
-          ],
-          "default": "rings"
         },
         {
           "type": "text",
@@ -515,11 +511,11 @@
     {
       "name": "AURELLE categories",
       "blocks": [
-        { "type": "category", "settings": { "fallback_image": "rings", "heading": "Rings", "description": "Solitaires & Sculptural Stacks", "badge_text": "34 Pieces" } },
-        { "type": "category", "settings": { "fallback_image": "earrings", "heading": "Earrings", "description": "Architectural Drops & Hoops", "badge_text": "28 Pieces" } },
-        { "type": "category", "settings": { "fallback_image": "necklaces", "heading": "Necklaces", "description": "Tennis & Medallion Suites", "badge_text": "19 Pieces" } },
-        { "type": "category", "settings": { "fallback_image": "bangles", "heading": "Bangles", "description": "Solid 18K Cuffs & Chains", "badge_text": "22 Pieces" } },
-        { "type": "category", "settings": { "fallback_image": "bridal", "heading": "Bridal", "description": "Ceremonial Solitaires", "badge_text": "16 Pieces" } }
+        { "type": "category", "settings": { "heading": "Rings", "description": "Solitaires & Sculptural Stacks", "badge_text": "34 Pieces" } },
+        { "type": "category", "settings": { "heading": "Earrings", "description": "Architectural Drops & Hoops", "badge_text": "28 Pieces" } },
+        { "type": "category", "settings": { "heading": "Necklaces", "description": "Tennis & Medallion Suites", "badge_text": "19 Pieces" } },
+        { "type": "category", "settings": { "heading": "Bangles", "description": "Solid 18K Cuffs & Chains", "badge_text": "22 Pieces" } },
+        { "type": "category", "settings": { "heading": "Bridal", "description": "Ceremonial Solitaires", "badge_text": "16 Pieces" } }
       ]
     }
   ]

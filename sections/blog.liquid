@@ -20,7 +20,7 @@
             <h2><a href="{{ article.url }}">{{ article.title | escape }}</a></h2>
             {% assign date = article.published_at | time_tag: format: 'date' %}
             <p class="aurelle-blog__metadata">{{ 'blog.article_metadata_html' | t: date: date, author: article.author }}</p>
-            {% if article.excerpt != blank %}<div class="aurelle-blog__excerpt rte">{{ article.excerpt }}</div>{% endif %}
+            {% if article.excerpt_or_content != blank %}<p class="aurelle-blog__excerpt">{{ article.excerpt_or_content | strip_html | truncatewords: 38 | escape }}</p>{% endif %}
           </article>
         {% endfor %}
       </div>
@@ -94,13 +94,13 @@
   .aurelle-blog__metadata {
     margin-top: 8px;
     color: #77716a;
-    font-size: 13px;
+    font-size: 16px;
     line-height: 1.5;
   }
 
   .aurelle-blog__excerpt {
     margin-top: 12px;
-    font-size: 15px;
+    font-size: 17px;
     line-height: 1.6;
   }
 

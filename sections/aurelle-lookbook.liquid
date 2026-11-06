@@ -15,7 +15,7 @@
         </h2>
       {% endif %}
       {% if section.settings.description != blank %}
-        <div class="aurelle-lookbook__description rte">{{ section.settings.description }}</div>
+        <div class="aurelle-lookbook__description">{{ section.settings.description }}</div>
       {% endif %}
 
       {% assign lookbook_products = section.blocks | where: 'type', 'product' %}
@@ -62,13 +62,24 @@
 
     <div class="aurelle-lookbook__visual">
       <div class="aurelle-lookbook__image-wrap">
-        {% if section.settings.image != blank %}
-          {% assign lookbook_image_alt = section.settings.image_alt | default: section.settings.image.alt %}
-          {{ section.settings.image | image_url: width: 1800 | image_tag: class: 'aurelle-lookbook__image', alt: lookbook_image_alt, widths: '640, 900, 1200, 1500, 1800', sizes: '(min-width: 1000px) 54vw, 100vw', loading: 'lazy' }}
+        {% liquid
+          assign lookbook_image = section.settings.image
+          if lookbook_image == blank
+            for block in lookbook_products
+              if block.settings.product.featured_image != blank
+                assign lookbook_image = block.settings.product.featured_image
+                break
+              endif
+            endfor
+          endif
+          assign lookbook_image_alt = section.settings.image_alt | default: lookbook_image.alt
+        %}
+        {% if lookbook_image != blank %}
+          {{ lookbook_image | image_url: width: 1800 | image_tag: class: 'aurelle-lookbook__image', alt: lookbook_image_alt, widths: '640, 900, 1200, 1500, 1800', sizes: '(min-width: 1000px) 54vw, 100vw', loading: 'lazy' }}
         {% else %}
-          <div class="aurelle-lookbook__placeholder" aria-hidden="true">
-            {{ 'image' | placeholder_svg_tag: 'aurelle-lookbook__placeholder-svg' }}
-            {% if request.design_mode %}<span>Upload the Solstice campaign image in this section's settings.</span>{% endif %}
+          <div class="aurelle-lookbook__placeholder" role="img" aria-label="{{ section.settings.image_alt | escape }}">
+            <span class="aurelle-lookbook__placeholder-mark" aria-hidden="true">◇</span>
+            <span>Choose a lookbook image in the theme editor</span>
           </div>
         {% endif %}
 
@@ -116,7 +127,7 @@
     margin: 0 0 10px;
     color: var(--aurelle-lookbook-accent);
     font-family: var(--font-primary--family);
-    font-size: 9px;
+    font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.12em;
     line-height: 1.4;
@@ -137,7 +148,7 @@
     margin-top: 16px;
     color: var(--aurelle-lookbook-muted);
     font-family: var(--font-primary--family);
-    font-size: 14px;
+    font-size: 17px;
     line-height: 1.62;
   }
 
@@ -192,7 +203,7 @@
     color: #241e13;
     background: #f2d58e;
     font-family: var(--font-primary--family);
-    font-size: 10px;
+    font-size: 13px;
     font-weight: 700;
   }
 
@@ -205,7 +216,7 @@
   .aurelle-lookbook__product-title {
     overflow: hidden;
     font-family: var(--font-primary--family);
-    font-size: 12px;
+    font-size: 15px;
     line-height: 1.4;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -215,7 +226,7 @@
     overflow: hidden;
     color: var(--aurelle-lookbook-muted);
     font-family: var(--font-primary--family);
-    font-size: 10px;
+    font-size: 14px;
     line-height: 1.4;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -226,7 +237,7 @@
     margin-left: auto;
     color: #f2d58e;
     font-family: var(--font-primary--family);
-    font-size: 10px;
+    font-size: 14px;
     letter-spacing: 0.08em;
   }
 
@@ -241,7 +252,7 @@
     color: #fff;
     background: var(--aurelle-lookbook-accent);
     font-family: var(--font-primary--family);
-    font-size: 9px;
+    font-size: 14px;
     font-weight: 600;
     letter-spacing: 0.1em;
     line-height: 1.4;
@@ -312,8 +323,16 @@
   .aurelle-lookbook__placeholder span {
     max-width: 280px;
     font-family: var(--font-primary--family);
-    font-size: 12px;
+    font-size: 15px;
     line-height: 1.5;
+  }
+
+  .aurelle-lookbook__placeholder-mark {
+    color: var(--aurelle-lookbook-accent);
+    font-family: Georgia, 'Times New Roman', serif !important;
+    font-size: clamp(76px, 9vw, 140px) !important;
+    line-height: 1 !important;
+    opacity: 0.65;
   }
 
   .aurelle-lookbook__hotspot {
@@ -354,7 +373,7 @@
     color: #241e13;
     background: #fbf8f1;
     font-family: var(--font-primary--family);
-    font-size: 11px;
+    font-size: 14px;
     opacity: 0;
     pointer-events: none;
     transform: translate(-50%, 4px);
@@ -382,7 +401,7 @@
     }
 
     .aurelle-lookbook__description {
-      font-size: 12px;
+      font-size: 15px;
     }
   }
 
@@ -403,7 +422,7 @@
 
     .aurelle-lookbook__description {
       margin-top: 12px;
-      font-size: 13px;
+      font-size: 16px;
     }
 
     .aurelle-lookbook__image-wrap {
@@ -426,17 +445,18 @@
     }
 
     .aurelle-lookbook__product-title {
-      font-size: 12px;
+      font-size: 15px;
+      white-space: normal;
     }
 
     .aurelle-lookbook__product-detail {
-      font-size: 10px;
+      font-size: 14px;
     }
 
     .aurelle-lookbook__button {
       width: auto;
       min-width: 227px;
-      min-height: 38px;
+      min-height: 44px;
       margin-top: 34px;
       padding-inline: 25px;
     }
@@ -459,8 +479,8 @@
 {
   "name": "AURELLE lookbook",
   "settings": [
-    { "type": "image_picker", "id": "image", "label": "Lookbook photograph", "info": "Upload the Solstice campaign photograph shown in the design reference." },
-    { "type": "text", "id": "image_alt", "label": "Image alternative text", "default": "Model wearing the Solstice diamond jewellery suite" },
+    { "type": "image_picker", "id": "image", "label": "Lookbook photograph", "info": "Optional. If blank, the first selected product image is used, followed by a neutral placeholder." },
+    { "type": "text", "id": "image_alt", "label": "Image alternative text", "default": "Model wearing diamond necklace and earrings" },
     { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "High Jewellery Capsule" },
     { "type": "text", "id": "heading", "label": "Heading", "default": "The Solstice Suite" },
     { "type": "richtext", "id": "description", "label": "Description", "default": "<p>A homage to the radiant warmth of southern French light. Featuring over 14 carats of internally flawless pear and marquise cut diamonds set in articulable 18k yellow gold lace.</p>", "info": "Reference copy is editable. Verify material and product claims before publishing." },

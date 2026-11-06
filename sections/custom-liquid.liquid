@@ -1,0 +1,27 @@
+<section class="aurelle-custom-liquid full-width">
+  <div class="aurelle-custom-liquid__inner">
+    {% if section.settings.custom_liquid != blank %}
+      {{ section.settings.custom_liquid }}
+    {% elsif request.design_mode %}
+      <p>Add Liquid content in this section's settings.</p>
+    {% endif %}
+  </div>
+</section>
+
+{% stylesheet %}
+  .aurelle-custom-liquid__inner {
+    width: min(var(--page-width), calc(100% - 40px));
+    margin-inline: auto;
+    padding-block: 24px;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Custom Liquid",
+  "settings": [
+    { "type": "liquid", "id": "custom_liquid", "label": "Liquid code" }
+  ],
+  "presets": [{ "name": "Custom Liquid" }]
+}
+{% endschema %}

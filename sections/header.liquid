@@ -17,8 +17,10 @@
 %}
 
 <header
-  class="aurelle-header full-width"
+  class="aurelle-header full-width{% if section.settings.enable_sticky_header %} aurelle-header--sticky{% endif %}"
   style="--aurelle-header-background: {{ section.settings.background_color }}; --aurelle-header-foreground: {{ section.settings.foreground_color }}; --aurelle-header-accent: {{ section.settings.accent_color }};"
+  data-aurelle-header
+  data-sticky-header="{{ section.settings.enable_sticky_header }}"
 >
   <div class="aurelle-header__utility">
     <div class="aurelle-header__inner aurelle-header__utility-inner">
@@ -241,6 +243,20 @@
     font-family: var(--font-primary--family);
   }
 
+  .shopify-section.aurelle-header-section--sticky {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .shopify-section.aurelle-header-section--sticky .aurelle-header {
+    transition: box-shadow 180ms ease;
+  }
+
+  .shopify-section.aurelle-header-section--sticky.is-scrolled .aurelle-header {
+    box-shadow: 0 10px 28px rgb(39 37 33 / 9%);
+  }
+
   .aurelle-header__inner {
     width: min(1184px, calc(100% - 96px));
     margin-inline: auto;
@@ -263,7 +279,7 @@
     grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto;
     align-items: center;
     gap: 24px;
-    font-size: 10px;
+    font-size: 11px;
     letter-spacing: 0.16em;
     line-height: 1.2;
     text-transform: uppercase;
@@ -386,7 +402,7 @@
     align-items: center;
     gap: 8px;
     color: inherit;
-    font-size: 11px;
+    font-size: 13px;
     letter-spacing: 0.16em;
     line-height: 1.3;
     text-decoration: none;
@@ -458,7 +474,7 @@
 
   .aurelle-header__brand-subtitle {
     margin-top: 7px;
-    font-size: 8px;
+    font-size: 10px;
     letter-spacing: 0.34em;
     line-height: 1.2;
     text-transform: uppercase;
@@ -476,7 +492,7 @@
   }
 
   .aurelle-header__bag-count {
-    font-size: 11px;
+    font-size: 12px;
   }
 
   .aurelle-header__desktop-navigation {
@@ -495,7 +511,7 @@
   .aurelle-header__desktop-navigation a,
   .aurelle-header__mobile-panel a {
     color: inherit;
-    font-size: 11px;
+    font-size: 13px;
     letter-spacing: 0.2em;
     line-height: 1.3;
     text-decoration: none;
@@ -670,7 +686,7 @@
   .aurelle-search-dialog__eyebrow {
     margin: 0 0 20px;
     color: var(--aurelle-header-accent);
-    font-size: 10px;
+    font-size: 12px;
     letter-spacing: 0.2em;
     text-transform: uppercase;
   }
@@ -727,15 +743,19 @@
     .aurelle-header__utility-inner {
       grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) auto;
       gap: 12px;
-      font-size: 9px;
+      font-size: 10px;
     }
 
-    .aurelle-header__desktop-navigation ul {
-      gap: 20px;
+    .aurelle-header__desktop-navigation {
+      display: none;
     }
 
-    .aurelle-header__desktop-navigation li + li::before {
-      margin-right: 20px;
+    .aurelle-header__mobile-menu {
+      display: block;
+    }
+
+    .aurelle-header__mobile-panel a {
+      font-size: 14px;
     }
   }
 
@@ -754,13 +774,13 @@
 
     .aurelle-header__salon-message {
       overflow: hidden;
-      font-size: 9px;
+      font-size: 11px;
       letter-spacing: 0.12em;
       text-overflow: ellipsis;
     }
 
     .aurelle-header__localization {
-      font-size: 9px;
+      font-size: 11px;
       letter-spacing: 0.08em;
     }
 
@@ -810,7 +830,7 @@
 
     .aurelle-header__brand-subtitle {
       margin-top: 5px;
-      font-size: 9px;
+      font-size: 10px;
       letter-spacing: 0.15em;
     }
 
@@ -832,7 +852,7 @@
     }
 
     .aurelle-header__bag-count {
-      font-size: 9px;
+      font-size: 12px;
     }
   }
 
@@ -877,6 +897,7 @@
     .aurelle-header__desktop-navigation a::after,
     .aurelle-header__mobile-panel a,
     .aurelle-header__mobile-panel,
+    .shopify-section.aurelle-header-section--sticky .aurelle-header,
     .aurelle-search-dialog[open]::backdrop,
     .aurelle-search-dialog[open] .aurelle-search-dialog__panel {
       animation: none;
@@ -892,6 +913,36 @@
 {% endstylesheet %}
 
 {% javascript %}
+  (() => {
+    const stickyClass = 'aurelle-header-section--sticky';
+    const scrolledClass = 'is-scrolled';
+
+    const initializeHeader = (scope = document) => {
+      const headers = [];
+      if (scope.matches?.('[data-aurelle-header]')) headers.push(scope);
+      scope.querySelectorAll?.('[data-aurelle-header]').forEach((header) => headers.push(header));
+
+      headers.forEach((header) => {
+        const sectionWrapper = header.closest('.shopify-section');
+        if (!sectionWrapper) return;
+
+        const stickyEnabled = header.dataset.stickyHeader === 'true';
+        sectionWrapper.classList.toggle(stickyClass, stickyEnabled);
+        sectionWrapper.classList.toggle(scrolledClass, stickyEnabled && window.scrollY > 0);
+      });
+    };
+
+    const updateStickyHeaders = () => {
+      document.querySelectorAll(`.${stickyClass}`).forEach((sectionWrapper) => {
+        sectionWrapper.classList.toggle(scrolledClass, window.scrollY > 0);
+      });
+    };
+
+    initializeHeader();
+    document.addEventListener('shopify:section:load', (event) => initializeHeader(event.target));
+    window.addEventListener('scroll', updateStickyHeaders, { passive: true });
+  })();
+
   document.addEventListener('change', (event) => {
     if (event.target.matches('[data-aurelle-localization-select]')) {
       event.target.form?.requestSubmit();
@@ -929,6 +980,13 @@
 {
   "name": "AURELLE header",
   "settings": [
+    {
+      "type": "checkbox",
+      "id": "enable_sticky_header",
+      "label": "Enable sticky header",
+      "default": false,
+      "info": "Keeps the complete header visible at the top while customers scroll."
+    },
     {
       "type": "image_picker",
       "id": "logo",

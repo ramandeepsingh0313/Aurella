@@ -1,0 +1,55 @@
+<section class="aurelle-contact full-width" aria-labelledby="AurelleContactHeading-{{ section.id }}">
+  <div class="aurelle-contact__inner">
+    <p class="aurelle-contact__eyebrow">{{ 'contact.eyebrow' | t }}</p>
+    <h2 id="AurelleContactHeading-{{ section.id }}">{{ 'contact.heading' | t }}</h2>
+    {% assign contact_form_id = 'AurelleContactForm-' | append: section.id %}
+    {% form 'contact', id: contact_form_id, class: 'aurelle-contact__form' %}
+      {% if form.posted_successfully? %}
+        <p class="aurelle-contact__success" role="status">{{ 'contact.success' | t }}</p>
+      {% endif %}
+      {{ form.errors | default_errors }}
+
+      <div class="aurelle-contact__row">
+        <div>
+          <label for="AurelleContactName-{{ section.id }}">{{ 'contact.name' | t }}</label>
+          <input id="AurelleContactName-{{ section.id }}" type="text" name="contact[name]" value="{{ form.name | escape }}" autocomplete="name" required>
+        </div>
+        <div>
+          <label for="AurelleContactEmail-{{ section.id }}">{{ 'contact.email' | t }}</label>
+          <input id="AurelleContactEmail-{{ section.id }}" type="email" name="contact[email]" value="{{ form.email | escape }}" autocomplete="email" required>
+        </div>
+      </div>
+
+      <label for="AurelleContactMessage-{{ section.id }}">{{ 'contact.message' | t }}</label>
+      <textarea id="AurelleContactMessage-{{ section.id }}" name="contact[body]" rows="7" required>{{ form.body | escape }}</textarea>
+
+      <button type="submit">{{ 'contact.submit' | t }}</button>
+    {% endform %}
+  </div>
+</section>
+
+{% stylesheet %}
+  .aurelle-contact { padding-block: clamp(32px, 6vw, 80px) clamp(64px, 8vw, 112px); }
+  .aurelle-contact__inner { width: min(760px, calc(100% - 40px)); margin-inline: auto; }
+  .aurelle-contact__eyebrow { margin-bottom: 12px; color: #806122; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
+  .aurelle-contact h2 { margin-bottom: 32px; font-family: Georgia, 'Times New Roman', serif; font-size: clamp(32px, 4vw, 48px); font-weight: 400; line-height: 1.15; }
+  .aurelle-contact__form { display: grid; gap: 14px; }
+  .aurelle-contact__row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+  .aurelle-contact__row > div { display: grid; gap: 8px; }
+  .aurelle-contact label { font-size: 14px; }
+  .aurelle-contact input,
+  .aurelle-contact textarea { width: 100%; min-height: 48px; padding: 12px; border: 1px solid #c9c1b6; background: transparent; color: inherit; }
+  .aurelle-contact textarea { resize: vertical; }
+  .aurelle-contact button { width: fit-content; min-height: 48px; margin-top: 10px; padding: 10px 30px; border: 0; background: #1e1c19; color: #fff; cursor: pointer; }
+  .aurelle-contact :is(input, textarea, button):focus-visible { outline: 2px solid #806122; outline-offset: 3px; }
+  .aurelle-contact__success { padding: 14px 18px; border: 1px solid #806122; }
+  @media (max-width: 600px) { .aurelle-contact__row { grid-template-columns: 1fr; } }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Contact form",
+  "settings": [],
+  "presets": [{ "name": "Contact form" }]
+}
+{% endschema %}

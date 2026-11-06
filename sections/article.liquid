@@ -13,7 +13,7 @@
     <h1>{{ article.title | escape }}</h1>
     {% assign date = article.published_at | time_tag: format: 'date' %}
     <p class="aurelle-article__metadata">{{ 'blog.article_metadata_html' | t: date: date, author: article.author }}</p>
-    <div class="aurelle-article__content rte">{{ article.content }}</div>
+    <div class="aurelle-article__content">{{ article.content }}</div>
 
     {% if blog.comments_enabled? %}
       <section class="aurelle-article__comments" id="comments" aria-labelledby="AurelleArticleComments-{{ section.id }}">
@@ -73,7 +73,7 @@
   .aurelle-article__metadata {
     margin-bottom: 28px;
     color: #77716a;
-    font-size: 13px;
+    font-size: 16px;
     line-height: 1.5;
   }
 

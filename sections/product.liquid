@@ -1,128 +1,793 @@
-{% comment %}
-  This section renders a responsive product gallery, product details and Shopify product form.
+{% liquid
+  assign current_variant = product.selected_or_first_available_variant | default: product.variants.first
+  assign active_collection = collection | default: section.settings.related_collection | default: product.collections.first
+  assign active_media = current_variant.featured_media | default: product.featured_media | default: product.media.first
+  assign product_eyebrow = product.metafields.custom.collection_label.value | default: product.collections.first.title | default: product.vendor
+  assign product_subtitle = product.metafields.custom.product_subtitle.value | default: product.type
+  assign gallery_badge = product.metafields.custom.gallery_badge.value
+  assign gallery_caption = product.metafields.custom.gallery_caption.value
+  assign rating_value = product.metafields.reviews.rating.value.rating | default: product.metafields.custom.rating.value
+  assign review_count = product.metafields.reviews.rating_count.value | default: product.metafields.custom.review_count.value
+  assign dispatch_note = product.metafields.custom.dispatch_note.value | default: section.settings.dispatch_note
+  assign product_engravable = section.settings.enable_engraving
+  if product.metafields.custom.enable_engraving != blank
+    assign product_engravable = product.metafields.custom.enable_engraving.value
+  endif
+  assign atelier_image = product.metafields.custom.atelier_image.value | default: section.settings.atelier_image
+  assign details_heading = product.metafields.custom.details_heading.value | default: product.title | default: section.settings.details_heading
+  assign details_intro = product.metafields.custom.details_intro.value | default: product.description | strip_html
+  assign details_note = product.metafields.custom.details_note.value | default: section.settings.details_note
+  assign atelier_heading = product.metafields.custom.atelier_heading.value | default: section.settings.atelier_heading
+  assign atelier_description = product.metafields.custom.atelier_description.value
+  assign atelier_badge = product.metafields.custom.atelier_badge.value | default: section.settings.atelier_badge
+  assign atelier_stat_one = product.metafields.custom.atelier_stat_one.value | default: section.settings.atelier_stat_one
+  assign atelier_stat_one_label = product.metafields.custom.atelier_stat_one_label.value | default: section.settings.atelier_stat_one_label
+  assign atelier_stat_two = product.metafields.custom.atelier_stat_two.value | default: section.settings.atelier_stat_two
+  assign atelier_stat_two_label = product.metafields.custom.atelier_stat_two_label.value | default: section.settings.atelier_stat_two_label
+  assign enquiry_form_id = 'AurelleContactForm-' | append: section.id
+%}
 
-  https://shopify.dev/docs/storefronts/themes/architecture/templates/product
-{% endcomment %}
-
-{% assign current_variant = product.selected_or_first_available_variant %}
-
-<section class="aurelle-product full-width">
-  <div class="aurelle-product__layout">
-    <div class="aurelle-product__media" role="group" aria-label="{{ product.title | escape }} images">
-      {% for image in product.images %}
-        {% assign image_alt = image.alt | default: product.title %}
-        {% if forloop.first %}
-          {% render 'image',
-            class: 'aurelle-product__image',
-            image: image,
-            alt: image_alt,
-            width: 1200,
-            loading: 'eager',
-            fetchpriority: 'high',
-            sizes: '(min-width: 1000px) 50vw, 100vw'
-          %}
-        {% else %}
-          {% render 'image',
-            class: 'aurelle-product__image',
-            image: image,
-            alt: image_alt,
-            width: 1200,
-            sizes: '(min-width: 1000px) 50vw, 100vw'
-          %}
+{% if product != blank %}
+  <section class="aurelle-product full-width" data-aurelle-product data-section-id="{{ section.id }}" aria-label="{{ product.title | escape }}">
+    <div class="aurelle-product__page-width">
+      <nav class="aurelle-product__breadcrumbs" aria-label="{{ 'products.aurelle.breadcrumbs' | t }}">
+        <a href="{{ routes.root_url }}">{{ 'products.aurelle.home' | t }}</a>
+        <span aria-hidden="true">/</span>
+        {% if active_collection != blank %}
+          <a href="{{ active_collection.url }}">{{ active_collection.title | escape }}</a>
+          <span aria-hidden="true">/</span>
+        {% elsif product.type != blank %}
+          <span>{{ product.type | escape }}</span>
+          <span aria-hidden="true">/</span>
         {% endif %}
-      {% endfor %}
-    </div>
+        <span aria-current="page">{{ product.title | escape }}</span>
+      </nav>
 
-    <div class="aurelle-product__details">
-      <h1 class="aurelle-product__title">{{ product.title | escape }}</h1>
-      <p class="aurelle-product__price">{{ current_variant.price | money_with_currency }}</p>
+      <div class="aurelle-product__overview">
+        <div class="aurelle-product__gallery" data-product-gallery>
+          <div class="aurelle-product__gallery-stage">
+            {% if product.media.size > 0 %}
+              {% for media in product.media %}
+                {% assign media_alt = media.alt | default: product.title %}
+                <div class="aurelle-product__media-item" data-gallery-item data-media-id="{{ media.id }}"{% unless media.id == active_media.id %} hidden{% endunless %}>
+                  {% if media.media_type == 'image' %}
+                    {{ media.preview_image | image_url: width: 1600 | image_tag: class: 'aurelle-product__main-image', alt: media_alt, widths: '480, 640, 800, 1000, 1200, 1600', sizes: '(min-width: 1000px) 50vw, 100vw', loading: 'eager', fetchpriority: 'high' }}
+                  {% else %}
+                    {{ media | media_tag: image_size: '1200x', controls: true, preload: 'none' }}
+                  {% endif %}
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="aurelle-product__media-item aurelle-product__media-item--empty">
+                {{ 'product-1' | placeholder_svg_tag: 'aurelle-product__placeholder' }}
+              </div>
+            {% endif %}
 
-      {% if product.description != blank %}
-        <div class="aurelle-product__description rte">{{ product.description }}</div>
-      {% endif %}
+            {% if gallery_badge != blank %}<span class="aurelle-product__gallery-badge">{{ gallery_badge | escape }}</span>{% endif %}
 
-      {% form 'product', product, class: 'aurelle-product__form' %}
-        {% if product.variants.size > 1 %}
-          <label for="ProductVariant-{{ section.id }}">{{ 'products.product.choose_options' | t }}</label>
-          <select id="ProductVariant-{{ section.id }}" name="id">
-            {% for variant in product.variants %}
-              <option
-                value="{{ variant.id }}"
-                {% if variant == current_variant %}selected{% endif %}
-                {% unless variant.available %}disabled{% endunless %}
-              >
-                {{ variant.title | escape }} — {{ variant.price | money_with_currency }}
-                {% unless variant.available %} — {{ 'products.product.sold_out' | t }}{% endunless %}
-              </option>
-            {% endfor %}
-          </select>
-        {% else %}
-          <input type="hidden" name="id" value="{{ current_variant.id }}">
-        {% endif %}
+            {% if product.media.size > 0 %}
+              <button class="aurelle-product__fullscreen" type="button" data-gallery-open aria-label="{{ 'products.aurelle.open_image' | t }}">
+                <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M7 3H3v4M13 3h4v4M17 13v4h-4M3 13v4h4M3 7l5-5M17 7l-5-5M17 13l-5 5M3 13l5 5" /></svg>
+              </button>
+            {% endif %}
+          </div>
 
-        <label for="ProductQuantity-{{ section.id }}">{{ 'products.product.quantity.label' | t }}</label>
-        <input id="ProductQuantity-{{ section.id }}" type="number" name="quantity" min="1" value="1" inputmode="numeric">
-
-        <button type="submit" name="add" {% unless current_variant.available %}disabled{% endunless %}>
-          {% if current_variant.available %}
-            {{ 'products.product.add_to_cart' | t }}
-          {% else %}
-            {{ 'products.product.sold_out' | t }}
+          {% if product.media.size > 0 %}
+          <div class="aurelle-product__thumbnails" role="group" aria-label="{{ 'products.aurelle.gallery' | t: title: product.title | escape }}">
+              {% for media in product.media %}
+                {% assign thumbnail_alt = media.alt | default: product.title %}
+                <button
+                  class="aurelle-product__thumbnail{% if media.id == active_media.id %} is-active{% endif %}"
+                  type="button"
+                  data-gallery-thumb
+                  data-media-id="{{ media.id }}"
+                  aria-pressed="{% if media.id == active_media.id %}true{% else %}false{% endif %}"
+                  aria-label="{{ 'products.aurelle.view_image' | t: index: forloop.index }}"
+                >
+                  {{ media.preview_image | image_url: width: 420 | image_tag: alt: thumbnail_alt, widths: '140, 210, 280, 420', sizes: '(min-width: 1000px) 17vw, 32vw', loading: 'lazy' }}
+                  {% if media.media_type != 'image' %}<span class="aurelle-product__thumbnail-type" aria-hidden="true">{{ media.media_type | upcase }}</span>{% endif %}
+                </button>
+              {% endfor %}
+            </div>
           {% endif %}
-        </button>
 
-        {{ form | payment_button }}
-      {% endform %}
+          <div class="aurelle-product__gallery-caption">
+            {% if gallery_caption != blank %}<p>{{ gallery_caption | escape }}</p>{% endif %}
+            {% if product.media.size > 0 %}
+              {% assign gallery_total = product.media.size %}
+              {% if gallery_total < 10 %}{% assign gallery_total = gallery_total | prepend: '0' %}{% endif %}
+              <span data-gallery-count>01 / {{ gallery_total }}</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="aurelle-product__purchase">
+          {% if product_eyebrow != blank %}<p class="aurelle-product__eyebrow">{{ product_eyebrow | escape }}</p>{% endif %}
+          <h1 class="aurelle-product__title">{{ product.title | escape }}</h1>
+
+          {% if product_subtitle != blank %}<p class="aurelle-product__subtitle">{{ product_subtitle | escape }}</p>{% endif %}
+
+          {% if rating_value != blank and review_count != blank and review_count != 0 %}
+            <a class="aurelle-product__rating" href="#AurelleReviews-{{ section.id }}" aria-label="{{ 'products.aurelle.rating_summary' | t: rating: rating_value, count: review_count }}">
+              <span class="aurelle-product__stars" aria-hidden="true">★★★★★</span>
+              <span class="aurelle-product__rating-copy">{{ rating_value | round: 1 }} · {{ review_count }} {{ 'products.aurelle.reviews' | t }}</span>
+            </a>
+          {% endif %}
+
+          <div class="aurelle-product__price-wrap" aria-live="polite">
+            <p class="aurelle-product__price" data-product-price>{{ current_variant.price | money_with_currency }}</p>
+            <s class="aurelle-product__compare-price" data-product-compare{% unless current_variant.compare_at_price > current_variant.price %} hidden{% endunless %}>{{ current_variant.compare_at_price | money_with_currency }}</s>
+          </div>
+          <p class="aurelle-product__unit-price" data-product-unit-price{% if current_variant.unit_price == blank %} hidden{% endif %}>{{ current_variant.unit_price | unit_price_with_measurement: current_variant.unit_price_measurement }}</p>
+          {% if cart.taxes_included %}<p class="aurelle-product__tax-note">{{ 'products.aurelle.taxes_included' | t }}</p>{% endif %}
+          {% if section.settings.delivery_note != blank %}<p class="aurelle-product__tax-note">{{ section.settings.delivery_note | escape }}</p>{% endif %}
+
+          <div class="aurelle-product__rule"></div>
+
+          {% if product.description != blank %}
+            <div class="aurelle-product__description rte">{{ product.description }}</div>
+          {% endif %}
+
+          {% assign product_form_id = 'AurelleProductForm-' | append: section.id %}
+          {% form 'product', product, id: product_form_id, class: 'aurelle-product__form' %}
+            <input type="hidden" value="{{ current_variant.id }}" data-current-variant-id>
+            <label class="visually-hidden" for="AurelleVariant-{{ section.id }}">{{ 'products.product.choose_options' | t }}</label>
+            <select id="AurelleVariant-{{ section.id }}" class="aurelle-product__fallback-variant" name="id" data-variant-fallback>
+              {% for variant in product.variants %}
+                <option value="{{ variant.id }}"{% if variant.id == current_variant.id %} selected{% endif %}{% unless variant.available %} disabled{% endunless %}>
+                  {{ variant.title | escape }} — {{ variant.price | money_with_currency }}{% unless variant.available %} — {{ 'products.product.sold_out' | t }}{% endunless %}
+                </option>
+              {% endfor %}
+            </select>
+            <div class="aurelle-product__payment-terms">{{ form | payment_terms }}</div>
+
+            {% for product_option in product.options_with_values %}
+              {% assign option_position = forloop.index0 %}
+              {% assign option_name_downcase = product_option.name | downcase %}
+              {% assign render_swatch_option = false %}
+              {% for option_value in product_option.values %}
+                {% if option_value.swatch != blank %}{% assign render_swatch_option = true %}{% endif %}
+              {% endfor %}
+              <fieldset class="aurelle-product__option" data-option-group data-option-index="{{ option_position }}">
+                <legend>{{ product_option.name | escape }} <span data-option-current>{{ current_variant.options[option_position] | escape }}</span></legend>
+                {% if option_name_downcase contains 'size' %}
+                  {% if section.settings.size_guide_link != blank %}
+                    <a class="aurelle-product__size-guide" href="{{ section.settings.size_guide_link }}">{{ 'products.aurelle.find_your_size' | t }}</a>
+                  {% else %}
+                    <button class="aurelle-product__size-guide" type="button" data-enquiry-open data-enquiry-title="{{ 'products.aurelle.size_advice_title' | t | escape }}" data-enquiry-type="{{ 'products.aurelle.size_advice_title' | t | escape }}">{{ 'products.aurelle.find_your_size' | t }}</button>
+                  {% endif %}
+                {% endif %}
+                {% if render_swatch_option %}
+                  <div class="aurelle-product__swatches">
+                    {% for option_value in product_option.values %}
+                      {% assign option_value_name = option_value.name | default: option_value %}
+                      {% assign option_input_id = 'AurelleOption-' | append: section.id | append: '-' | append: option_position | append: '-' | append: forloop.index %}
+                      <label class="aurelle-product__swatch{% if option_value.swatch == blank %} aurelle-product__swatch--text{% endif %}" for="{{ option_input_id }}" title="{{ option_value_name | escape }}">
+                        <input id="{{ option_input_id }}" type="radio" name="AurelleOption-{{ section.id }}-{{ option_position }}" value="{{ option_value_name | escape }}" data-product-option data-option-index="{{ option_position }}" data-option-label="{{ product_option.name | escape }}"{% if option_value_name == current_variant.options[option_position] %} checked{% endif %}>
+                        {% if option_value.swatch.image != blank %}
+                          <span class="aurelle-product__swatch-dot aurelle-product__swatch-dot--image" aria-hidden="true">{{ option_value.swatch.image | image_url: width: 64 | image_tag: alt: '', widths: '32, 64', sizes: '27px', loading: 'lazy' }}</span>
+                        {% elsif option_value.swatch.color != blank %}
+                          <span class="aurelle-product__swatch-dot" style="--aurelle-swatch: {{ option_value.swatch.color }}" aria-hidden="true"></span>
+                        {% else %}
+                          <span class="aurelle-product__swatch-text">{{ option_value_name | escape }}</span>
+                        {% endif %}
+                        <span class="visually-hidden">{{ option_value_name | escape }}</span>
+                      </label>
+                    {% endfor %}
+                  </div>
+                {% else %}
+                  <label class="visually-hidden" for="AurelleSelect-{{ section.id }}-{{ option_position }}">{{ product_option.name | escape }}</label>
+                  <select id="AurelleSelect-{{ section.id }}-{{ option_position }}" class="aurelle-product__select" data-product-option data-option-index="{{ option_position }}" data-option-label="{{ product_option.name | escape }}">
+                    {% for option_value in product_option.values %}
+                      {% assign option_value_name = option_value.name | default: option_value %}
+                      <option value="{{ option_value_name | escape }}"{% if option_value_name == current_variant.options[option_position] %} selected{% endif %}>{{ option_value_name | escape }}</option>
+                    {% endfor %}
+                  </select>
+                {% endif %}
+              </fieldset>
+            {% endfor %}
+
+            {% if product_engravable %}
+              <label class="aurelle-product__engraving-toggle">
+                <input type="checkbox" data-engraving-toggle>
+                <span>{{ section.settings.engraving_label | escape }}</span>
+              </label>
+              <label class="visually-hidden" for="AurelleEngraving-{{ section.id }}">{{ 'products.aurelle.engraving_text' | t }}</label>
+              <input id="AurelleEngraving-{{ section.id }}" class="aurelle-product__engraving-input" type="text" name="properties[{{ section.settings.engraving_label | escape }}]" maxlength="{{ section.settings.engraving_limit }}" data-engraving-input hidden>
+            {% endif %}
+
+            {% if product.gift_card? %}{% render 'gift-card-recipient-form', section_id: section.id %}{% endif %}
+
+            <p class="aurelle-product__availability" data-product-availability data-available-label="{{ 'products.aurelle.in_stock' | t | escape }}" data-unavailable-label="{{ 'products.product.sold_out' | t | escape }}">
+              <span class="aurelle-product__availability-dot" aria-hidden="true"></span>
+              <span data-availability-copy>{% if current_variant.available %}{{ 'products.aurelle.in_stock' | t }}{% else %}{{ 'products.product.sold_out' | t }}{% endif %}</span>
+              {% if current_variant.available and dispatch_note != blank %}<span data-dispatch-note>· {{ dispatch_note | escape }}</span>{% endif %}
+            </p>
+
+            <div class="aurelle-product__purchase-row">
+              <div class="aurelle-product__quantity" aria-label="{{ 'products.aurelle.quantity' | t }}">
+                <button type="button" data-quantity-step="-1" aria-label="{{ 'products.aurelle.decrease_quantity' | t }}">−</button>
+                <label class="visually-hidden" for="AurelleQuantity-{{ section.id }}">{{ 'products.aurelle.quantity' | t }}</label>
+                <input id="AurelleQuantity-{{ section.id }}" type="number" name="quantity" min="1" value="1" inputmode="numeric" data-quantity-input>
+                <button type="button" data-quantity-step="1" aria-label="{{ 'products.aurelle.increase_quantity' | t }}">+</button>
+              </div>
+              <button class="aurelle-product__add-to-bag" type="submit" name="add" data-product-atc data-label-available="{{ 'products.aurelle.add_to_bag' | t | escape }}" data-label-unavailable="{{ 'products.product.sold_out' | t | escape }}"{% unless current_variant.available %} disabled{% endunless %}>
+                <span data-atc-label>{% if current_variant.available %}{{ 'products.aurelle.add_to_bag' | t }}{% else %}{{ 'products.product.sold_out' | t }}{% endif %}</span>
+                <span aria-hidden="true">—</span>
+                <span data-atc-price>{{ current_variant.price | money_with_currency }}</span>
+              </button>
+            </div>
+
+            {% if form.errors %}<div class="aurelle-product__form-errors" role="alert">{{ form.errors | default_errors }}</div>{% endif %}
+            <div class="aurelle-product__form-errors" role="alert" data-product-error hidden></div>
+            {% if section.settings.show_dynamic_checkout %}<div class="aurelle-product__dynamic-checkout" data-dynamic-checkout>{{ form | payment_button }}</div>{% endif %}
+          {% endform %}
+
+          {% if section.settings.booking_link != blank %}
+            <a class="aurelle-product__booking" href="{{ section.settings.booking_link }}">
+              <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><rect x="3" y="5" width="14" height="12" rx="1"/><path d="M6 3v4M14 3v4M3 9h14M7 12h2M11 12h2"/></svg>
+              <span>{{ 'products.aurelle.book_viewing' | t }}</span>
+            </a>
+          {% else %}
+            <button class="aurelle-product__booking" type="button" data-enquiry-open data-enquiry-title="{{ 'products.aurelle.viewing_request_title' | t | escape }}" data-enquiry-type="{{ 'products.aurelle.book_viewing' | t | escape }}">
+              <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><rect x="3" y="5" width="14" height="12" rx="1"/><path d="M6 3v4M14 3v4M3 9h14M7 12h2M11 12h2"/></svg>
+              <span>{{ 'products.aurelle.book_viewing' | t }}</span>
+            </button>
+          {% endif %}
+
+          {% if section.settings.gift_note != blank %}
+            <p class="aurelle-product__gift-note">
+              <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M2.5 8h15v9h-15zM1.5 5h17v3h-17zM10 5v12M10 5H6.5a2 2 0 1 1 0-4c2 0 3.5 4 3.5 4Zm0 0h3.5a2 2 0 1 0 0-4C11.5 1 10 5 10 5Z"/></svg>
+              <span>{{ section.settings.gift_note | escape }}</span>
+            </p>
+          {% endif %}
+
+          {% if section.settings.concierge_link != blank %}
+            <p class="aurelle-product__concierge">
+              <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M10 2.5a7.5 7.5 0 0 0-6.2 11.7L3 18l4-1.1A7.5 7.5 0 1 0 10 2.5Z"/><path d="M7 7.5h.01M10 7.5h.01M13 7.5h.01"/></svg>
+              <span>{{ 'products.aurelle.questions' | t }} <a href="{{ section.settings.concierge_link }}">{{ 'products.aurelle.speak_to_concierge' | t }}</a></span>
+            </p>
+          {% else %}
+            <p class="aurelle-product__concierge">
+              <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M10 2.5a7.5 7.5 0 0 0-6.2 11.7L3 18l4-1.1A7.5 7.5 0 1 0 10 2.5Z"/><path d="M7 7.5h.01M10 7.5h.01M13 7.5h.01"/></svg>
+              <span>{{ 'products.aurelle.questions' | t }} <button class="aurelle-product__concierge-link" type="button" data-enquiry-open data-enquiry-title="{{ 'products.aurelle.concierge_title' | t | escape }}" data-enquiry-type="{{ 'products.aurelle.speak_to_concierge' | t | escape }}">{{ 'products.aurelle.speak_to_concierge' | t }}</button></span>
+            </p>
+          {% endif %}
+
+          <dialog class="aurelle-product__enquiry-dialog" data-product-enquiry aria-labelledby="AurelleEnquiryTitle-{{ section.id }}">
+            <button class="aurelle-product__enquiry-close" type="button" data-enquiry-close aria-label="{{ 'products.aurelle.close_enquiry' | t | escape }}">&times;</button>
+            <p class="aurelle-product__eyebrow">{{ 'products.aurelle.concierge_title' | t }}</p>
+            <h2 id="AurelleEnquiryTitle-{{ section.id }}" data-enquiry-heading>{{ 'products.aurelle.concierge_title' | t }}</h2>
+            {% form 'contact', id: enquiry_form_id, class: 'aurelle-product__enquiry-form' %}
+              {% if form.posted_successfully? %}
+                <p class="aurelle-product__enquiry-success" data-enquiry-success role="status">{{ 'products.aurelle.enquiry_success' | t }}</p>
+              {% else %}
+                {% if form.errors %}<div class="aurelle-product__form-errors" role="alert">{{ form.errors | default_errors }}</div>{% endif %}
+                <input type="hidden" name="contact[product]" value="{{ product.title | escape }}">
+                <input type="hidden" name="contact[request_type]" value="{{ 'products.aurelle.speak_to_concierge' | t | escape }}" data-enquiry-type-input>
+                <label for="AurelleContactName-{{ section.id }}">{{ 'products.aurelle.contact_name' | t }}</label>
+                <input id="AurelleContactName-{{ section.id }}" type="text" name="contact[name]" autocomplete="name" required>
+                <label for="AurelleContactEmail-{{ section.id }}">{{ 'products.aurelle.contact_email' | t }}</label>
+                <input id="AurelleContactEmail-{{ section.id }}" type="email" name="contact[email]" autocomplete="email" required>
+                <label for="AurelleContactBody-{{ section.id }}">{{ 'products.aurelle.contact_message' | t }}</label>
+                <textarea id="AurelleContactBody-{{ section.id }}" name="contact[body]" rows="4" required></textarea>
+                <button class="aurelle-product__add-to-bag" type="submit">{{ 'products.aurelle.contact_submit' | t }}</button>
+              {% endif %}
+            {% endform %}
+          </dialog>
+        </div>
+      </div>
     </div>
-  </div>
-</section>
+
+    <section class="aurelle-product__details" aria-label="{{ 'products.aurelle.product_information' | t }}">
+      <div class="aurelle-product__page-width">
+        <div class="aurelle-product__tabs" role="tablist" aria-label="{{ 'products.aurelle.product_information' | t }}">
+          <button type="button" role="tab" id="AurelleTabDetails-{{ section.id }}" aria-controls="AurellePanelDetails-{{ section.id }}" aria-selected="true" data-product-tab="details">{{ 'products.aurelle.details_tab' | t }}</button>
+          <button type="button" role="tab" id="AurelleTabDelivery-{{ section.id }}" aria-controls="AurellePanelDelivery-{{ section.id }}" aria-selected="false" tabindex="-1" data-product-tab="delivery">{{ 'products.aurelle.delivery_tab' | t }}</button>
+          <button type="button" role="tab" id="AurelleTabCare-{{ section.id }}" aria-controls="AurellePanelCare-{{ section.id }}" aria-selected="false" tabindex="-1" data-product-tab="care">{{ 'products.aurelle.care_tab' | t }}</button>
+        </div>
+
+        <div class="aurelle-product__tab-panel" id="AurellePanelDetails-{{ section.id }}" role="tabpanel" aria-labelledby="AurelleTabDetails-{{ section.id }}" data-product-panel="details">
+          <div class="aurelle-product__story-copy">
+            {% if details_heading != blank %}<h2>{{ details_heading | escape | newline_to_br }}</h2>{% endif %}
+            {% if details_intro != blank %}<div class="rte">{{ details_intro | escape | newline_to_br }}</div>{% elsif section.settings.details_intro != blank %}<div class="rte">{{ section.settings.details_intro }}</div>{% endif %}
+            {% if details_note != blank %}<p class="aurelle-product__detail-note"><svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="m10 2 7 4v8l-7 4-7-4V6l7-4Zm0 0v16M3 6l7 4 7-4" /></svg>{{ details_note | escape }}</p>{% endif %}
+          </div>
+          <dl class="aurelle-product__specifications">
+            {% assign precious_metal = product.metafields.custom.precious_metal.value | default: product.metafields.custom.metal.value %}
+            {% assign centre_stone = product.metafields.custom.centre_stone.value | default: product.metafields.custom.center_stone.value %}
+            {% assign stone_weight = product.metafields.custom.diamond_weight.value | default: product.metafields.custom.stone_weight.value %}
+            {% assign setting_dimensions = product.metafields.custom.setting_dimensions.value | default: product.metafields.custom.dimensions.value %}
+            {% assign provenance = product.metafields.custom.provenance.value %}
+            {% assign reference_code = product.metafields.custom.reference.value | default: product.selected_or_first_available_variant.sku %}
+            {% if precious_metal != blank %}<div><dt>{{ 'products.aurelle.precious_metal' | t }}</dt><dd>{{ precious_metal | escape }}</dd></div>{% endif %}
+            {% if centre_stone != blank %}<div><dt>{{ 'products.aurelle.centre_stone' | t }}</dt><dd>{{ centre_stone | escape }}</dd></div>{% endif %}
+            {% if stone_weight != blank %}<div><dt>{{ 'products.aurelle.stone_weight' | t }}</dt><dd>{{ stone_weight | escape }}</dd></div>{% endif %}
+            {% if setting_dimensions != blank %}<div><dt>{{ 'products.aurelle.setting_dimensions' | t }}</dt><dd>{{ setting_dimensions | escape }}</dd></div>{% endif %}
+            {% if provenance != blank %}<div><dt>{{ 'products.aurelle.provenance' | t }}</dt><dd>{{ provenance | escape }}</dd></div>{% endif %}
+            {% if reference_code != blank %}<div><dt>{{ 'products.aurelle.reference' | t }}</dt><dd>{{ reference_code | escape }}</dd></div>{% endif %}
+          </dl>
+        </div>
+
+        <div class="aurelle-product__tab-panel aurelle-product__tab-panel--text" id="AurellePanelDelivery-{{ section.id }}" role="tabpanel" aria-labelledby="AurelleTabDelivery-{{ section.id }}" data-product-panel="delivery" hidden>
+          {% if section.settings.delivery_copy != blank %}<div class="rte">{{ section.settings.delivery_copy }}</div>{% endif %}
+        </div>
+        <div class="aurelle-product__tab-panel aurelle-product__tab-panel--text" id="AurellePanelCare-{{ section.id }}" role="tabpanel" aria-labelledby="AurelleTabCare-{{ section.id }}" data-product-panel="care" hidden>
+          {% if section.settings.care_copy != blank %}<div class="rte">{{ section.settings.care_copy }}</div>{% endif %}
+        </div>
+      </div>
+    </section>
+
+    {% if atelier_heading != blank or atelier_image != blank %}
+      <section class="aurelle-product__atelier" aria-label="{{ 'products.aurelle.atelier_eyebrow' | t | escape }}">
+        <div class="aurelle-product__atelier-inner aurelle-product__page-width{% if atelier_image == blank %} aurelle-product__atelier-inner--no-image{% endif %}">
+            {% if atelier_image != blank %}
+              {% assign atelier_alt = atelier_image.alt | default: product.title %}
+            <div class="aurelle-product__atelier-visual">
+              {{ atelier_image | image_url: width: 1400 | image_tag: class: 'aurelle-product__atelier-image', alt: atelier_alt, widths: '480, 720, 960, 1200, 1400', sizes: '(min-width: 1000px) 44vw, 100vw', loading: 'lazy' }}
+              {% if atelier_badge != blank %}<div class="aurelle-product__atelier-badge"><span>{{ 'products.aurelle.atelier_note' | t }}</span><p>{{ atelier_badge | escape }}</p></div>{% endif %}
+            </div>
+          {% elsif request.design_mode %}
+            <div class="aurelle-product__atelier-visual aurelle-product__atelier-visual--empty"><span>{{ 'products.aurelle.choose_atelier_image' | t }}</span></div>
+          {% endif %}
+
+          <div class="aurelle-product__atelier-copy">
+            <p class="aurelle-product__eyebrow">{{ 'products.aurelle.atelier_eyebrow' | t }}</p>
+            {% if atelier_heading != blank %}<h2>{{ atelier_heading | escape | newline_to_br }}</h2>{% endif %}
+            {% if atelier_description != blank %}<div class="rte">{{ atelier_description | escape | newline_to_br }}</div>{% elsif section.settings.atelier_description != blank %}<div class="rte">{{ section.settings.atelier_description }}</div>{% endif %}
+            <div class="aurelle-product__atelier-stats">
+              {% if atelier_stat_one != blank %}<div><span>{{ atelier_stat_one | escape }}</span><small>{{ atelier_stat_one_label | escape }}</small></div>{% endif %}
+              {% if atelier_stat_two != blank %}<div><span>{{ atelier_stat_two | escape }}</span><small>{{ atelier_stat_two_label | escape }}</small></div>{% endif %}
+            </div>
+            {% if section.settings.atelier_link != blank %}<a class="aurelle-product__text-link" href="{{ section.settings.atelier_link }}">{{ 'products.aurelle.atelier_link_label' | t }} <span aria-hidden="true">→</span></a>{% endif %}
+          </div>
+        </div>
+      </section>
+    {% endif %}
+
+    {% if rating_value != blank and review_count != blank and review_count != 0 %}
+      <section class="aurelle-product__reviews" id="AurelleReviews-{{ section.id }}" aria-label="{{ 'products.aurelle.customer_reviews' | t }}">
+        <div class="aurelle-product__reviews-inner aurelle-product__page-width">
+          <div class="aurelle-product__review-summary">
+            <span class="aurelle-product__stars" aria-hidden="true">★★★★★</span>
+            <p>{{ rating_value | round: 1 }} {{ 'products.aurelle.out_of_five' | t }}</p>
+            <a href="#shopify-product-reviews">{{ 'products.aurelle.read_reviews' | t: count: review_count }}</a>
+          </div>
+          {% if product.metafields.custom.featured_review.value != blank %}
+            <blockquote class="aurelle-product__review-quote">
+              <p>“{{ product.metafields.custom.featured_review.value | escape }}”</p>
+              {% if product.metafields.custom.featured_review_author.value != blank %}<cite>{{ product.metafields.custom.featured_review_author.value | escape }} · {{ 'products.aurelle.verified_collector' | t }}</cite>{% endif %}
+            </blockquote>
+          {% endif %}
+        </div>
+      </section>
+    {% endif %}
+
+    {% assign related_collection = section.settings.related_collection | default: active_collection | default: product.collections.first %}
+    {% assign related_product_count = 0 %}
+    {% if related_collection != blank %}
+      {% for related_product in related_collection.products limit: 8 %}
+        {% unless related_product.id == product.id %}{% assign related_product_count = related_product_count | plus: 1 %}{% endunless %}
+      {% endfor %}
+    {% endif %}
+    {% if related_product_count == 0 %}
+      {% assign related_collection = collections['all'] %}
+      {% assign related_product_count = 0 %}
+      {% if related_collection != blank %}
+        {% for related_product in related_collection.products limit: 8 %}
+          {% unless related_product.id == product.id %}{% assign related_product_count = related_product_count | plus: 1 %}{% endunless %}
+        {% endfor %}
+      {% endif %}
+    {% endif %}
+    {% if related_collection != blank %}
+      {% if related_product_count > 0 %}
+        <section class="aurelle-product__related" aria-labelledby="AurelleRelatedHeading-{{ section.id }}">
+          <div class="aurelle-product__page-width">
+            <div class="aurelle-product__related-heading">
+              <div>
+                <p class="aurelle-product__eyebrow">{{ 'products.aurelle.related_eyebrow' | t }}</p>
+                <h2 id="AurelleRelatedHeading-{{ section.id }}">{{ section.settings.related_heading | escape }}</h2>
+              </div>
+              <a href="{{ related_collection.url }}">{{ 'products.aurelle.related_link_label' | t }} <span aria-hidden="true">→</span></a>
+            </div>
+            <div class="aurelle-product__related-grid" role="list">
+              {% assign related_rendered = 0 %}
+              {% for related_product in related_collection.products limit: 8 %}
+                {% unless related_product.id == product.id %}
+                  {% render 'aurelle-product-card', product: related_product %}
+                  {% assign related_rendered = related_rendered | plus: 1 %}
+                  {% if related_rendered >= 4 %}{% break %}{% endif %}
+                {% endunless %}
+              {% endfor %}
+            </div>
+          </div>
+        </section>
+      {% endif %}
+    {% endif %}
+
+    {% assign product_service_count = 0 %}
+    {% for block in section.blocks %}
+      {% if block.type == 'service' %}{% assign product_service_count = product_service_count | plus: 1 %}{% endif %}
+    {% endfor %}
+    {% if product_service_count > 0 %}
+      <section class="aurelle-product__services" aria-label="{{ 'products.aurelle.client_services' | t }}">
+        <div class="aurelle-product__services-inner aurelle-product__page-width">
+          {% for block in section.blocks %}
+            {% if block.type == 'service' %}
+            <article class="aurelle-product__service" {{ block.shopify_attributes }}>
+              <span class="aurelle-product__service-icon" aria-hidden="true">
+                {% case block.settings.icon %}
+                  {% when 'truck' %}<svg viewBox="0 0 24 24"><path d="M2 5h12v12H2zM14 9h4l4 4v4h-8zM6.5 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM18.5 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/></svg>
+                  {% when 'return' %}<svg viewBox="0 0 24 24"><path d="M4 7v5h5M5 12a8 8 0 1 0 2-5M12 7v5l3 2"/></svg>
+                  {% when 'diamond' %}<svg viewBox="0 0 24 24"><path d="M3 9 7 4h10l4 5-9 11L3 9Zm0 0h18M7 4l5 16 5-16M7 9l5-5 5 5"/></svg>
+                  {% when 'infinity' %}<svg viewBox="0 0 24 24"><path d="M7 8c-2.3 0-4 1.7-4 4s1.7 4 4 4c3.1 0 6.1-8 10-8 2.3 0 4 1.7 4 4s-1.7 4-4 4C13.9 16 10.9 8 7 8Z"/></svg>
+                {% endcase %}
+              </span>
+              <div>{% if block.settings.title != blank %}<h3>{{ block.settings.title | escape }}</h3>{% endif %}{% if block.settings.description != blank %}<p>{{ block.settings.description | escape }}</p>{% endif %}</div>
+            </article>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+    {% for block in section.blocks %}
+      {% if block.type == '@app' %}<div class="aurelle-product__app-block aurelle-product__page-width">{% render block %}</div>{% endif %}
+      {% if block.type == 'custom_liquid' %}<div class="aurelle-product__app-block aurelle-product__page-width" {{ block.shopify_attributes }}>{{ block.settings.custom_liquid }}</div>{% endif %}
+    {% endfor %}
+
+    <script type="application/json" data-product-variants>
+      [
+        {% for variant in product.variants %}
+          {"id":{{ variant.id | json }},"options":{{ variant.options | json }},"price":{{ variant.price | json }},"price_text":{{ variant.price | money_with_currency | json }},"unit_price_text":{{ variant.unit_price | unit_price_with_measurement: variant.unit_price_measurement | json }},"compare_at_price":{{ variant.compare_at_price | json }},"compare_at_price_text":{{ variant.compare_at_price | money_with_currency | json }},"available":{{ variant.available | json }},"featured_media_id":{{ variant.featured_media.id | json }}}
+          {% unless forloop.last %},{% endunless %}
+        {% endfor %}
+      ]
+    </script>
+
+    <dialog class="aurelle-product__lightbox" data-gallery-dialog aria-label="{{ 'products.aurelle.gallery' | t: title: product.title | escape }}">
+      <button type="button" data-gallery-close aria-label="{{ 'products.aurelle.close_image' | t }}">×</button>
+      {% if product.featured_image != blank %}
+        <img src="{{ product.featured_image | image_url: width: 1600 }}" alt="{{ product.title | escape }}" width="{{ product.featured_image.width }}" height="{{ product.featured_image.height }}" loading="lazy" data-gallery-dialog-image>
+      {% endif %}
+    </dialog>
+  </section>
+{% endif %}
 
 {% stylesheet %}
   .aurelle-product {
-    padding-block: clamp(36px, 6vw, 88px);
+    --aurelle-product-ink: #25231f;
+    --aurelle-product-muted: #777169;
+    --aurelle-product-gold: #806122;
+    --aurelle-product-line: #e1dbd2;
+    --aurelle-product-ivory: #fcf9f4;
+    color: var(--aurelle-product-ink);
+    background: var(--aurelle-product-ivory);
   }
 
-  .aurelle-product__layout {
-    display: grid;
-    width: min(1280px, calc(100% - clamp(32px, 8vw, 112px)));
-    grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
-    align-items: start;
-    gap: clamp(28px, 6vw, 88px);
+  .aurelle-product__page-width {
+    width: min(1184px, calc(100% - 96px));
     margin-inline: auto;
   }
 
-  .aurelle-product__media {
-    display: grid;
+  .aurelle-product__breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 13px;
     min-width: 0;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: clamp(8px, 1.5vw, 20px);
-  }
-
-  .aurelle-product__image {
-    background: #f2efeb;
-  }
-
-  .aurelle-product__media > :first-child {
-    grid-column: 1 / -1;
-  }
-
-  .aurelle-product__title {
-    font-family: 'Bodoni MT', Didot, Georgia, 'Times New Roman', serif;
-    font-size: clamp(32px, 4.4vw, 56px);
-    font-weight: 400;
-    line-height: 1.08;
-  }
-
-  .aurelle-product__price {
-    margin-top: 18px;
-    font-size: 18px;
+    padding: 27px 0 28px;
+    color: #817c74;
+    font-family: var(--font-primary--family, Arial, sans-serif);
+    font-size: 14px;
     line-height: 1.4;
   }
 
+  .aurelle-product__breadcrumbs a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 180ms ease;
+  }
+
+  .aurelle-product__breadcrumbs a:hover,
+  .aurelle-product__size-guide:hover,
+  .aurelle-product__concierge a:hover {
+    color: var(--aurelle-product-gold);
+  }
+
+  .aurelle-product__breadcrumbs [aria-current='page'] {
+    overflow: hidden;
+    color: var(--aurelle-product-ink);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .aurelle-product__overview {
+    display: grid;
+    grid-template-columns: minmax(0, 4fr) minmax(0, 3fr);
+    align-items: start;
+    gap: 64px;
+    padding-bottom: 70px;
+  }
+
+  .aurelle-product__gallery,
+  .aurelle-product__purchase {
+    min-width: 0;
+  }
+
+  .aurelle-product__gallery-stage {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 640 / 620;
+    background: #eee9e1;
+  }
+
+  .aurelle-product__media-item {
+    width: 100%;
+    height: 100%;
+  }
+
+  .aurelle-product__media-item[hidden],
+  .aurelle-product__tab-panel[hidden],
+  .aurelle-product__fallback-variant[hidden],
+  .aurelle-product__engraving-input[hidden] {
+    display: none !important;
+  }
+
+  .aurelle-product__media-item > img,
+  .aurelle-product__media-item > video,
+  .aurelle-product__media-item > iframe,
+  .aurelle-product__media-item > model-viewer,
+  .aurelle-product__media-item > .shopify-model-viewer-ui {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .aurelle-product__media-item--empty {
+    display: grid;
+    place-items: center;
+    padding: 10%;
+    background: #f0ece5;
+  }
+
+  .aurelle-product__placeholder {
+    width: 100%;
+    height: 100%;
+    fill: rgb(88 78 65 / 14%);
+  }
+
+  .aurelle-product__gallery-badge {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    padding: 9px 13px;
+    color: var(--aurelle-product-gold);
+    background: rgb(252 249 244 / 96%);
+    font-family: var(--font-primary--family, Arial, sans-serif);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.11em;
+    line-height: 1.3;
+    text-transform: uppercase;
+  }
+
+  .aurelle-product__fullscreen {
+    position: absolute;
+    right: 18px;
+    bottom: 18px;
+    display: grid;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    color: var(--aurelle-product-gold);
+    background: rgb(252 249 244 / 96%);
+    cursor: zoom-in;
+    transition: transform 180ms ease, background-color 180ms ease;
+  }
+
+  .aurelle-product__fullscreen:hover {
+    transform: scale(1.06);
+    background: #fff;
+  }
+
+  .aurelle-product__fullscreen svg,
+  .aurelle-product__booking svg,
+  .aurelle-product__gift-note svg,
+  .aurelle-product__concierge svg,
+  .aurelle-product__detail-note svg,
+  .aurelle-product__service-icon svg {
+    width: 19px;
+    height: 19px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.35;
+  }
+
+  .aurelle-product__thumbnails {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: thin;
+    scrollbar-color: #c9b78e transparent;
+    scroll-snap-type: x mandatory;
+  }
+
+  .aurelle-product__thumbnail {
+    position: relative;
+    flex: 0 0 calc((100% - 24px) / 3);
+    min-width: 0;
+    overflow: hidden;
+    padding: 0;
+    aspect-ratio: 1.38;
+    border: 1px solid transparent;
+    background: #eee9e1;
+    cursor: pointer;
+    scroll-snap-align: start;
+    transition: border-color 180ms ease, opacity 180ms ease;
+  }
+
+  .aurelle-product__thumbnail.is-active,
+  .aurelle-product__thumbnail[aria-pressed='true'] {
+    border-color: var(--aurelle-product-gold);
+  }
+
+  .aurelle-product__thumbnail img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 450ms cubic-bezier(0.2, 0.65, 0.3, 1);
+  }
+
+  .aurelle-product__thumbnail:hover img {
+    transform: scale(1.035);
+  }
+
+  .aurelle-product__thumbnail-type {
+    position: absolute;
+    right: 6px;
+    bottom: 6px;
+    padding: 4px 6px;
+    color: #fff;
+    background: rgb(37 35 31 / 75%);
+    font: 12px/1.2 var(--font-primary--family, Arial, sans-serif);
+    letter-spacing: 0.06em;
+  }
+
+  .aurelle-product__gallery-caption {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 16px;
+    color: #888178;
+    font-family: var(--font-primary--family, Arial, sans-serif);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .aurelle-product__gallery-caption p {
+    margin: 0;
+  }
+
+  .aurelle-product__gallery-caption span {
+    flex: 0 0 auto;
+    color: var(--aurelle-product-gold);
+  }
+
+  .aurelle-product__purchase {
+    padding-top: 7px;
+  }
+
+  .aurelle-product__eyebrow {
+    margin: 0 0 13px;
+    color: var(--aurelle-product-gold);
+    font-family: var(--font-primary--family, Arial, sans-serif);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.13em;
+    line-height: 1.5;
+    text-transform: uppercase;
+  }
+
+  .aurelle-product__title,
+  .aurelle-product__tab-panel h2,
+  .aurelle-product__atelier-copy h2,
+  .aurelle-product__related-heading h2 {
+    margin: 0;
+    font-family: var(--font-heading--family, 'Playfair Display', Georgia, 'Times New Roman', serif);
+    font-weight: 400;
+    letter-spacing: -0.035em;
+  }
+
+  .aurelle-product__title {
+    max-width: 560px;
+    font-size: clamp(38px, 3.35vw, 48px);
+    line-height: 1.12;
+  }
+
+  .aurelle-product__subtitle {
+    margin: 11px 0 0;
+    color: #5e5952;
+    font-family: var(--font-primary--family, Arial, sans-serif);
+    font-size: 16px;
+    line-height: 1.55;
+  }
+
+  .aurelle-product__rating {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 11px;
+    margin-top: 11px;
+    color: var(--aurelle-product-ink);
+    font-family: var(--font-primary--family, Arial, sans-serif);
+    font-size: 14px;
+    text-decoration-color: #aaa197;
+    text-underline-offset: 3px;
+  }
+
+  .aurelle-product__stars {
+    color: var(--aurelle-product-gold);
+    font-size: 16px;
+    letter-spacing: 0.08em;
+    line-height: 1;
+  }
+
+  .aurelle-product__price-wrap {
+    display: flex;
+    align-items: baseline;
+    gap: 11px;
+    margin-top: 21px;
+  }
+
+  .aurelle-product__price {
+    margin: 0;
+    font-family: var(--font-primary--family, Arial, sans-serif);
+    font-size: 25px;
+    font-weight: 400;
+    letter-spacing: -0.03em;
+    line-height: 1.2;
+  }
+
+  .aurelle-product__compare-price {
+    color: var(--aurelle-product-muted);
+    font: 16px var(--font-primary--family, Arial, sans-serif);
+  }
+
+  .aurelle-product__tax-note {
+    margin: 5px 0 0;
+    color: #8a847b;
+    font: 14px/1.5 var(--font-primary--family, Arial, sans-serif);
+  }
+
+  .aurelle-product__unit-price { margin-top: 5px; color: #8a847b; font-size: 14px; }
+  .aurelle-product__dynamic-checkout { grid-column: 1 / -1; }
+
+  .aurelle-product__rule {
+    height: 1px;
+    margin: 20px 0 24px;
+    background: var(--aurelle-product-line);
+  }
+
   .aurelle-product__description {
-    margin-top: 24px;
-    font-size: 15px;
-    line-height: 1.65;
+    color: #59554e;
+    font-family: var(--font-primary--family, Arial, sans-serif);
+    font-size: 16px;
+    line-height: 1.72;
+  }
+
+  .aurelle-product__description p {
+    margin: 0 0 8px;
+  }
+
+  .aurelle-product__description p:last-child {
+    margin-bottom: 0;
   }
 
   .aurelle-product__description img,
@@ -132,85 +797,1432 @@
 
   .aurelle-product__form {
     display: grid;
-    gap: 10px;
-    margin-top: 28px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    column-gap: 18px;
+    row-gap: 17px;
+    margin-top: 22px;
   }
 
-  .aurelle-product__form label {
-    font-size: 13px;
-    line-height: 1.4;
-  }
-
-  .aurelle-product__form select,
-  .aurelle-product__form input[type='number'] {
+  .aurelle-product__fallback-variant {
+    display: block;
+    grid-column: 1 / -1;
     width: 100%;
-    min-height: 48px;
-    padding: 10px 12px;
-    border: 1px solid #c9c1b6;
-    background: #fff;
-    color: inherit;
+    min-height: 46px;
+    padding: 0 12px;
+    border: 1px solid var(--aurelle-product-line);
+    border-radius: 0;
+    color: var(--aurelle-product-ink);
+    background: transparent;
+    font: 16px var(--font-primary--family, Arial, sans-serif);
   }
 
-  .aurelle-product__form button {
-    min-height: 50px;
-    padding: 12px 20px;
-    border: 1px solid #1e1c19;
-    background: #1e1c19;
-    color: #fff;
+  .aurelle-product.is-enhanced .aurelle-product__fallback-variant {
+    display: none;
+  }
+
+  .aurelle-product__option {
+    position: relative;
+    display: grid;
+    grid-column: 1 / -1;
+    gap: 9px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .aurelle-product__option legend {
+    width: 100%;
+    margin-bottom: 0;
+    padding: 0;
+    color: #403d38;
+    font-family: var(--font-primary--family, Arial, sans-serif);
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
+  .aurelle-product__option legend span {
+    color: var(--aurelle-product-muted);
+  }
+
+  .aurelle-product:not(.is-enhanced) .aurelle-product__option {
+    display: none;
+  }
+
+  .aurelle-product__swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .aurelle-product__swatch {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    border: 1px solid transparent;
+    border-radius: 50%;
     cursor: pointer;
-    font: inherit;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    transition: border-color 180ms ease, transform 180ms ease;
   }
 
-  .aurelle-product__form button:disabled {
-    cursor: not-allowed;
-    opacity: 0.55;
+  .aurelle-product__swatch:hover {
+    transform: translateY(-1px);
   }
 
-  .aurelle-product__form :focus-visible {
-    outline: 2px solid #806122;
+  .aurelle-product__swatch:has(input:checked) {
+    border-color: var(--aurelle-product-gold);
+  }
+
+  .aurelle-product__swatch input:checked + .aurelle-product__swatch-dot {
+    box-shadow: inset 0 0 0 2px var(--aurelle-product-ivory), 0 0 0 1px var(--aurelle-product-gold);
+  }
+
+  .aurelle-product__swatch input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+
+  .aurelle-product__swatch-dot {
+    display: block;
+    width: 27px;
+    height: 27px;
+    border: 1px solid rgb(37 35 31 / 10%);
+    border-radius: 50%;
+    background: var(--aurelle-swatch);
+    box-shadow: inset 0 0 0 2px var(--aurelle-product-ivory);
+  }
+
+  .aurelle-product__swatch-dot--image { overflow: hidden; }
+  .aurelle-product__swatch-dot--image img { width: 100%; height: 100%; object-fit: cover; }
+  .aurelle-product__swatch--text { width: auto; min-width: 38px; padding-inline: 8px; border-radius: 0; }
+  .aurelle-product__swatch-text { font-size: 13px; white-space: nowrap; }
+
+  .aurelle-product__swatch input:focus-visible + :is(.aurelle-product__swatch-dot, .aurelle-product__swatch-text) {
+    outline: 2px solid var(--aurelle-product-gold);
     outline-offset: 3px;
   }
 
-  @media screen and (max-width: 900px) {
-    .aurelle-product__layout {
-      width: min(720px, calc(100% - 48px));
-      grid-template-columns: minmax(0, 1fr);
-      gap: 32px;
-    }
+  .aurelle-product__select {
+    width: 100%;
+    min-height: 46px;
+    padding: 0 14px;
+    border: 1px solid var(--aurelle-product-line);
+    border-radius: 0;
+    color: var(--aurelle-product-ink);
+    background: transparent;
+    font: 16px var(--font-primary--family, Arial, sans-serif);
+  }
 
-    .aurelle-product__details {
-      max-width: 680px;
+  .aurelle-product__option :focus-visible,
+  .aurelle-product__form :focus-visible,
+  .aurelle-product__booking:focus-visible,
+  .aurelle-product__concierge-link:focus-visible,
+  .aurelle-product__enquiry-close:focus-visible,
+  .aurelle-product__fullscreen:focus-visible,
+  .aurelle-product__thumbnail:focus-visible {
+    outline: 2px solid var(--aurelle-product-gold);
+    outline-offset: 3px;
+  }
+
+  .aurelle-product__size-guide {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--aurelle-product-gold);
+    font: 15px var(--font-primary--family, Arial, sans-serif);
+    text-underline-offset: 3px;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  .aurelle-product__engraving-toggle {
+    display: flex;
+    grid-column: 1 / -1;
+    align-items: center;
+    gap: 10px;
+    color: #69645c;
+    font: 15px/1.5 var(--font-primary--family, Arial, sans-serif);
+    cursor: pointer;
+  }
+
+  .aurelle-product__engraving-toggle input {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: var(--aurelle-product-gold);
+  }
+
+  .aurelle-product__engraving-input {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-height: 42px;
+    padding: 10px 12px;
+    border: 1px solid var(--aurelle-product-line);
+    border-radius: 0;
+    background: #fff;
+    font: 16px var(--font-primary--family, Arial, sans-serif);
+  }
+
+  .aurelle-product__availability {
+    display: flex;
+    grid-column: 1 / -1;
+    align-items: center;
+    gap: 7px;
+    margin: 0;
+    color: var(--aurelle-product-gold);
+    font: 14px/1.5 var(--font-primary--family, Arial, sans-serif);
+  }
+
+  .aurelle-product__availability-dot {
+    width: 5px;
+    height: 5px;
+    flex: 0 0 5px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .aurelle-product__availability.is-unavailable {
+    color: #8a4d43;
+  }
+
+  .aurelle-product__purchase-row {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: 100px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .aurelle-product__quantity {
+    display: grid;
+    grid-template-columns: 30px minmax(24px, 1fr) 30px;
+    min-height: 50px;
+    align-items: center;
+    border: 1px solid var(--aurelle-product-line);
+    border-radius: 14px;
+    background: transparent;
+  }
+
+  .aurelle-product__quantity button {
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    color: #777168;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .aurelle-product__quantity input {
+    width: 100%;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    color: var(--aurelle-product-ink);
+    background: transparent;
+    font: 16px var(--font-primary--family, Arial, sans-serif);
+    text-align: center;
+    appearance: textfield;
+    -moz-appearance: textfield;
+  }
+
+  .aurelle-product__quantity input::-webkit-inner-spin-button,
+  .aurelle-product__quantity input::-webkit-outer-spin-button {
+    margin: 0;
+    appearance: none;
+  }
+
+  .aurelle-product__add-to-bag {
+    display: flex;
+    min-width: 0;
+    min-height: 50px;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 12px 16px;
+    border: 1px solid var(--aurelle-product-gold);
+    border-radius: 13px;
+    color: #fff;
+    background: var(--aurelle-product-gold);
+    cursor: pointer;
+    font: 600 15px/1.35 var(--font-primary--family, Arial, sans-serif);
+    letter-spacing: 0.08em;
+    text-align: center;
+    text-transform: uppercase;
+    transition: background-color 180ms ease, border-color 180ms ease, transform 180ms ease;
+  }
+
+  .aurelle-product__add-to-bag:not(:disabled):hover {
+    transform: translateY(-1px);
+    border-color: #60491f;
+    background: #60491f;
+  }
+
+  .aurelle-product__add-to-bag:disabled {
+    opacity: 0.58;
+    cursor: not-allowed;
+  }
+
+  .aurelle-product__booking {
+    display: flex;
+    width: 100%;
+    min-height: 50px;
+    align-items: center;
+    justify-content: center;
+    gap: 11px;
+    margin-top: 11px;
+    border: 1px solid var(--aurelle-product-line);
+    border-radius: 13px;
+    color: var(--aurelle-product-ink);
+    font: 500 15px var(--font-primary--family, Arial, sans-serif);
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: border-color 180ms ease, color 180ms ease;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .aurelle-product__booking:hover {
+    border-color: var(--aurelle-product-gold);
+    color: var(--aurelle-product-gold);
+  }
+
+  .aurelle-product__gift-note,
+  .aurelle-product__concierge {
+    display: flex;
+    align-items: flex-start;
+    gap: 13px;
+    margin: 21px 0 0;
+    color: #726d65;
+    font: 14px/1.7 var(--font-primary--family, Arial, sans-serif);
+  }
+
+  .aurelle-product__gift-note svg,
+  .aurelle-product__concierge svg {
+    flex: 0 0 19px;
+    color: var(--aurelle-product-gold);
+  }
+
+  .aurelle-product__concierge {
+    margin-top: 15px;
+  }
+
+  .aurelle-product__concierge a {
+    color: var(--aurelle-product-gold);
+    text-underline-offset: 3px;
+  }
+
+  .aurelle-product__concierge-link {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--aurelle-product-gold);
+    font: inherit;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
+
+  .aurelle-product__enquiry-dialog {
+    position: fixed;
+    width: min(520px, calc(100% - 32px));
+    max-width: 520px;
+    max-height: min(720px, calc(100dvh - 32px));
+    padding: clamp(26px, 5vw, 44px);
+    border: 1px solid var(--aurelle-product-line);
+    background: var(--aurelle-product-paper);
+    color: var(--aurelle-product-ink);
+    box-shadow: 0 24px 80px rgb(20 18 14 / 24%);
+  }
+
+  .aurelle-product__enquiry-dialog::backdrop {
+    background: rgb(26 24 21 / 58%);
+    backdrop-filter: blur(3px);
+  }
+
+  .aurelle-product__enquiry-dialog h2 {
+    margin: 0 36px 20px 0;
+    font: 400 clamp(26px, 4vw, 38px)/1.12 var(--font-heading--family, Georgia, serif);
+  }
+
+  .aurelle-product__enquiry-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--aurelle-product-line);
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    font-size: 22px;
+    cursor: pointer;
+  }
+
+  .aurelle-product__enquiry-form {
+    display: grid;
+    gap: 10px;
+  }
+
+  .aurelle-product__enquiry-form label {
+    color: #69645c;
+    font: 15px/1.4 var(--font-primary--family, Arial, sans-serif);
+  }
+
+  .aurelle-product__enquiry-form input:not([type='hidden']),
+  .aurelle-product__enquiry-form textarea {
+    width: 100%;
+    min-height: 44px;
+    padding: 11px 12px;
+    border: 1px solid var(--aurelle-product-line);
+    border-radius: 0;
+    background: #fff;
+    color: var(--aurelle-product-ink);
+    font: 16px/1.4 var(--font-primary--family, Arial, sans-serif);
+  }
+
+  .aurelle-product__enquiry-form textarea {
+    min-height: 112px;
+    resize: vertical;
+  }
+
+  .aurelle-product__enquiry-form .aurelle-product__add-to-bag {
+    margin-top: 8px;
+  }
+
+  .aurelle-product__enquiry-success {
+    margin: 0;
+    color: var(--aurelle-product-gold);
+    font: 16px/1.6 var(--font-primary--family, Arial, sans-serif);
+  }
+
+  .aurelle-product__form-errors {
+    grid-column: 1 / -1;
+    color: #8a342c;
+    font: 16px/1.5 var(--font-primary--family, Arial, sans-serif);
+  }
+
+  .aurelle-product__details {
+    padding: 54px 0 72px;
+    background: #f5f2ed;
+  }
+
+  .aurelle-product__details .aurelle-product__page-width {
+    width: min(1480px, calc(100% - 120px));
+  }
+
+  .aurelle-product__tabs {
+    display: flex;
+    gap: 50px;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--aurelle-product-line);
+    scrollbar-width: none;
+  }
+
+  .aurelle-product__tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .aurelle-product__tabs button {
+    position: relative;
+    flex: 0 0 auto;
+    padding: 8px 0 17px;
+    border: 0;
+    color: #8a847d;
+    background: transparent;
+    cursor: pointer;
+    font: 500 16px/1.5 var(--font-primary--family, Arial, sans-serif);
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+  }
+
+  .aurelle-product__tabs button[aria-selected='true'] {
+    color: var(--aurelle-product-gold);
+  }
+
+  .aurelle-product__tabs button[aria-selected='true']::after {
+    position: absolute;
+    right: 0;
+    bottom: -1px;
+    left: 0;
+    height: 2px;
+    background: var(--aurelle-product-gold);
+    content: '';
+  }
+
+  .aurelle-product__tabs button:focus-visible {
+    outline: 2px solid var(--aurelle-product-gold);
+    outline-offset: 4px;
+  }
+
+  .aurelle-product__tab-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.12fr);
+    align-items: start;
+    gap: clamp(64px, 6.2vw, 100px);
+    padding-top: 44px;
+  }
+
+  .aurelle-product__tab-panel h2 {
+    max-width: 430px;
+    margin: 0;
+    font-size: clamp(32px, 2.6vw, 40px);
+    line-height: 1.2;
+    white-space: normal;
+  }
+
+  .aurelle-product__story-copy .rte {
+    margin-top: 16px;
+    color: #5d5851;
+    font: 16px/1.95 var(--font-primary--family, Arial, sans-serif);
+  }
+
+  .aurelle-product__story-copy .rte p {
+    margin: 0 0 12px;
+  }
+
+  .aurelle-product__detail-note {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 17px 0 0;
+    color: var(--aurelle-product-gold);
+    font: 16px/1.6 var(--font-primary--family, Arial, sans-serif);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .aurelle-product__detail-note svg {
+    flex: 0 0 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  .aurelle-product__specifications {
+    margin: 0;
+  }
+
+  .aurelle-product__specifications > div {
+    display: grid;
+    grid-template-columns: minmax(170px, 0.65fr) minmax(0, 2.35fr);
+    gap: 22px;
+    padding: 13px 0;
+    border-bottom: 1px solid #e3ddd5;
+    font: 16px/1.5 var(--font-primary--family, Arial, sans-serif);
+  }
+
+  .aurelle-product__specifications dt {
+    color: #8b857d;
+  }
+
+  .aurelle-product__specifications dd {
+    margin: 0;
+    color: #393631;
+  }
+
+  .aurelle-product__tab-panel--text {
+    min-height: 140px;
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 800px;
+    color: #59554e;
+    font: 16px/1.8 var(--font-primary--family, Arial, sans-serif);
+  }
+
+  .aurelle-product__atelier {
+    padding: 76px 0;
+    background: var(--aurelle-product-ivory);
+  }
+
+  .aurelle-product__atelier-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    gap: clamp(48px, 6vw, 80px);
+  }
+
+  .aurelle-product__atelier-visual {
+    position: relative;
+    min-width: 0;
+    aspect-ratio: 1.25;
+    background: #eae6df;
+  }
+
+  .aurelle-product__atelier-visual--empty {
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    color: #726d65;
+    background: linear-gradient(145deg, #e4e0d9, #d4cfc7);
+    font: 16px/1.5 var(--font-primary--family, Arial, sans-serif);
+    text-align: center;
+  }
+
+  .aurelle-product__atelier-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(1);
+  }
+
+  .aurelle-product__atelier-badge {
+    position: absolute;
+    right: 20px;
+    bottom: -16px;
+    width: min(250px, 62%);
+    padding: 16px 19px;
+    background: var(--aurelle-product-ivory);
+    box-shadow: 0 8px 26px rgb(37 35 31 / 10%);
+  }
+
+  .aurelle-product__atelier-badge span {
+    color: var(--aurelle-product-gold);
+    font: 600 12px/1.4 var(--font-primary--family, Arial, sans-serif);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .aurelle-product__atelier-badge p {
+    margin: 6px 0 0;
+    font: 18px/1.25 var(--font-heading--family, 'Playfair Display', Georgia, serif);
+  }
+
+  .aurelle-product__atelier-copy {
+    max-width: 580px;
+  }
+
+  .aurelle-product__atelier-copy .aurelle-product__eyebrow {
+    margin-bottom: 14px;
+  }
+
+  .aurelle-product__atelier-copy h2 {
+    font-size: clamp(34px, 3vw, 42px);
+    line-height: 1.18;
+  }
+
+  .aurelle-product__atelier-copy .rte {
+    margin-top: 17px;
+    color: #5d5851;
+    font: 16px/1.8 var(--font-primary--family, Arial, sans-serif);
+  }
+
+  .aurelle-product__atelier-copy .rte p {
+    margin: 0;
+  }
+
+  .aurelle-product__atelier-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(28px, 5vw, 58px);
+    margin-top: 28px;
+  }
+
+  .aurelle-product__atelier-stats div {
+    display: grid;
+    gap: 4px;
+  }
+
+  .aurelle-product__atelier-stats span {
+    color: var(--aurelle-product-gold);
+    font: 28px/1.1 var(--font-heading--family, 'Playfair Display', Georgia, serif);
+  }
+
+  .aurelle-product__atelier-stats small {
+    color: #79736b;
+    font: 12px/1.45 var(--font-primary--family, Arial, sans-serif);
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+  }
+
+  .aurelle-product__text-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 24px;
+    color: var(--aurelle-product-gold);
+    font: 14px/1.5 var(--font-primary--family, Arial, sans-serif);
+    letter-spacing: 0.1em;
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+
+  .aurelle-product__text-link span {
+    font-size: 16px;
+    transition: transform 180ms ease;
+  }
+
+  .aurelle-product__text-link:hover span {
+    transform: translateX(4px);
+  }
+
+  .aurelle-product__atelier-inner--no-image {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    text-align: center;
+  }
+
+  .aurelle-product__atelier-inner--no-image .aurelle-product__atelier-copy {
+    max-width: 760px;
+  }
+
+  .aurelle-product__atelier-inner--no-image .aurelle-product__atelier-stats {
+    justify-content: center;
+  }
+
+  .aurelle-product__reviews {
+    padding: 35px 0 38px;
+    background: #f0ede8;
+  }
+
+  .aurelle-product__reviews-inner {
+    display: grid;
+    grid-template-columns: minmax(150px, 0.32fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 55px;
+  }
+
+  .aurelle-product__review-summary .aurelle-product__stars {
+    display: block;
+  }
+
+  .aurelle-product__review-summary p {
+    margin: 8px 0 2px;
+    font: 20px/1.25 var(--font-heading--family, 'Playfair Display', Georgia, serif);
+  }
+
+  .aurelle-product__review-summary a {
+    color: #716b63;
+    font: 14px/1.5 var(--font-primary--family, Arial, sans-serif);
+    text-underline-offset: 3px;
+  }
+
+  .aurelle-product__review-quote {
+    margin: 0;
+  }
+
+  .aurelle-product__review-quote p {
+    margin: 0;
+    font: italic clamp(20px, 2.4vw, 27px)/1.35 var(--font-heading--family, 'Playfair Display', Georgia, serif);
+  }
+
+  .aurelle-product__review-quote cite {
+    display: block;
+    margin-top: 13px;
+    color: #716b63;
+    font: normal 12px/1.5 var(--font-primary--family, Arial, sans-serif);
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+  }
+
+  .aurelle-product__related {
+    padding: 62px 0 56px;
+    background: var(--aurelle-product-ivory);
+  }
+
+  .aurelle-product__related-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid var(--aurelle-product-line);
+  }
+
+  .aurelle-product__related-heading .aurelle-product__eyebrow {
+    margin-bottom: 8px;
+  }
+
+  .aurelle-product__related-heading h2 {
+    font-size: clamp(29px, 3vw, 38px);
+    line-height: 1.2;
+  }
+
+  .aurelle-product__related-heading > a {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 5px;
+    color: var(--aurelle-product-gold);
+    font: 14px/1.4 var(--font-primary--family, Arial, sans-serif);
+    letter-spacing: 0.09em;
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+
+  .aurelle-product__related-heading > a span {
+    font-size: 17px;
+    transition: transform 180ms ease;
+  }
+
+  .aurelle-product__related-heading > a:hover span {
+    transform: translateX(4px);
+  }
+
+  .aurelle-product__related-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 22px;
+    margin-top: 36px;
+  }
+
+  .aurelle-product__related-grid .aurelle-product-card {
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .aurelle-product__services {
+    padding: 24px 0;
+    background: #f0ede8;
+  }
+
+  .aurelle-product__services-inner {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 24px;
+  }
+
+  .aurelle-product__service {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr);
+    align-items: start;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .aurelle-product__service-icon {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    border-radius: 10px;
+    color: var(--aurelle-product-gold);
+    background: #fff;
+  }
+
+  .aurelle-product__service h3 {
+    margin: 2px 0 4px;
+    font: 16px/1.3 var(--font-heading--family, 'Playfair Display', Georgia, serif);
+  }
+
+  .aurelle-product__service p {
+    margin: 0;
+    color: #716c64;
+    font: 14px/1.5 var(--font-primary--family, Arial, sans-serif);
+  }
+
+  .aurelle-product__lightbox {
+    position: fixed;
+    inset: 0;
+    width: min(96vw, 1200px);
+    max-width: none;
+    height: min(94vh, 1100px);
+    max-height: none;
+    padding: 36px;
+    border: 0;
+    background: #171613;
+  }
+
+  .aurelle-product__lightbox::backdrop {
+    background: rgb(18 17 15 / 92%);
+  }
+
+  .aurelle-product__lightbox[open] {
+    display: grid;
+    place-items: center;
+  }
+
+  .aurelle-product__lightbox img {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+
+  .aurelle-product__lightbox button {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    width: 42px;
+    height: 42px;
+    border: 0;
+    color: white;
+    background: transparent;
+    cursor: pointer;
+    font: 32px/1 Arial, sans-serif;
+  }
+
+  @media screen and (min-width: 1500px) {
+    .aurelle-product__overview {
+      grid-template-columns: minmax(0, 640px) minmax(0, 480px);
+      justify-content: space-between;
     }
   }
 
-  @media screen and (max-width: 520px) {
-    .aurelle-product__layout {
-      width: calc(100% - 32px);
-      gap: 24px;
+  @media screen and (max-width: 1100px) {
+    .aurelle-product__page-width {
+      width: min(calc(100% - 64px), 900px);
     }
 
-    .aurelle-product__media {
-      grid-template-columns: minmax(0, 1fr);
+    .aurelle-product__details .aurelle-product__page-width {
+      width: min(calc(100% - 64px), 900px);
     }
 
-    .aurelle-product__media > :first-child {
-      grid-column: auto;
+    .aurelle-product__details {
+      padding: 44px 0 56px;
+    }
+
+    .aurelle-product__tabs {
+      gap: 34px;
+    }
+
+    .aurelle-product__tabs button {
+      font-size: 14px;
+    }
+
+    .aurelle-product__tab-panel {
+      gap: 42px;
+      padding-top: 34px;
+    }
+
+    .aurelle-product__tab-panel h2 {
+      font-size: clamp(30px, 3.5vw, 36px);
+    }
+
+    .aurelle-product__story-copy .rte {
+      font-size: 16px;
+      line-height: 1.8;
+    }
+
+    .aurelle-product__specifications > div {
+      grid-template-columns: minmax(130px, 0.8fr) minmax(0, 2fr);
+      gap: 14px;
+      font-size: 15px;
+    }
+
+    .aurelle-product__overview {
+      grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+      gap: 36px;
+      padding-bottom: 56px;
     }
 
     .aurelle-product__title {
-      font-size: clamp(32px, 9vw, 42px);
+      font-size: clamp(34px, 4.2vw, 44px);
+    }
+
+    .aurelle-product__related-grid {
+      gap: 14px;
+    }
+
+    .aurelle-product__services-inner {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      row-gap: 22px;
+    }
+  }
+
+  @media screen and (max-width: 760px) {
+    .aurelle-product__page-width {
+      width: min(calc(100% - 40px), 640px);
+    }
+
+    .aurelle-product__details .aurelle-product__page-width {
+      width: min(calc(100% - 40px), 640px);
+    }
+
+    .aurelle-product__breadcrumbs {
+      gap: 9px;
+      padding: 18px 0 20px;
+      font-size: 13px;
+    }
+
+    .aurelle-product__overview {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 27px;
+      padding-bottom: 42px;
+    }
+
+    .aurelle-product__gallery-stage {
+      aspect-ratio: 1 / 1.03;
+    }
+
+    .aurelle-product__purchase {
+      padding-top: 0;
+    }
+
+    .aurelle-product__title {
+      font-size: clamp(34px, 8vw, 44px);
+    }
+
+    .aurelle-product__price-wrap {
+      margin-top: 16px;
+    }
+
+    .aurelle-product__rule {
+      margin: 17px 0 20px;
+    }
+
+    .aurelle-product__details {
+      padding: 32px 0 42px;
+    }
+
+    .aurelle-product__tabs {
+      gap: 22px;
+    }
+
+    .aurelle-product__tabs button {
+      font-size: 14px;
+    }
+
+    .aurelle-product__tab-panel {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 23px;
+      padding-top: 27px;
+    }
+
+    .aurelle-product__tab-panel h2 {
+      font-size: clamp(27px, 7vw, 32px);
+    }
+
+    .aurelle-product__story-copy .rte {
+      font-size: 16px;
+      line-height: 1.75;
+    }
+
+    .aurelle-product__detail-note {
+      font-size: 13px;
+    }
+
+    .aurelle-product__specifications > div {
+      grid-template-columns: minmax(110px, 0.8fr) minmax(0, 1.2fr);
+      gap: 12px;
+      font-size: 15px;
+      padding: 11px 0;
+    }
+
+    .aurelle-product__atelier {
+      padding: 48px 0;
+    }
+
+    .aurelle-product__atelier-inner {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 31px;
+    }
+
+    .aurelle-product__atelier-visual {
+      width: calc(100% - 10px);
+      aspect-ratio: 1.12;
+    }
+
+    .aurelle-product__atelier-badge {
+      right: -10px;
+    }
+
+    .aurelle-product__atelier-copy h2 {
+      font-size: clamp(32px, 8vw, 40px);
+    }
+
+    .aurelle-product__reviews-inner {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 19px;
+    }
+
+    .aurelle-product__review-quote p {
+      font-size: clamp(21px, 6vw, 26px);
+    }
+
+    .aurelle-product__related {
+      padding: 45px 0 42px;
+    }
+
+    .aurelle-product__related-heading {
+      align-items: flex-start;
+    }
+
+    .aurelle-product__related-heading h2 {
+      font-size: clamp(28px, 7vw, 35px);
+    }
+
+    .aurelle-product__related-heading > a {
+      max-width: 135px;
+      font-size: 14px;
+    }
+
+    .aurelle-product__related-grid {
+      grid-auto-columns: minmax(70%, 1fr);
+      grid-auto-flow: column;
+      grid-template-columns: none;
+      gap: 13px;
+      overflow-x: auto;
+      padding: 0 0 5px;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .aurelle-product__related-grid::-webkit-scrollbar {
+      display: none;
+    }
+
+    .aurelle-product__related-grid .aurelle-product-card {
+      scroll-snap-align: start;
+    }
+
+    .aurelle-product__services {
+      padding: 23px 0;
+    }
+
+    .aurelle-product__services-inner {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 18px;
+    }
+  }
+
+  @media screen and (max-width: 420px) {
+    .aurelle-product__page-width {
+      width: calc(100% - 32px);
+    }
+
+    .aurelle-product__details .aurelle-product__page-width {
+      width: calc(100% - 32px);
+    }
+
+    .aurelle-product__thumbnails { gap: 8px; }
+    .aurelle-product__thumbnail { flex-basis: calc((100% - 16px) / 3); }
+
+    .aurelle-product__purchase-row {
+      grid-template-columns: 84px minmax(0, 1fr);
+      gap: 7px;
+    }
+
+    .aurelle-product__add-to-bag {
+      gap: 3px;
+      padding-inline: 8px;
+      font-size: 14px;
+      letter-spacing: 0.045em;
+    }
+
+    .aurelle-product__tabs {
+      gap: 20px;
+    }
+
+    .aurelle-product__tabs button {
+      font-size: 14px;
+      letter-spacing: 0.055em;
+    }
+
+    .aurelle-product__specifications > div {
+      grid-template-columns: minmax(105px, 0.8fr) minmax(0, 1.2fr);
+      gap: 12px;
+      font-size: 14px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .aurelle-product *,
+    .aurelle-product *::before,
+    .aurelle-product *::after {
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
     }
   }
 {% endstylesheet %}
 
+{% javascript %}
+  (() => {
+    const sectionSelector = '[data-aurelle-product]';
+
+    const initializeProductSection = (section) => {
+      if (!section || section.dataset.productReady === 'true') return;
+      const form = section.querySelector('form.aurelle-product__form');
+      const variantSelect = section.querySelector('[data-variant-fallback]');
+      const variantIdInput = section.querySelector('[data-current-variant-id]');
+      const variantsScript = section.querySelector('[data-product-variants]');
+      if (!form || !variantSelect || !variantIdInput || !variantsScript) return;
+
+      let variants;
+      try {
+        variants = JSON.parse(variantsScript.textContent);
+      } catch {
+        return;
+      }
+      if (!Array.isArray(variants) || !variants.length) return;
+
+      section.dataset.productReady = 'true';
+      section.classList.add('is-enhanced');
+      variantSelect.removeAttribute('name');
+      variantSelect.hidden = true;
+      variantIdInput.name = 'id';
+
+      const price = section.querySelector('[data-product-price]');
+      const comparePrice = section.querySelector('[data-product-compare]');
+      const unitPrice = section.querySelector('[data-product-unit-price]');
+      const addButton = section.querySelector('[data-product-atc]');
+      const availability = section.querySelector('[data-product-availability]');
+      const availabilityCopy = section.querySelector('[data-availability-copy]');
+      const dispatchNote = section.querySelector('[data-dispatch-note]');
+      const recipient = section.querySelector('[data-gift-recipient]');
+      if (recipient) {
+        const toggle = recipient.querySelector('[data-gift-recipient-toggle]');
+        const fields = recipient.querySelector('[data-gift-recipient-fields]');
+        const email = recipient.querySelector('[data-gift-recipient-email]');
+        const date = recipient.querySelector('[data-gift-recipient-date]');
+        const offset = recipient.querySelector('[data-gift-recipient-offset]');
+        const dynamicCheckout = section.querySelector('[data-dynamic-checkout]');
+        const formatLocalDate = (value) => `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
+        if (date) {
+          const today = new Date();
+          const lastDay = new Date(today);
+          lastDay.setDate(lastDay.getDate() + 90);
+          date.min = formatLocalDate(today);
+          date.max = formatLocalDate(lastDay);
+        }
+        if (offset) offset.value = String(new Date().getTimezoneOffset());
+        const updateRecipient = () => {
+          const enabled = Boolean(toggle?.checked);
+          if (fields) fields.disabled = !enabled;
+          if (email) email.required = enabled;
+          if (dynamicCheckout) dynamicCheckout.hidden = enabled;
+        };
+        toggle?.addEventListener('change', updateRecipient);
+        updateRecipient();
+      }
+
+      const getOptionValues = () => {
+        const values = [];
+        section.querySelectorAll('[data-product-option]').forEach((option) => {
+          const index = Number(option.dataset.optionIndex);
+          if (option.type === 'radio') {
+            if (option.checked) values[index] = option.value;
+          } else {
+            values[index] = option.value;
+          }
+        });
+        return values;
+      };
+
+      const showMedia = (mediaId) => {
+        if (!mediaId) return;
+        let activeIndex = 0;
+        const mediaItems = [...section.querySelectorAll('[data-gallery-item]')];
+        const thumbnails = [...section.querySelectorAll('[data-gallery-thumb]')];
+        mediaItems.forEach((item, index) => {
+          item.hidden = item.dataset.mediaId !== String(mediaId);
+          if (!item.hidden) activeIndex = index;
+        });
+        thumbnails.forEach((thumbnail) => {
+          const selected = thumbnail.dataset.mediaId === String(mediaId);
+          thumbnail.classList.toggle('is-active', selected);
+          thumbnail.setAttribute('aria-pressed', String(selected));
+        });
+        const count = section.querySelector('[data-gallery-count]');
+        if (count && mediaItems.length) count.textContent = `${String(activeIndex + 1).padStart(2, '0')} / ${String(mediaItems.length).padStart(2, '0')}`;
+      };
+
+      const updateVariant = () => {
+        const optionValues = getOptionValues();
+        const variant = variants.find((item) => item.options.length === optionValues.length && item.options.every((value, index) => value === optionValues[index]));
+        const atcLabel = addButton?.querySelector('[data-atc-label]');
+        const atcPrice = addButton?.querySelector('[data-atc-price]');
+        if (!variant) {
+          if (availability) availability.classList.add('is-unavailable');
+          if (availabilityCopy) availabilityCopy.textContent = availability?.dataset.unavailableLabel || '';
+          if (addButton) {
+            addButton.disabled = true;
+            if (atcLabel) atcLabel.textContent = addButton.dataset.labelUnavailable || '';
+          }
+          return;
+        }
+
+        variantIdInput.value = variant.id;
+        variantSelect.value = String(variant.id);
+        variantIdInput.dispatchEvent(new Event('change', { bubbles: true }));
+        if (price) price.textContent = variant.price_text;
+        if (atcPrice) atcPrice.textContent = variant.price_text;
+        if (comparePrice) {
+          comparePrice.hidden = !(variant.compare_at_price && variant.compare_at_price > variant.price);
+          comparePrice.textContent = variant.compare_at_price_text;
+        }
+        if (unitPrice) {
+          unitPrice.hidden = !variant.unit_price_text;
+          unitPrice.textContent = variant.unit_price_text || '';
+        }
+        if (availability) availability.classList.toggle('is-unavailable', !variant.available);
+        if (availabilityCopy) availabilityCopy.textContent = variant.available ? availability.dataset.availableLabel : availability.dataset.unavailableLabel;
+        if (dispatchNote) dispatchNote.hidden = !variant.available;
+        if (addButton) {
+          addButton.disabled = !variant.available;
+          if (atcLabel) atcLabel.textContent = variant.available ? addButton.dataset.labelAvailable : addButton.dataset.labelUnavailable;
+        }
+
+        section.querySelectorAll('[data-option-group]').forEach((group) => {
+          const selected = group.querySelector('[data-product-option]:checked') || group.querySelector('[data-product-option]');
+          const currentValue = group.querySelector('[data-option-current]');
+          if (selected && currentValue) currentValue.textContent = selected.value;
+        });
+        if (variant.featured_media_id) showMedia(variant.featured_media_id);
+        const url = new URL(window.location.href);
+        url.searchParams.set('variant', variant.id);
+        window.history.replaceState({}, '', url);
+      };
+
+      form.addEventListener('change', (event) => {
+        if (event.target.matches('[data-product-option]')) updateVariant();
+      });
+      section.querySelectorAll('[data-gallery-thumb]').forEach((thumbnail) => {
+        thumbnail.addEventListener('click', () => showMedia(thumbnail.dataset.mediaId));
+      });
+
+      section.querySelectorAll('[data-quantity-step]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const input = section.querySelector('[data-quantity-input]');
+          if (!input) return;
+          const current = Number.parseInt(input.value, 10) || 1;
+          input.value = String(Math.max(1, current + Number(button.dataset.quantityStep)));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+      });
+
+      const engravingToggle = section.querySelector('[data-engraving-toggle]');
+      const engravingInput = section.querySelector('[data-engraving-input]');
+      engravingToggle?.addEventListener('change', () => {
+        if (!engravingInput) return;
+        engravingInput.hidden = !engravingToggle.checked;
+        engravingInput.required = engravingToggle.checked;
+        if (engravingToggle.checked) engravingInput.focus();
+        else engravingInput.value = '';
+      });
+
+      section.querySelectorAll('[data-product-tab]').forEach((tab) => {
+        tab.addEventListener('click', () => {
+          section.querySelectorAll('[data-product-tab]').forEach((item) => {
+            const active = item === tab;
+            item.setAttribute('aria-selected', String(active));
+            item.tabIndex = active ? 0 : -1;
+          });
+          section.querySelectorAll('[data-product-panel]').forEach((panel) => {
+            panel.hidden = panel.dataset.productPanel !== tab.dataset.productTab;
+          });
+        });
+        tab.addEventListener('keydown', (event) => {
+          if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+          event.preventDefault();
+          const tabs = [...section.querySelectorAll('[data-product-tab]')];
+          let index = tabs.indexOf(tab);
+          if (event.key === 'Home') index = 0;
+          else if (event.key === 'End') index = tabs.length - 1;
+          else index = (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+          tabs[index].focus();
+          tabs[index].click();
+        });
+      });
+
+      const dialog = section.querySelector('[data-gallery-dialog]');
+      const dialogImage = section.querySelector('[data-gallery-dialog-image]');
+      section.querySelector('[data-gallery-open]')?.addEventListener('click', () => {
+        const activeImage = section.querySelector('[data-gallery-item]:not([hidden]) img');
+        if (!activeImage || !dialog || !dialogImage) return;
+        dialogImage.src = activeImage.currentSrc || activeImage.src;
+        dialogImage.alt = activeImage.alt;
+        if (typeof dialog.showModal === 'function') dialog.showModal();
+      });
+      section.querySelector('[data-gallery-close]')?.addEventListener('click', () => dialog?.close());
+      dialog?.addEventListener('click', (event) => {
+        if (event.target === dialog) dialog.close();
+      });
+
+      const enquiryDialog = section.querySelector('[data-product-enquiry]');
+      const enquiryHeading = enquiryDialog?.querySelector('[data-enquiry-heading]');
+      const enquiryTypeInput = enquiryDialog?.querySelector('[data-enquiry-type-input]');
+      section.querySelectorAll('[data-enquiry-open]').forEach((trigger) => {
+        trigger.addEventListener('click', () => {
+          if (!enquiryDialog) return;
+          if (enquiryHeading) enquiryHeading.textContent = trigger.dataset.enquiryTitle || '';
+          if (enquiryTypeInput) enquiryTypeInput.value = trigger.dataset.enquiryType || '';
+          if (typeof enquiryDialog.showModal === 'function') enquiryDialog.showModal();
+          else enquiryDialog.setAttribute('open', '');
+        });
+      });
+      section.querySelector('[data-enquiry-close]')?.addEventListener('click', () => {
+        if (typeof enquiryDialog?.close === 'function') enquiryDialog.close();
+        else enquiryDialog?.removeAttribute('open');
+      });
+      enquiryDialog?.addEventListener('click', (event) => {
+        if (event.target !== enquiryDialog) return;
+        if (typeof enquiryDialog.close === 'function') enquiryDialog.close();
+        else enquiryDialog.removeAttribute('open');
+      });
+      if (enquiryDialog?.querySelector('[data-enquiry-success], .aurelle-product__form-errors') && typeof enquiryDialog.showModal === 'function') {
+        enquiryDialog.showModal();
+      }
+
+      updateVariant();
+    };
+
+    const initialize = (root = document) => {
+      if (root.matches?.(sectionSelector)) initializeProductSection(root);
+      root.querySelectorAll?.(sectionSelector).forEach(initializeProductSection);
+    };
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => initialize(), { once: true });
+    else initialize();
+    document.addEventListener('shopify:section:load', (event) => initialize(event.target));
+  })();
+{% endjavascript %}
+
 {% schema %}
 {
   "name": "t:general.product",
-  "settings": [],
-  "disabled_on": {
-    "groups": ["header", "footer"]
-  }
+  "settings": [
+    { "type": "text", "id": "delivery_note", "label": "Delivery note", "info": "Only add delivery claims that your store can fulfill." },
+    { "type": "checkbox", "id": "show_dynamic_checkout", "label": "Show accelerated checkout button", "default": true },
+    { "type": "text", "id": "gift_note", "label": "Gift presentation note", "default": "Presented in our signature Aurèle box, with a certificate of authenticity and a personal note.", "info": "Verify packaging and certificate details before publishing." },
+    { "type": "text", "id": "dispatch_note", "label": "Dispatch estimate", "info": "Optional fallback. The product's custom.dispatch_note metafield takes precedence." },
+    { "type": "url", "id": "size_guide_link", "label": "Size guide link" },
+    { "type": "checkbox", "id": "enable_engraving", "label": "Offer complimentary engraving", "default": false, "info": "Adds a customer-entered line item property to the cart. The product's custom.enable_engraving metafield takes precedence." },
+    { "type": "text", "id": "engraving_label", "label": "Engraving option label", "default": "Add a personal engraving — complimentary" },
+    { "type": "range", "id": "engraving_limit", "label": "Maximum engraving characters", "min": 1, "max": 40, "step": 1, "default": 18 },
+    { "type": "url", "id": "booking_link", "label": "Private viewing link", "info": "Optional. If blank, the button opens the built-in product enquiry form." },
+    { "type": "url", "id": "concierge_link", "label": "Concierge contact link", "info": "Optional. If blank, the concierge link opens the built-in product enquiry form." },
+    { "type": "textarea", "id": "details_heading", "label": "Details heading", "info": "Optional fallback. Product metafields take precedence." },
+    { "type": "richtext", "id": "details_intro", "label": "Details introduction", "info": "Optional fallback. Product metafields take precedence." },
+    { "type": "text", "id": "details_note", "label": "Details note", "info": "Optional fallback. Verify sourcing claims before publishing." },
+    { "type": "richtext", "id": "delivery_copy", "label": "Delivery and returns content", "default": "<p>Complimentary insured worldwide delivery. Returns are accepted within 30 days for unworn pieces; personalized creations may be excluded.</p>", "info": "Confirm delivery coverage, return period, and exclusions with your store policies." },
+    { "type": "richtext", "id": "care_copy", "label": "Care and lifetime service content", "default": "<p>We invite you to return to the atelier for complimentary cleaning and annual inspections. Store your jewellery separately and avoid contact with harsh chemicals.</p>", "info": "Confirm service availability and care advice before publishing." },
+    { "type": "image_picker", "id": "atelier_image", "label": "Atelier photograph", "info": "Choose a fallback image here, or set the product's custom.atelier_image file-reference metafield." },
+    { "type": "text", "id": "atelier_heading", "label": "Atelier heading", "info": "Optional fallback. Product metafields take precedence." },
+    { "type": "richtext", "id": "atelier_description", "label": "Atelier description", "info": "Optional fallback. Product metafields take precedence." },
+    { "type": "text", "id": "atelier_badge", "label": "Atelier image badge", "info": "Optional fallback. Verify production-time claims before publishing." },
+    { "type": "text", "id": "atelier_stat_one", "label": "Atelier proof point one" },
+    { "type": "text", "id": "atelier_stat_one_label", "label": "Proof point one label" },
+    { "type": "text", "id": "atelier_stat_two", "label": "Atelier proof point two" },
+    { "type": "text", "id": "atelier_stat_two_label", "label": "Proof point two label" },
+    { "type": "url", "id": "atelier_link", "label": "Atelier story link" },
+    { "type": "collection", "id": "related_collection", "label": "Related creations collection", "info": "If unset, the product's first collection is used." },
+    { "type": "text", "id": "related_heading", "label": "Related creations heading", "default": "The art of wearing together" }
+  ],
+  "blocks": [
+    { "type": "@app" },
+    { "type": "custom_liquid", "name": "Custom Liquid", "settings": [ { "type": "liquid", "id": "custom_liquid", "label": "Custom Liquid" } ] },
+    {
+      "type": "service",
+      "name": "Client service",
+      "settings": [
+        { "type": "select", "id": "icon", "label": "Icon", "options": [ { "value": "truck", "label": "Delivery" }, { "value": "return", "label": "Returns" }, { "value": "diamond", "label": "Certification" }, { "value": "infinity", "label": "Lifetime care" } ], "default": "truck" },
+        { "type": "text", "id": "title", "label": "Title", "default": "Insured global transit" },
+        { "type": "textarea", "id": "description", "label": "Description", "default": "Complimentary, fully insured delivery with tracking.", "info": "Verify all delivery, return, certification, and care claims for your store." }
+      ]
+    }
+  ],
+  "max_blocks": 8,
+  "disabled_on": { "groups": ["header", "footer"] }
 }
 {% endschema %}
