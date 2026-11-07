@@ -102,9 +102,35 @@
         "product-documentation",
         "care-guidance"
       ]
+    },
+    "related-recommendations": {
+      "type": "aurelle-product-recommendations",
+      "settings": {
+        "eyebrow": "Selected for you",
+        "heading": "The art of wearing together",
+        "intent": "related",
+        "products_to_show": 4,
+        "desktop_columns": 4,
+        "mobile_columns": "1",
+        "enable_carousel": true
+      }
+    },
+    "complementary-recommendations": {
+      "type": "aurelle-product-recommendations",
+      "settings": {
+        "eyebrow": "Complete the composition",
+        "heading": "Considered pairings",
+        "intent": "complementary",
+        "products_to_show": 4,
+        "desktop_columns": 4,
+        "mobile_columns": "1",
+        "enable_carousel": true
+      }
     }
   },
   "order": [
-    "main"
+    "main",
+    "related-recommendations",
+    "complementary-recommendations"
   ]
 }

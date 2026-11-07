@@ -401,48 +401,6 @@
       </section>
     {% endif %}
 
-    {% assign related_collection = section.settings.related_collection | default: active_collection | default: product.collections.first %}
-    {% assign related_product_count = 0 %}
-    {% if related_collection != blank %}
-      {% for related_product in related_collection.products limit: 8 %}
-        {% unless related_product.id == product.id %}{% assign related_product_count = related_product_count | plus: 1 %}{% endunless %}
-      {% endfor %}
-    {% endif %}
-    {% if related_product_count == 0 %}
-      {% assign related_collection = collections['all'] %}
-      {% assign related_product_count = 0 %}
-      {% if related_collection != blank %}
-        {% for related_product in related_collection.products limit: 8 %}
-          {% unless related_product.id == product.id %}{% assign related_product_count = related_product_count | plus: 1 %}{% endunless %}
-        {% endfor %}
-      {% endif %}
-    {% endif %}
-    {% if related_collection != blank %}
-      {% if related_product_count > 0 %}
-        <section class="aurelle-product__related" aria-labelledby="AurelleRelatedHeading-{{ section.id }}">
-          <div class="aurelle-product__page-width">
-            <div class="aurelle-product__related-heading">
-              <div>
-                <p class="aurelle-product__eyebrow">{{ 'products.aurelle.related_eyebrow' | t }}</p>
-                <h2 id="AurelleRelatedHeading-{{ section.id }}">{{ section.settings.related_heading | escape }}</h2>
-              </div>
-              <a href="{{ related_collection.url }}">{{ 'products.aurelle.related_link_label' | t }} <span aria-hidden="true">→</span></a>
-            </div>
-            <div class="aurelle-product__related-grid" role="list">
-              {% assign related_rendered = 0 %}
-              {% for related_product in related_collection.products limit: 8 %}
-                {% unless related_product.id == product.id %}
-                  {% render 'aurelle-product-card', product: related_product %}
-                  {% assign related_rendered = related_rendered | plus: 1 %}
-                  {% if related_rendered >= 4 %}{% break %}{% endif %}
-                {% endunless %}
-              {% endfor %}
-            </div>
-          </div>
-        </section>
-      {% endif %}
-    {% endif %}
-
     {% assign product_service_count = 0 %}
     {% for block in section.blocks %}
       {% if block.type == 'service' %}{% assign product_service_count = product_service_count | plus: 1 %}{% endif %}
