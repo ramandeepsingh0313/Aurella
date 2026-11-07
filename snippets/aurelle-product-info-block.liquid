@@ -13,10 +13,12 @@
   @param {number} engraving_limit - Maximum engraving length.
   @param {string} size_guide_link - Optional size guide URL.
   @param {boolean} show_dynamic_checkout - Whether accelerated checkout is enabled.
+  @param {boolean} [enforce_section_dynamic_checkout] - When true, the parent section can disable accelerated checkout regardless of the block setting.
 {% enddoc %}
 
 {% assign render_dynamic_checkout = show_dynamic_checkout %}
 {% if block != blank %}{% assign render_dynamic_checkout = block.settings.show_dynamic_checkout %}{% endif %}
+{% if enforce_section_dynamic_checkout and show_dynamic_checkout == false %}{% assign render_dynamic_checkout = false %}{% endif %}
 
 {% case block_type %}
   {% when 'title' %}

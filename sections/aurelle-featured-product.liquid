@@ -1,0 +1,447 @@
+{% liquid
+  assign featured_product = section.settings.product
+  assign current_variant = featured_product.selected_or_first_available_variant
+  assign product_form_id = 'AurelleFeaturedProductForm-' | append: section.id
+  assign section_heading_id = 'AurelleFeaturedProductHeading-' | append: section.id
+  assign dispatch_note = featured_product.metafields.custom.dispatch_note.value | default: section.settings.dispatch_note
+%}
+
+<section
+  class="aurelle-featured-product full-width"
+  data-aurelle-featured-product
+  data-section-id="{{ section.id }}"
+  data-requires-selling-plan="{% if featured_product != blank %}{{ featured_product.requires_selling_plan }}{% else %}false{% endif %}"
+  style="--afp-background: {{ section.settings.background_color }}; --afp-foreground: {{ section.settings.text_color }}; --afp-muted: {{ section.settings.muted_color }}; --afp-accent: {{ section.settings.accent_color }}; --afp-card: {{ section.settings.card_color }}; --afp-padding-desktop: {{ section.settings.padding_desktop }}px; --afp-padding-mobile: {{ section.settings.padding_mobile }}px;"
+  {% if section.settings.heading != blank %}aria-labelledby="{{ section_heading_id }}"{% endif %}
+>
+  <div class="aurelle-featured-product__inner">
+    {% if section.settings.subheading != blank %}<p class="aurelle-featured-product__eyebrow">{{ section.settings.subheading | escape }}</p>{% endif %}
+    {% if section.settings.heading != blank %}<h2 id="{{ section_heading_id }}" class="aurelle-featured-product__heading">{{ section.settings.heading | escape }}</h2>{% endif %}
+
+    {% if featured_product == blank %}
+      <div class="aurelle-featured-product__placeholder">
+        <div class="aurelle-featured-product__placeholder-art" aria-hidden="true"><span></span></div>
+        <div>
+          <p class="aurelle-featured-product__placeholder-label">Featured creation</p>
+          <h3>Select a product</h3>
+          <p>Choose a product in the theme editor to show its media and purchase options.</p>
+        </div>
+      </div>
+    {% else %}
+      <div class="aurelle-featured-product__layout aurelle-featured-product__layout--{{ section.settings.image_position }}">
+        <div class="aurelle-featured-product__gallery" data-featured-gallery>
+          <div class="aurelle-featured-product__media-stage">
+            {% if featured_product.media.size > 0 %}
+              {% for media in featured_product.media %}
+                <div class="aurelle-featured-product__media{% if media.id == current_variant.featured_media.id or current_variant.featured_media == blank and forloop.first %} is-active{% endif %}" data-featured-media-id="{{ media.id }}"{% unless media.id == current_variant.featured_media.id or current_variant.featured_media == blank and forloop.first %} hidden{% endunless %}>
+                  {% case media.media_type %}
+                    {% when 'image' %}
+                      {{ media.preview_image | image_url: width: 1800 | image_tag: widths: '480, 720, 960, 1200, 1500, 1800', sizes: '(min-width: 990px) 50vw, 100vw', loading: 'lazy', alt: media.alt }}
+                    {% when 'external_video' %}
+                      {{ media | external_video_tag: loading: 'lazy', class: 'aurelle-featured-product__video' }}
+                    {% when 'video' %}
+                      {{ media | media_tag: controls: true, preload: 'metadata', class: 'aurelle-featured-product__video' }}
+                    {% when 'model' %}
+                      {{ media | media_tag: toggleable: true, class: 'aurelle-featured-product__model' }}
+                    {% else %}
+                      {{ media | media_tag }}
+                  {% endcase %}
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="aurelle-featured-product__empty-media" aria-label="No product image available"><span aria-hidden="true"></span></div>
+            {% endif %}
+          </div>
+
+          {% if featured_product.media.size > 1 %}
+            <div class="aurelle-featured-product__thumbnails" role="list" aria-label="Product media">
+              {% for media in featured_product.media %}
+                <button class="aurelle-featured-product__thumbnail{% if media.id == current_variant.featured_media.id or current_variant.featured_media == blank and forloop.first %} is-active{% endif %}" type="button" data-featured-thumbnail data-media-id="{{ media.id }}" aria-label="Show media {{ forloop.index }}" aria-pressed="{% if media.id == current_variant.featured_media.id or current_variant.featured_media == blank and forloop.first %}true{% else %}false{% endif %}">
+                  {{ media.preview_image | image_url: width: 180 | image_tag: widths: '90, 135, 180', sizes: '76px', loading: 'lazy', alt: media.alt }}
+                </button>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="aurelle-featured-product__details">
+          {% form 'product', featured_product, id: product_form_id, class: 'aurelle-product__form aurelle-featured-product__form', data-featured-product-form: '' %}
+            <input type="hidden" name="id" value="{{ current_variant.id }}" data-current-variant-id>
+            <input type="hidden" name="selling_plan" value="" data-selling-plan-input disabled>
+            <select name="id" class="visually-hidden" tabindex="-1" aria-hidden="true" data-variant-fallback disabled>
+              {% for variant in featured_product.variants %}<option value="{{ variant.id }}"{% if variant.id == current_variant.id %} selected{% endif %}>{{ variant.title | escape }}</option>{% endfor %}
+            </select>
+
+            <div class="aurelle-product__status visually-hidden" role="status" aria-live="polite" data-product-status></div>
+
+            {% for block in section.blocks %}
+              {% case block.type %}
+                {% when '@app' %}
+                  <div class="aurelle-featured-product__app-block" {{ block.shopify_attributes }}>{% render block %}</div>
+                {% when 'vendor' %}
+                  {% if section.settings.show_vendor and featured_product.vendor != blank %}<p class="aurelle-featured-product__vendor" {{ block.shopify_attributes }}>{{ featured_product.vendor | escape }}</p>{% endif %}
+                {% when 'description' %}
+                  {% if section.settings.show_description %}{% render 'aurelle-product-info-block', block_type: block.type, block: block, product: featured_product, current_variant: current_variant, form: form, section_id: section.id, dispatch_note: dispatch_note, product_engravable: false, engraving_label: '', engraving_limit: 1, size_guide_link: section.settings.size_guide_link, show_dynamic_checkout: section.settings.show_dynamic_checkout, enforce_section_dynamic_checkout: true %}{% endif %}
+                {% when 'quantity' %}
+                  {% if section.settings.show_quantity %}{% render 'aurelle-product-info-block', block_type: block.type, block: block, product: featured_product, current_variant: current_variant, form: form, section_id: section.id, dispatch_note: dispatch_note, product_engravable: false, engraving_label: '', engraving_limit: 1, size_guide_link: section.settings.size_guide_link, show_dynamic_checkout: section.settings.show_dynamic_checkout, enforce_section_dynamic_checkout: true %}{% endif %}
+                {% when 'buy_buttons' %}
+                  {% render 'aurelle-product-info-block', block_type: block.type, block: block, product: featured_product, current_variant: current_variant, form: form, section_id: section.id, dispatch_note: dispatch_note, product_engravable: false, engraving_label: '', engraving_limit: 1, size_guide_link: section.settings.size_guide_link, show_dynamic_checkout: section.settings.show_dynamic_checkout, enforce_section_dynamic_checkout: true %}
+                {% else %}
+                  {% render 'aurelle-product-info-block', block_type: block.type, block: block, product: featured_product, current_variant: current_variant, form: form, section_id: section.id, dispatch_note: dispatch_note, product_engravable: false, engraving_label: '', engraving_limit: 1, size_guide_link: section.settings.size_guide_link, show_dynamic_checkout: section.settings.show_dynamic_checkout, enforce_section_dynamic_checkout: true %}
+              {% endcase %}
+            {% endfor %}
+
+            {% if form.errors %}<div class="aurelle-product__form-errors" role="alert">{{ form.errors | default_errors }}</div>{% endif %}
+            <div class="aurelle-product__form-errors" role="alert" data-product-error hidden></div>
+          {% endform %}
+
+          {% if section.settings.show_pickup_availability %}
+            <div class="aurelle-product__pickup" data-pickup-container data-root-url="{{ routes.root_url }}">{% render 'aurelle-pickup-availability', variant: current_variant, section_id: section.id %}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <script type="application/json" data-featured-product-json>
+        {"variants":[
+          {% for variant in featured_product.variants %}
+            {"id":{{ variant.id | json }},"available":{{ variant.available | json }},"options":{{ variant.options | json }},"price":{{ variant.price | json }},"priceFormatted":{{ variant.price | money_with_currency | json }},"compareAtPrice":{{ variant.compare_at_price | default: 0 | json }},"compareAtFormatted":{{ variant.compare_at_price | money_with_currency | json }},"sku":{{ variant.sku | json }},"featuredMediaId":{% if variant.featured_media %}{{ variant.featured_media.id | json }}{% else %}null{% endif %},"unitPriceFormatted":{% if variant.unit_price %}{{ variant.unit_price | unit_price_with_measurement: variant.unit_price_measurement | json }}{% else %}null{% endif %},"quantityRule":{"min":{{ variant.quantity_rule.min | default: 1 | json }},"max":{% if variant.quantity_rule.max %}{{ variant.quantity_rule.max | json }}{% else %}null{% endif %},"increment":{{ variant.quantity_rule.increment | default: 1 | json }}},"sellingPlans":[{% for allocation in variant.selling_plan_allocations %}{"id":{{ allocation.selling_plan.id | json }},"price":{{ allocation.price | json }},"priceFormatted":{{ allocation.price | money_with_currency | json }},"compareAtPrice":{{ allocation.compare_at_price | default: 0 | json }},"compareAtFormatted":{{ allocation.compare_at_price | money_with_currency | json }}}{% unless forloop.last %},{% endunless %}{% endfor %}]}
+            {% unless forloop.last %},{% endunless %}
+          {% endfor %}
+        ]}
+      </script>
+    {% endif %}
+  </div>
+</section>
+
+{% stylesheet %}
+  .aurelle-featured-product { background: var(--afp-background); color: var(--afp-foreground); }
+  .aurelle-featured-product__inner { width: min(100% - 48px, 1440px); margin-inline: auto; padding-block: var(--afp-padding-desktop); }
+  .aurelle-featured-product__eyebrow, .aurelle-featured-product__vendor { margin: 0 0 10px; color: var(--afp-accent); font-size: 11px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; }
+  .aurelle-featured-product__heading { margin: 0 0 38px; font-family: Georgia, 'Times New Roman', serif; font-size: clamp(34px, 4vw, 58px); font-weight: 400; line-height: 1.05; }
+  .aurelle-featured-product__layout { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(340px, .95fr); gap: clamp(40px, 7vw, 112px); align-items: start; }
+  .aurelle-featured-product__layout--right .aurelle-featured-product__gallery { order: 2; }
+  .aurelle-featured-product__layout--right .aurelle-featured-product__details { order: 1; }
+  .aurelle-featured-product__details { min-width: 0; padding-top: clamp(4px, 2vw, 34px); }
+  .aurelle-featured-product__media-stage { position: relative; overflow: hidden; background: var(--afp-card); aspect-ratio: 4 / 5; }
+  .aurelle-featured-product__media { width: 100%; height: 100%; }
+  .aurelle-featured-product__media img, .aurelle-featured-product__media video, .aurelle-featured-product__media model-viewer, .aurelle-featured-product__media iframe { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .aurelle-featured-product__thumbnails { display: flex; gap: 10px; margin-top: 12px; overflow-x: auto; padding: 2px; scrollbar-width: thin; }
+  .aurelle-featured-product__thumbnail { flex: 0 0 76px; width: 76px; height: 88px; padding: 0; overflow: hidden; border: 1px solid transparent; background: var(--afp-card); cursor: pointer; }
+  .aurelle-featured-product__thumbnail.is-active { border-color: var(--afp-accent); }
+  .aurelle-featured-product__thumbnail img { width: 100%; height: 100%; object-fit: cover; }
+  .aurelle-featured-product__empty-media, .aurelle-featured-product__placeholder-art { display: grid; place-items: center; width: 100%; height: 100%; min-height: 360px; background: linear-gradient(135deg, color-mix(in srgb, var(--afp-card), white 28%), var(--afp-card)); }
+  .aurelle-featured-product__empty-media span, .aurelle-featured-product__placeholder-art span { width: 90px; height: 90px; border: 1px solid var(--afp-accent); transform: rotate(45deg); opacity: .55; }
+  .aurelle-featured-product__placeholder { display: grid; grid-template-columns: minmax(280px, .9fr) minmax(280px, 1.1fr); gap: clamp(36px, 7vw, 100px); align-items: center; padding: clamp(24px, 5vw, 72px); background: var(--afp-card); }
+  .aurelle-featured-product__placeholder h3 { margin: 8px 0 14px; font-family: Georgia, 'Times New Roman', serif; font-size: clamp(34px, 4vw, 54px); font-weight: 400; }
+  .aurelle-featured-product__placeholder p { color: var(--afp-muted); }
+  .aurelle-featured-product__placeholder-label { color: var(--afp-accent) !important; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; }
+  .aurelle-featured-product .aurelle-product__info-block { margin-bottom: 22px; }
+  .aurelle-featured-product .aurelle-product__title { margin: 0; overflow-wrap: anywhere; font-family: Georgia, 'Times New Roman', serif; font-size: clamp(36px, 4.4vw, 64px); font-weight: 400; line-height: .98; }
+  .aurelle-featured-product .aurelle-product__subtitle, .aurelle-featured-product .aurelle-product__tax-note, .aurelle-featured-product .aurelle-product__sku { color: var(--afp-muted); }
+  .aurelle-featured-product .aurelle-product__price-wrap { display: flex; align-items: baseline; gap: 12px; }
+  .aurelle-featured-product .aurelle-product__price { margin: 0; font-size: 28px; }
+  .aurelle-featured-product .aurelle-product__compare-price { color: var(--afp-muted); }
+  .aurelle-featured-product .aurelle-product__rule { height: 1px; margin-bottom: 22px; background: color-mix(in srgb, var(--afp-foreground), transparent 84%); }
+  .aurelle-featured-product .aurelle-product__description { color: var(--afp-muted); line-height: 1.7; }
+  .aurelle-featured-product .aurelle-product__option, .aurelle-featured-product .aurelle-product__selling-plans { position: relative; margin: 0 0 22px; padding: 0; border: 0; }
+  .aurelle-featured-product .aurelle-product__option legend, .aurelle-featured-product .aurelle-product__selling-plans legend { width: 100%; margin-bottom: 10px; font-weight: 500; }
+  .aurelle-featured-product .aurelle-product__option legend span { color: var(--afp-muted); font-weight: 400; }
+  .aurelle-featured-product .aurelle-product__select { width: 100%; min-height: 50px; padding: 0 42px 0 14px; border: 1px solid color-mix(in srgb, var(--afp-foreground), transparent 78%); background: transparent; color: inherit; }
+  .aurelle-featured-product .aurelle-product__size-guide { position: absolute; top: 0; right: 0; padding: 0; border: 0; background: transparent; color: var(--afp-accent); text-decoration: underline; cursor: pointer; }
+  .aurelle-featured-product .aurelle-product__swatches { display: flex; flex-wrap: wrap; gap: 10px; }
+  .aurelle-featured-product .aurelle-product__swatch input { position: absolute; opacity: 0; }
+  .aurelle-featured-product .aurelle-product__swatch-dot, .aurelle-featured-product .aurelle-product__swatch-text { display: grid; place-items: center; min-width: 44px; height: 44px; padding: 0 12px; border: 1px solid color-mix(in srgb, var(--afp-foreground), transparent 72%); border-radius: 50%; background: var(--aurelle-swatch, transparent); cursor: pointer; }
+  .aurelle-featured-product .aurelle-product__swatch input:checked + .aurelle-product__swatch-dot, .aurelle-featured-product .aurelle-product__swatch input:checked + .aurelle-product__swatch-text { outline: 2px solid var(--afp-accent); outline-offset: 2px; }
+  .aurelle-featured-product .aurelle-product__selling-plan { display: flex; gap: 10px; align-items: center; min-height: 44px; padding: 10px 12px; border: 1px solid color-mix(in srgb, var(--afp-foreground), transparent 82%); }
+  .aurelle-featured-product .aurelle-product__selling-plan-group p { margin: 14px 0 7px; color: var(--afp-muted); }
+  .aurelle-featured-product .aurelle-product__availability { display: flex; gap: 8px; align-items: center; color: var(--afp-muted); }
+  .aurelle-featured-product .aurelle-product__availability-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--afp-accent); }
+  .aurelle-featured-product .aurelle-product__quantity-block { margin-bottom: 18px; }
+  .aurelle-featured-product .aurelle-product__quantity { display: inline-grid; grid-template-columns: 44px 54px 44px; min-height: 48px; margin-top: 8px; border: 1px solid color-mix(in srgb, var(--afp-foreground), transparent 78%); }
+  .aurelle-featured-product .aurelle-product__quantity button, .aurelle-featured-product .aurelle-product__quantity input { width: 100%; border: 0; background: transparent; color: inherit; text-align: center; }
+  .aurelle-featured-product .aurelle-product__add-to-bag { display: flex; justify-content: center; gap: 8px; width: 100%; min-height: 56px; padding: 16px 22px; border: 1px solid var(--afp-accent); background: var(--afp-accent); color: var(--afp-background); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; }
+  .aurelle-featured-product .aurelle-product__add-to-bag:disabled { cursor: not-allowed; opacity: .48; }
+  .aurelle-featured-product .aurelle-product__dynamic-checkout { margin-top: 10px; }
+  .aurelle-featured-product .aurelle-product__pickup { display: block; }
+  .aurelle-featured-product .aurelle-product__collapsible { border-top: 1px solid color-mix(in srgb, var(--afp-foreground), transparent 84%); }
+  .aurelle-featured-product .aurelle-product__collapsible summary { display: flex; justify-content: space-between; padding: 17px 0; cursor: pointer; }
+  .aurelle-featured-product .aurelle-product__text-icon, .aurelle-featured-product .aurelle-product__complementary a { display: flex; gap: 14px; align-items: center; }
+  .aurelle-featured-product .aurelle-product__complementary-grid { display: grid; gap: 10px; }
+  .aurelle-featured-product .aurelle-product__complementary img, .aurelle-featured-product .aurelle-product__complementary svg { width: 74px; height: 74px; object-fit: cover; }
+  .aurelle-featured-product .aurelle-product__pickup-card { margin-top: 20px; padding: 16px; border: 1px solid color-mix(in srgb, var(--afp-foreground), transparent 82%); }
+  .aurelle-featured-product .aurelle-product__pickup-card button { padding: 0; border: 0; background: transparent; color: var(--afp-accent); text-decoration: underline; cursor: pointer; }
+  .aurelle-featured-product .aurelle-product__pickup-dialog { width: min(92vw, 560px); max-height: 80vh; padding: 0; border: 0; background: var(--afp-background); color: var(--afp-foreground); }
+  .aurelle-featured-product .aurelle-product__pickup-dialog::backdrop { background: rgb(20 18 16 / 55%); }
+  .aurelle-featured-product .aurelle-product__pickup-dialog-inner { position: relative; padding: 32px; }
+  .aurelle-featured-product .aurelle-product__pickup-dialog-inner > button { position: absolute; top: 16px; right: 16px; width: 44px; height: 44px; border: 0; background: transparent; color: inherit; font-size: 24px; cursor: pointer; }
+  .aurelle-featured-product .aurelle-product__pickup-dialog h2 { margin: 0 48px 20px 0; font-family: Georgia, 'Times New Roman', serif; font-size: 30px; font-weight: 400; }
+  .aurelle-featured-product .aurelle-product__pickup-dialog ul { padding: 0; list-style: none; }
+  .aurelle-featured-product .aurelle-product__pickup-dialog li { display: grid; gap: 6px; padding: 16px 0; border-top: 1px solid color-mix(in srgb, var(--afp-foreground), transparent 84%); }
+  .aurelle-featured-product .aurelle-product__form-errors { margin-top: 12px; color: #8c3029; }
+  .aurelle-featured-product :focus-visible { outline: 2px solid var(--afp-accent); outline-offset: 3px; }
+  @media (max-width: 989px) {
+    .aurelle-featured-product__inner { width: min(100% - 32px, 760px); padding-block: var(--afp-padding-mobile); }
+    .aurelle-featured-product__layout, .aurelle-featured-product__placeholder { grid-template-columns: 1fr; gap: 30px; }
+    .aurelle-featured-product__layout--right .aurelle-featured-product__gallery, .aurelle-featured-product__layout--right .aurelle-featured-product__details { order: initial; }
+    .aurelle-featured-product__details { padding-top: 0; }
+  }
+  @media (max-width: 549px) {
+    .aurelle-featured-product__inner { width: min(100% - 24px, 520px); }
+    .aurelle-featured-product__heading { margin-bottom: 26px; }
+    .aurelle-featured-product__media-stage { aspect-ratio: 1 / 1.18; }
+    .aurelle-featured-product__placeholder { padding: 22px; }
+    .aurelle-featured-product__placeholder-art { min-height: 260px; }
+  }
+{% endstylesheet %}
+
+{% javascript %}
+  (() => {
+    const selector = '[data-aurelle-featured-product]';
+
+    const initialize = (section) => {
+      if (!section || section.dataset.featuredProductReady === 'true') return;
+      const form = section.querySelector('[data-featured-product-form]');
+      const json = section.querySelector('[data-featured-product-json]');
+      if (!form || !json) return;
+      section.dataset.featuredProductReady = 'true';
+
+      let productData;
+      try { productData = JSON.parse(json.textContent); } catch { return; }
+      const variants = productData.variants || [];
+      const variantInput = form.querySelector('[data-current-variant-id]');
+      const fallback = form.querySelector('[data-variant-fallback]');
+      const status = form.querySelector('[data-product-status]');
+      const error = form.querySelector('[data-product-error]');
+      const atc = form.querySelector('[data-product-atc]');
+      const sellingPlanInput = form.querySelector('[data-selling-plan-input]');
+      const pickup = section.querySelector('[data-pickup-container]');
+      let currentVariant = variants.find((variant) => String(variant.id) === variantInput?.value) || variants[0];
+
+      const selectedPlanId = () => form.querySelector('[data-selling-plan-option]:checked')?.value || '';
+      const requiresPlan = section.dataset.requiresSellingPlan === 'true';
+      const setStatus = (message) => { if (status) status.textContent = message; };
+
+      const activateMedia = (mediaId) => {
+        if (!mediaId) return;
+        section.querySelectorAll('[data-featured-media-id]').forEach((media) => {
+          const active = media.dataset.featuredMediaId === String(mediaId);
+          media.hidden = !active;
+          media.classList.toggle('is-active', active);
+        });
+        section.querySelectorAll('[data-featured-thumbnail]').forEach((button) => {
+          const active = button.dataset.mediaId === String(mediaId);
+          button.classList.toggle('is-active', active);
+          button.setAttribute('aria-pressed', String(active));
+        });
+      };
+
+      const refreshPickup = async (variantId) => {
+        if (!pickup || !variantId) return;
+        pickup.setAttribute('aria-busy', 'true');
+        try {
+          const root = pickup.dataset.rootUrl || '/';
+          const response = await fetch(`${root}variants/${variantId}/?section_id=pickup-availability`);
+          if (!response.ok) throw new Error('Pickup request failed');
+          const doc = new DOMParser().parseFromString(await response.text(), 'text/html');
+          pickup.innerHTML = doc.querySelector('[data-pickup-response]')?.innerHTML || '';
+          const dialog = pickup.querySelector('[data-pickup-dialog]');
+          const opener = pickup.querySelector('[data-pickup-open]');
+          if (dialog) {
+            const dialogId = `AurellePickupDialog-${section.dataset.sectionId}`;
+            const title = dialog.querySelector('[id]');
+            dialog.id = dialogId;
+            if (title) {
+              title.id = `AurellePickupTitle-${section.dataset.sectionId}`;
+              dialog.setAttribute('aria-labelledby', title.id);
+            }
+            if (opener) opener.setAttribute('aria-controls', dialogId);
+          }
+        } catch { pickup.innerHTML = ''; }
+        finally { pickup.removeAttribute('aria-busy'); }
+      };
+
+      const updatePrice = () => {
+        if (!currentVariant) return;
+        const allocation = currentVariant.sellingPlans.find((plan) => String(plan.id) === selectedPlanId());
+        const displayPrice = allocation?.priceFormatted || currentVariant.priceFormatted;
+        const comparePrice = allocation?.compareAtFormatted || currentVariant.compareAtFormatted;
+        const compareValue = allocation ? allocation.compareAtPrice - allocation.price : currentVariant.compareAtPrice - currentVariant.price;
+        const price = form.querySelector('[data-product-price]');
+        const compare = form.querySelector('[data-product-compare]');
+        if (price) price.textContent = displayPrice;
+        if (compare) { compare.textContent = comparePrice || ''; compare.hidden = !(compareValue > 0); }
+        const atcPrice = form.querySelector('[data-atc-price]');
+        if (atcPrice) atcPrice.textContent = displayPrice;
+      };
+
+      const updateVariant = (variant, announce = true) => {
+        currentVariant = variant;
+        const available = Boolean(variant?.available);
+        if (variantInput) variantInput.value = variant?.id || '';
+        if (fallback && variant) fallback.value = variant.id;
+        form.querySelectorAll('[data-option-group]').forEach((group) => {
+          const index = Number(group.dataset.optionIndex);
+          const current = group.querySelector('[data-option-current]');
+          if (current) current.textContent = variant?.options[index] || '';
+        });
+        updatePrice();
+        const unit = form.querySelector('[data-product-unit-price]');
+        if (unit) { unit.textContent = variant?.unitPriceFormatted || ''; unit.hidden = !variant?.unitPriceFormatted; }
+        const sku = form.querySelector('[data-product-sku]');
+        if (sku) { sku.textContent = variant?.sku || ''; sku.closest('.aurelle-product__sku').hidden = !variant?.sku; }
+        const availability = form.querySelector('[data-product-availability]');
+        if (availability) {
+          availability.querySelector('[data-availability-copy]').textContent = available ? availability.dataset.availableLabel : availability.dataset.unavailableLabel;
+          availability.classList.toggle('is-unavailable', !available);
+        }
+        const quantity = form.querySelector('[data-quantity-input]');
+        if (quantity && variant) {
+          quantity.min = variant.quantityRule.min;
+          quantity.step = variant.quantityRule.increment;
+          if (variant.quantityRule.max) quantity.max = variant.quantityRule.max; else quantity.removeAttribute('max');
+          quantity.value = variant.quantityRule.min;
+        }
+        const planInvalid = requiresPlan && !selectedPlanId();
+        if (atc) {
+          atc.disabled = !available || planInvalid;
+          atc.querySelector('[data-atc-label]').textContent = available && !planInvalid ? atc.dataset.labelAvailable : atc.dataset.labelUnavailable;
+        }
+        if (variant?.featuredMediaId) activateMedia(variant.featuredMediaId);
+        if (variant) refreshPickup(variant.id);
+        if (announce) setStatus(variant ? `${variant.options.join(' / ')} selected. ${available ? 'Available.' : 'Sold out.'}` : 'This option combination is unavailable.');
+      };
+
+      const findVariant = () => {
+        const values = [];
+        form.querySelectorAll('[data-option-group]').forEach((group) => {
+          const index = Number(group.dataset.optionIndex);
+          values[index] = group.querySelector('[data-product-option]:checked')?.value || group.querySelector('select[data-product-option]')?.value;
+        });
+        return variants.find((variant) => variant.options.every((option, index) => option === values[index]));
+      };
+
+      form.addEventListener('change', (event) => {
+        if (event.target.matches('[data-product-option]')) updateVariant(findVariant());
+        if (event.target.matches('[data-selling-plan-option]')) {
+          const value = event.target.value;
+          if (sellingPlanInput) { sellingPlanInput.value = value; sellingPlanInput.disabled = !value; }
+          updateVariant(currentVariant, false);
+          setStatus(value ? 'Subscription purchase option selected.' : 'One-time purchase selected.');
+        }
+      });
+
+      section.addEventListener('click', (event) => {
+        const pickupOpen = event.target.closest('[data-pickup-open]');
+        const pickupClose = event.target.closest('[data-pickup-close]');
+        if (pickupOpen) {
+          const dialog = section.querySelector(`#${CSS.escape(pickupOpen.getAttribute('aria-controls'))}`);
+          if (dialog?.showModal) dialog.showModal();
+        }
+        if (pickupClose) pickupClose.closest('[data-pickup-dialog]')?.close();
+        const thumbnail = event.target.closest('[data-featured-thumbnail]');
+        if (thumbnail) activateMedia(thumbnail.dataset.mediaId);
+        const stepButton = event.target.closest('[data-quantity-step]');
+        if (stepButton) {
+          const input = form.querySelector('[data-quantity-input]');
+          if (!input) return;
+          const step = Number(input.step) || 1;
+          const min = Number(input.min) || step;
+          const max = input.max ? Number(input.max) : Infinity;
+          input.value = Math.min(max, Math.max(min, Number(input.value || min) + Number(stepButton.dataset.quantityStep) * step));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      });
+
+      form.addEventListener('submit', async (event) => {
+        if (event.submitter && event.submitter.name !== 'add') return;
+        event.preventDefault();
+        if (!currentVariant?.available || (requiresPlan && !selectedPlanId())) return;
+        if (error) { error.hidden = true; error.textContent = ''; }
+        if (atc) atc.disabled = true;
+        try {
+          const response = await fetch(`${window.Shopify?.routes?.root || '/'}cart/add.js`, { method: 'POST', headers: { Accept: 'application/json' }, body: new FormData(form) });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.description || result.message || 'Unable to add this item.');
+          setStatus(`${result.product_title || 'Product'} added to your bag.`);
+          document.dispatchEvent(new CustomEvent('cart:updated', { detail: { item: result, source: section } }));
+        } catch (submitError) {
+          if (error) { error.textContent = submitError.message; error.hidden = false; }
+          setStatus('The product could not be added to your bag.');
+        } finally { if (atc) atc.disabled = !currentVariant?.available || (requiresPlan && !selectedPlanId()); }
+      });
+
+      const initialPlan = selectedPlanId();
+      if (sellingPlanInput) { sellingPlanInput.value = initialPlan; sellingPlanInput.disabled = !initialPlan; }
+      updateVariant(currentVariant, false);
+    };
+
+    const initializeAll = (root = document) => root.querySelectorAll(selector).forEach(initialize);
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => initializeAll()); else initializeAll();
+    document.addEventListener('shopify:section:load', (event) => initializeAll(event.target));
+  })();
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "AURELLE featured product",
+  "tag": "section",
+  "class": "section-aurelle-featured-product",
+  "disabled_on": { "groups": ["header", "footer"] },
+  "settings": [
+    { "type": "product", "id": "product", "label": "Product" },
+    { "type": "text", "id": "subheading", "label": "Subheading", "default": "A selected creation" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Discover the details" },
+    { "type": "select", "id": "image_position", "label": "Image position", "options": [ { "value": "left", "label": "Left" }, { "value": "right", "label": "Right" } ], "default": "left" },
+    { "type": "checkbox", "id": "show_vendor", "label": "Show vendor blocks", "default": true },
+    { "type": "checkbox", "id": "show_description", "label": "Show description blocks", "default": true },
+    { "type": "checkbox", "id": "show_quantity", "label": "Show quantity blocks", "default": true },
+    { "type": "checkbox", "id": "show_dynamic_checkout", "label": "Allow dynamic checkout in buy-button blocks", "default": true },
+    { "type": "checkbox", "id": "show_pickup_availability", "label": "Show pickup availability", "default": true },
+    { "type": "text", "id": "delivery_note", "label": "Delivery note", "info": "Only add delivery claims your store can fulfil." },
+    { "type": "text", "id": "dispatch_note", "label": "Dispatch estimate", "info": "The product custom.dispatch_note metafield takes precedence." },
+    { "type": "url", "id": "size_guide_link", "label": "Size guide link" },
+    { "type": "header", "content": "Colors" },
+    { "type": "color", "id": "background_color", "label": "Background", "default": "#f7f3ed" },
+    { "type": "color", "id": "card_color", "label": "Media and placeholder background", "default": "#eee8df" },
+    { "type": "color", "id": "text_color", "label": "Text", "default": "#24211e" },
+    { "type": "color", "id": "muted_color", "label": "Muted text", "default": "#716b64" },
+    { "type": "color", "id": "accent_color", "label": "Accent", "default": "#8a6d2f" },
+    { "type": "header", "content": "Spacing" },
+    { "type": "range", "id": "padding_desktop", "label": "Desktop vertical spacing", "min": 24, "max": 160, "step": 4, "unit": "px", "default": 88 },
+    { "type": "range", "id": "padding_mobile", "label": "Mobile vertical spacing", "min": 20, "max": 100, "step": 4, "unit": "px", "default": 52 }
+  ],
+  "blocks": [
+    { "type": "@app" },
+    { "type": "vendor", "name": "Vendor", "limit": 1, "settings": [] },
+    { "type": "title", "name": "Product title", "limit": 1, "settings": [] },
+    { "type": "price", "name": "Price", "limit": 1, "settings": [] },
+    { "type": "description", "name": "Description", "limit": 1, "settings": [] },
+    { "type": "variant_picker", "name": "Variant and purchase options", "limit": 1, "settings": [ { "type": "text", "id": "selling_plan_heading", "label": "Purchase options heading", "default": "Purchase options" } ] },
+    { "type": "inventory", "name": "Inventory status", "limit": 1, "settings": [ { "type": "range", "id": "low_stock_threshold", "label": "Low stock threshold", "min": 1, "max": 20, "step": 1, "default": 5 } ] },
+    { "type": "sku", "name": "SKU", "limit": 1, "settings": [ { "type": "text", "id": "label", "label": "Label", "default": "SKU" } ] },
+    { "type": "quantity", "name": "Quantity selector", "limit": 1, "settings": [ { "type": "text", "id": "label", "label": "Label", "default": "Quantity" } ] },
+    { "type": "buy_buttons", "name": "Buy buttons", "limit": 1, "settings": [ { "type": "checkbox", "id": "show_dynamic_checkout", "label": "Show accelerated checkout", "default": true } ] },
+    { "type": "collapsible", "name": "Collapsible details", "settings": [ { "type": "text", "id": "heading", "label": "Heading", "default": "Materials and care" }, { "type": "richtext", "id": "content", "label": "Content" } ] },
+    { "type": "custom_liquid", "name": "Custom Liquid", "settings": [ { "type": "liquid", "id": "custom_liquid", "label": "Custom Liquid" } ] },
+    { "type": "text_icon", "name": "Text with icon", "settings": [ { "type": "select", "id": "icon", "label": "Icon", "options": [ { "value": "diamond", "label": "Gemstone" }, { "value": "care", "label": "Care" }, { "value": "delivery", "label": "Delivery" }, { "value": "bullet", "label": "Bullet" } ], "default": "diamond" }, { "type": "text", "id": "heading", "label": "Heading" }, { "type": "richtext", "id": "text", "label": "Text" } ] },
+    { "type": "complementary_products", "name": "Complementary products", "settings": [ { "type": "text", "id": "heading", "label": "Heading", "default": "Pairs beautifully with" }, { "type": "product_list", "id": "products", "label": "Products", "limit": 4 } ] }
+  ],
+  "max_blocks": 24,
+  "presets": [
+    {
+      "name": "AURELLE featured product",
+      "blocks": [
+        { "type": "vendor" },
+        { "type": "title" },
+        { "type": "price" },
+        { "type": "description" },
+        { "type": "variant_picker" },
+        { "type": "inventory" },
+        { "type": "quantity" },
+        { "type": "buy_buttons" },
+        { "type": "collapsible" }
+      ]
+    }
+  ]
+}
+{% endschema %}
