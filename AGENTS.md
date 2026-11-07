@@ -11,6 +11,70 @@ Use the [Shopify AI Toolkit](https://shopify.dev/docs/apps/build/ai-toolkit) for
 ### Directory structure
 
 ```
+
+## AURELLE permanent project standards
+
+These project-specific rules supplement all preceding repository instructions. If a generic example conflicts with an established AURELLE component or these standards, preserve the working AURELLE behavior and follow these standards.
+
+### Product and design source of truth
+
+- Treat the implemented AURELLE homepage, collection page, product page, Featured Product section, header, footer, and product cards as the visual source of truth. Audit their current behavior before extending or refactoring them.
+- The global header and footer are shared, locked visual systems. Do not redesign, replace, or materially alter them unless the user explicitly scopes that work.
+- Maintain the established luxury language: warm ivory surfaces, charcoal text, muted champagne-gold accents, editorial serif display type, restrained sans-serif utility type, fine borders, generous whitespace, and subtle motion.
+- Prefer the established palette before introducing another near-duplicate. Current implementation anchors are warm ivory `#FCF9F4`/`#F7F4EF`, charcoal `#1E1C19`, muted gold `#806122`, muted text near `#77716A`, and light borders near `#E6E1DA`. These are implementation defaults, not brand claims; merchant color settings take precedence where available.
+- Use the theme primary font setting (currently Work Sans by default) for body, navigation, controls, and utility copy. Use the established Georgia/Times-style serif stack for editorial headings. Do not add remotely hosted or unlicensed fonts.
+- Preserve the existing scale: small uppercase eyebrows and utility labels with deliberate tracking; editorial headings with regular weight and tight line-height; body copy with readable line-height; controls normally at least 44 px high. Use fluid sizing only within tested bounds.
+- Reuse the established content grid and page-width settings. New page-specific layout must not create unexplained outer gutters, horizontal overflow, or a second competing container system.
+- Reuse existing card proportions, fine borders, image treatment, hover/focus transitions, and responsive behavior. Hover enhancements must have equivalent keyboard/touch behavior and respect `prefers-reduced-motion`.
+
+### Reuse before invention
+
+- Before creating a component, inspect relevant existing sections and snippets, especially `header.liquid`, `footer.liquid`, `aurelle-collection.liquid`, `product.liquid`, `aurelle-featured-product.liquid`, `aurelle-product-recommendations.liquid`, `aurelle-collection-card.liquid`, `aurelle-product-card.liquid`, and `aurelle-product-info-block.liquid`.
+- Keep product price, compare-at price, availability, variants, selling plans, pickup, unit pricing, quantity rules, cart submission, and recommendation data Shopify-native. Never reproduce commerce state with static display-only values.
+- Shared patterns should become reusable snippets or narrowly scoped CSS custom properties when that reduces drift without risking regressions. Do not perform broad visual refactors as a side effect of building one page.
+- New sections must be multi-instance safe: unique IDs and form IDs, section-scoped selectors and events, idempotent Theme Editor initialization, and no cross-section state leakage.
+
+### Online Store 2.0 and merchant control
+
+- Use JSON templates, sections, blocks, app blocks where applicable, and dynamic Shopify resources. Preserve merchant block order and existing saved setting IDs.
+- Content that a merchant would reasonably change must be a schema setting, block, menu, product, collection, page, article, metaobject/metafield, or Shopify-generated value. Do not hardcode product data, navigation, policy copy, editorial claims, contact details, or image URLs.
+- Image content must use Shopify `image_picker` or native product/collection/article media, responsive `image_url`/`image_tag`, meaningful alt behavior, sensible focal cropping, and an elegant layout-preserving fallback when unset.
+- Preserve useful empty, loading, error, unavailable, sold-out, and no-results states. Do not use fake products or remote placeholder photography.
+- Support `@app` blocks in commerce sections where third-party extensions are expected, render them with Shopify-supported syntax, and do not inject unsupported vendor scripts.
+- Do not rename or remove existing schema setting/block IDs without a migration plan and explicit approval. Additive changes are preferred.
+
+### Competitive-reference boundary
+
+- Impulse and other commercial themes may be studied only for capability categories, interaction expectations, and quality benchmarks.
+- Never copy their Liquid, JavaScript, CSS, wording, assets, schema, exact layout, distinctive interaction details, or visual trade dress. AURELLE must retain its own code, information architecture, styling, and brand expression.
+- When closing a capability gap, implement the feature from Shopify documentation and AURELLE's own component system.
+
+### Licensing and claims
+
+- Do not add or distribute an image, icon, font, logo, press mark, trademark, or other asset without documentary commercial redistribution rights suitable for a downloadable theme.
+- Unverified local photographs must remain ignored and outside commits/theme packages. Do not restore removed runtime references or Git tracking without documented approval.
+- Prefer merchant-selected imagery, native resource media, or original CSS/SVG treatments whose authorship is recorded. Never add remote image URLs as defaults.
+- Default copy must be merchant-neutral and editable. Do not assert awards, press coverage, certifications, ethical sourcing, recycled content, manufacturing origin, insured delivery, lifetime care, warranties, or similar facts without merchant-provided evidence.
+- Maintain `IMAGE_LICENSING_REPORT.md` whenever a distributable visual asset is introduced, replaced, or removed.
+
+### Accessibility, localization, SEO, and performance
+
+- Target WCAG 2.2 AA: semantic landmarks and headings, keyboard-complete controls, visible focus, accurate labels and states, logical focus management, screen-reader status/error announcements, adequate contrast, and touch targets of at least 44 by 44 px where practical.
+- Never make essential functionality hover-only. Dialogs and drawers must manage focus, close on Escape, restore focus, and prevent inappropriate background interaction.
+- All merchant-facing schema labels and storefront interface text must follow the repository localization rules. Do not introduce untranslated customer-facing literals.
+- Preserve semantic product/article data, canonical behavior, meaningful titles/headings, responsive image dimensions, and native Shopify SEO output. Avoid duplicate H1s and decorative alt text.
+- Performance is a release constraint: avoid unnecessary dependencies, global listeners, render-blocking assets, duplicate requests, oversized images, and layout shift. Lazy-load below-the-fold media and features; prioritize only genuine above-the-fold media.
+- New responsive work must be reviewed at narrow mobile (about 320-390 px), mobile (390-480 px), tablet (about 768 px), desktop (about 1280-1440 px), and a wide viewport. Preserve existing breakpoints unless a scoped consolidation is separately approved.
+
+### Delivery workflow and Git safety
+
+- Work one page or feature milestone at a time: audit current implementation, define the reusable contract and states, implement only the approved scope, run static validation, identify real-store/browser tests, and stop for approval when requested.
+- Before modifying theme code, read the applicable files and current Git status. Preserve user changes and unrelated functionality.
+- For Liquid/theme work, use the repository's Shopify instructions and official Shopify documentation. If a named repository tool such as `learn_shopify_api` is unavailable, state that plainly and use the available official documentation; never claim the unavailable tool was used.
+- Required static checks for implementation work are `shopify theme check`, `git diff --check`, JSON/schema validation for changed structured files, and JavaScript syntax validation for changed scripts. Static checks do not substitute for browser, Theme Editor, cart, checkout, localization, app-block, or real-product testing.
+- Do not use `git add .` or `git add -A` for controlled releases. Stage only an explicit reviewed allowlist, inspect the staged diff, and exclude secrets, `.env` files, temporary files, toolkits, generated artifacts, and unverified assets.
+- Do not commit, push, force-push, rewrite history, deploy, publish, or modify a live theme unless the user explicitly authorizes that exact action. Never deploy as an incidental validation step.
+- Do not introduce dependencies when Shopify-native Liquid, browser APIs, or small section-scoped JavaScript can provide the behavior safely.
 .
 ├── assets          # Stores static assets (CSS, JS, images, fonts, etc.)
 ├── blocks          # Reusable, nestable, customizable components
