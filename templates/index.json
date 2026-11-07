@@ -123,44 +123,44 @@
     "aurelle_craftsmanship": {
       "type": "aurelle-craftsmanship",
       "blocks": {
-        "recycled_gold": {
+        "materials": {
           "type": "stat",
           "settings": {
-            "value": "100%",
-            "label": "RECYCLED GOLD",
-            "detail": "Zero newly mined bullion"
+            "value": "01",
+            "label": "MATERIALS",
+            "detail": "Describe your verified material choices"
           }
         },
-        "conflict_free": {
+        "process": {
           "type": "stat",
           "settings": {
-            "value": "KPCS",
-            "label": "CONFLICT-FREE",
-            "detail": "Kimberley Process certified"
+            "value": "02",
+            "label": "PROCESS",
+            "detail": "Share your making process"
           }
         },
-        "hand_finished": {
+        "design": {
           "type": "stat",
           "settings": {
-            "value": "Paris",
-            "label": "HAND-FINISHED",
-            "detail": "Place Vendôme masters"
+            "value": "03",
+            "label": "DESIGN",
+            "detail": "Explain your design approach"
           }
         },
-        "lifetime_care": {
+        "care": {
           "type": "stat",
           "settings": {
-            "value": "∞",
-            "label": "LIFETIME CARE",
-            "detail": "Complimentary cleaning & prongs"
+            "value": "04",
+            "label": "CARE",
+            "detail": "Add your confirmed care services"
           }
         }
       },
       "block_order": [
-        "recycled_gold",
-        "conflict_free",
-        "hand_finished",
-        "lifetime_care"
+        "materials",
+        "process",
+        "design",
+        "care"
       ],
       "settings": {}
     },
@@ -245,89 +245,67 @@
     "aurelle_press": {
       "type": "aurelle-press",
       "blocks": {
-        "vogue": { "type": "publication", "settings": { "name": "VOGUE", "style": "serif_italic" } },
-        "harpers_bazaar": { "type": "publication", "settings": { "name": "Harper's BAZAAR", "style": "serif" } },
-        "elle_luxe": { "type": "publication", "settings": { "name": "ELLE LUXE", "style": "sans_bold" } },
-        "lofficiel": { "type": "publication", "settings": { "name": "L'OFFICIEL", "style": "serif_italic" } },
-        "vanity_fair": { "type": "publication", "settings": { "name": "VANITY FAIR", "style": "serif" } }
+        "publication_one": { "type": "publication", "settings": { "name": "Publication one", "style": "serif_italic" } },
+        "publication_two": { "type": "publication", "settings": { "name": "Publication two", "style": "serif" } },
+        "publication_three": { "type": "publication", "settings": { "name": "Publication three", "style": "sans_bold" } }
       },
-      "block_order": ["vogue", "harpers_bazaar", "elle_luxe", "lofficiel", "vanity_fair"],
+      "block_order": ["publication_one", "publication_two", "publication_three"],
       "settings": {}
     },
     "aurelle_testimonials": {
       "type": "aurelle-testimonials",
       "blocks": {
-        "camille": {
+        "approved_review": {
           "type": "testimonial",
           "settings": {
-            "quote": "The weight of the 18k gold is astonishing. It feels like an ancient talisman rendered for modern life. I haven't taken off my solitaire since it arrived.",
+            "quote": "Add an approved customer quotation before enabling this section.",
             "rating": 5,
-            "customer_name": "Camille V.",
-            "verification": "Verified Buyer · Paris",
-            "initials": "CV"
-          }
-        },
-        "eleanor": {
-          "type": "testimonial",
-          "settings": {
-            "quote": "Purchased the Aura Tennis Necklace for our 10th anniversary. The fluidity of the setting sits perfectly flat against the collarbone without twisting.",
-            "rating": 5,
-            "customer_name": "Eleanor M.",
-            "verification": "Verified Buyer · New York",
-            "initials": "EM"
-          }
-        },
-        "marcus": {
-          "type": "testimonial",
-          "settings": {
-            "quote": "The bespoke packaging alone is worth noting—heavy silk, wax seal, and the GIA dossier. AURELLE treats jewellery purchasing with proper dignity.",
-            "rating": 5,
-            "customer_name": "Marcus K.",
-            "verification": "Verified Buyer · Geneva",
-            "initials": "MK"
+            "customer_name": "Customer name",
+            "verification": "Approved customer detail",
+            "initials": "CN"
           }
         }
       },
-      "block_order": ["camille", "eleanor", "marcus"],
+      "block_order": ["approved_review"],
       "settings": {}
     },
     "aurelle_collector_access": {
       "type": "aurelle-collector-access",
       "blocks": {
-        "armored_transit": {
+        "delivery_information": {
           "type": "benefit",
           "settings": {
             "icon": "transit",
-            "heading": "Armored Insured Transit",
-            "description": "Direct insured courier with mandatory biometric or physical signature upon release."
+            "heading": "Delivery information",
+            "description": "Add your confirmed delivery methods and conditions."
           }
         },
-        "atelier_adjustments": {
+        "customer_services": {
           "type": "benefit",
           "settings": {
             "icon": "adjustments",
-            "heading": "30-Day Atelier Adjustments",
-            "description": "Complimentary sizing, vault exchanges, and full insurance returns within thirty days."
+            "heading": "Customer services",
+            "description": "Describe the services currently available to customers."
           }
         },
-        "gia_hallmark": {
+        "product_documentation": {
           "type": "benefit",
           "settings": {
             "icon": "gia",
-            "heading": "GIA Certified & Hallmarked",
-            "description": "Stamped with French eagle hallmarks and accompanied by full laboratory dossiers."
+            "heading": "Product documentation",
+            "description": "Explain any documentation supplied with eligible products."
           }
         },
         "silk_casket": {
           "type": "benefit",
           "settings": {
             "icon": "casket",
-            "heading": "Signature Silk Casket",
-            "description": "Handcrafted velour jewellery trunk with personalized calligraphed wax-sealed letter."
+            "heading": "Presentation",
+            "description": "Describe your available packaging and gifting options."
           }
         }
       },
-      "block_order": ["armored_transit", "atelier_adjustments", "gia_hallmark", "silk_casket"],
+      "block_order": ["delivery_information", "customer_services", "product_documentation", "silk_casket"],
       "settings": {}
     }
   },

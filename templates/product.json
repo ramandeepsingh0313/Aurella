@@ -55,36 +55,36 @@
             "show_dynamic_checkout": true
           }
         },
-        "insured-transit": {
+        "delivery-information": {
           "type": "service",
           "settings": {
             "icon": "truck",
-            "title": "Insured global transit",
-            "description": "Complimentary, fully insured delivery. Dispatched in 2–3 business days."
+            "title": "Delivery information",
+            "description": "Add your confirmed delivery methods and estimated dispatch times."
           }
         },
-        "atelier-returns": {
+        "returns-information": {
           "type": "service",
           "settings": {
             "icon": "return",
-            "title": "30-Day Atelier Returns",
-            "description": "Time to fall in love. Complimentary returns on non-engraved creations."
+            "title": "Returns information",
+            "description": "Add your confirmed return period and eligibility conditions."
           }
         },
-        "certified-brilliance": {
+        "product-documentation": {
           "type": "service",
           "settings": {
             "icon": "diamond",
-            "title": "Certified Brilliance",
-            "description": "Conflict-free natural diamonds, with a certificate of authenticity."
+            "title": "Product documentation",
+            "description": "Describe documentation supplied with eligible products."
           }
         },
-        "lifetime-care": {
+        "care-guidance": {
           "type": "service",
           "settings": {
             "icon": "infinity",
-            "title": "Lifetime Care",
-            "description": "Expert cleaning and annual inspections, for a lifetime of brilliance."
+            "title": "Care guidance",
+            "description": "Share accurate care guidance and confirmed customer services."
           }
         }
       },
@@ -97,10 +97,10 @@
         "sku",
         "quantity",
         "buy-buttons",
-        "insured-transit",
-        "atelier-returns",
-        "certified-brilliance",
-        "lifetime-care"
+        "delivery-information",
+        "returns-information",
+        "product-documentation",
+        "care-guidance"
       ]
     }
   },

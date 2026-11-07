@@ -2385,19 +2385,19 @@
     { "type": "text", "id": "delivery_note", "label": "Delivery note", "info": "Only add delivery claims that your store can fulfill." },
     { "type": "checkbox", "id": "show_dynamic_checkout", "label": "Show accelerated checkout button", "default": true },
     { "type": "checkbox", "id": "show_pickup_availability", "label": "Show pickup availability", "default": true, "info": "Displays Shopify location pickup information when the selected variant supports pickup." },
-    { "type": "text", "id": "gift_note", "label": "Gift presentation note", "default": "Presented in our signature Aurèle box, with a certificate of authenticity and a personal note.", "info": "Verify packaging and certificate details before publishing." },
+    { "type": "text", "id": "gift_note", "label": "Gift presentation note", "default": "Add your confirmed packaging and documentation details here.", "info": "Verify packaging and documentation details before publishing." },
     { "type": "text", "id": "dispatch_note", "label": "Dispatch estimate", "info": "Optional fallback. The product's custom.dispatch_note metafield takes precedence." },
     { "type": "url", "id": "size_guide_link", "label": "Size guide link" },
     { "type": "checkbox", "id": "enable_engraving", "label": "Offer complimentary engraving", "default": false, "info": "Adds a customer-entered line item property to the cart. The product's custom.enable_engraving metafield takes precedence." },
-    { "type": "text", "id": "engraving_label", "label": "Engraving option label", "default": "Add a personal engraving — complimentary" },
+    { "type": "text", "id": "engraving_label", "label": "Engraving option label", "default": "Add a personal engraving" },
     { "type": "range", "id": "engraving_limit", "label": "Maximum engraving characters", "min": 1, "max": 40, "step": 1, "default": 18 },
     { "type": "url", "id": "booking_link", "label": "Private viewing link", "info": "Optional. If blank, the button opens the built-in product enquiry form." },
     { "type": "url", "id": "concierge_link", "label": "Concierge contact link", "info": "Optional. If blank, the concierge link opens the built-in product enquiry form." },
     { "type": "textarea", "id": "details_heading", "label": "Details heading", "info": "Optional fallback. Product metafields take precedence." },
     { "type": "richtext", "id": "details_intro", "label": "Details introduction", "info": "Optional fallback. Product metafields take precedence." },
     { "type": "text", "id": "details_note", "label": "Details note", "info": "Optional fallback. Verify sourcing claims before publishing." },
-    { "type": "richtext", "id": "delivery_copy", "label": "Delivery and returns content", "default": "<p>Complimentary insured worldwide delivery. Returns are accepted within 30 days for unworn pieces; personalized creations may be excluded.</p>", "info": "Confirm delivery coverage, return period, and exclusions with your store policies." },
-    { "type": "richtext", "id": "care_copy", "label": "Care and lifetime service content", "default": "<p>We invite you to return to the atelier for complimentary cleaning and annual inspections. Store your jewellery separately and avoid contact with harsh chemicals.</p>", "info": "Confirm service availability and care advice before publishing." },
+    { "type": "richtext", "id": "delivery_copy", "label": "Delivery and returns content", "default": "<p>Add your confirmed delivery coverage, costs, return period, and exclusions.</p>", "info": "Confirm delivery coverage, return period, and exclusions with your store policies." },
+    { "type": "richtext", "id": "care_copy", "label": "Care and service content", "default": "<p>Share accurate product-care guidance and any services currently offered by your business.</p>", "info": "Confirm service availability and care advice before publishing." },
     { "type": "image_picker", "id": "atelier_image", "label": "Atelier photograph", "info": "Choose a fallback image here, or set the product's custom.atelier_image file-reference metafield." },
     { "type": "text", "id": "atelier_heading", "label": "Atelier heading", "info": "Optional fallback. Product metafields take precedence." },
     { "type": "richtext", "id": "atelier_description", "label": "Atelier description", "info": "Optional fallback. Product metafields take precedence." },
@@ -2422,15 +2422,15 @@
     { "type": "buy_buttons", "name": "Buy buttons", "limit": 1, "settings": [ { "type": "checkbox", "id": "show_dynamic_checkout", "label": "Show accelerated checkout", "default": true } ] },
     { "type": "collapsible", "name": "Collapsible details", "settings": [ { "type": "text", "id": "heading", "label": "Heading", "default": "Materials and care" }, { "type": "richtext", "id": "content", "label": "Content" } ] },
     { "type": "custom_liquid", "name": "Custom Liquid", "settings": [ { "type": "liquid", "id": "custom_liquid", "label": "Custom Liquid" } ] },
-    { "type": "text_icon", "name": "Text with icon", "settings": [ { "type": "select", "id": "icon", "label": "Icon", "options": [ { "value": "diamond", "label": "Diamond" }, { "value": "care", "label": "Lifetime care" }, { "value": "delivery", "label": "Delivery" }, { "value": "bullet", "label": "Bullet" } ], "default": "diamond" }, { "type": "text", "id": "heading", "label": "Heading" }, { "type": "richtext", "id": "text", "label": "Text" } ] },
+    { "type": "text_icon", "name": "Text with icon", "settings": [ { "type": "select", "id": "icon", "label": "Icon", "options": [ { "value": "diamond", "label": "Gemstone" }, { "value": "care", "label": "Care" }, { "value": "delivery", "label": "Delivery" }, { "value": "bullet", "label": "Bullet" } ], "default": "diamond" }, { "type": "text", "id": "heading", "label": "Heading" }, { "type": "richtext", "id": "text", "label": "Text" } ] },
     { "type": "complementary_products", "name": "Complementary products", "settings": [ { "type": "text", "id": "heading", "label": "Heading", "default": "Pairs beautifully with" }, { "type": "product_list", "id": "products", "label": "Products", "limit": 4 } ] },
     {
       "type": "service",
       "name": "Client service",
       "settings": [
-        { "type": "select", "id": "icon", "label": "Icon", "options": [ { "value": "truck", "label": "Delivery" }, { "value": "return", "label": "Returns" }, { "value": "diamond", "label": "Certification" }, { "value": "infinity", "label": "Lifetime care" } ], "default": "truck" },
-        { "type": "text", "id": "title", "label": "Title", "default": "Insured global transit" },
-        { "type": "textarea", "id": "description", "label": "Description", "default": "Complimentary, fully insured delivery with tracking.", "info": "Verify all delivery, return, certification, and care claims for your store." }
+        { "type": "select", "id": "icon", "label": "Icon", "options": [ { "value": "truck", "label": "Delivery" }, { "value": "return", "label": "Returns" }, { "value": "diamond", "label": "Product details" }, { "value": "infinity", "label": "Care" } ], "default": "truck" },
+        { "type": "text", "id": "title", "label": "Title", "default": "Delivery information" },
+        { "type": "textarea", "id": "description", "label": "Description", "default": "Add your confirmed delivery terms.", "info": "Verify all delivery, return, certification, and care claims for your store." }
       ]
     }
   ],

@@ -19,7 +19,7 @@
       {% if section.settings.view_all_label != blank %}
         <a class="aurelle-categories__view-all" href="{{ section.settings.view_all_link | default: routes.collections_url | escape }}">
           <span>{{ section.settings.view_all_label | escape }}</span>
-          <img src="{{ 'aurelle-arrow-right.svg' | asset_url }}" width="13" height="9" alt="" aria-hidden="true">
+          <span class="aurelle-categories__css-arrow" aria-hidden="true"></span>
         </a>
       {% endif %}
     </div>
@@ -79,7 +79,7 @@
                 <span class="aurelle-categories__badge">{{ category_badge | escape }}</span>
               {% endif %}
               <span class="aurelle-categories__hover-cue" aria-hidden="true">
-                <img src="{{ 'aurelle-arrow-right.svg' | asset_url }}" width="13" height="9" alt="">
+                <span class="aurelle-categories__css-arrow"></span>
               </span>
             </div>
 
@@ -168,9 +168,35 @@
     color: var(--aurelle-categories-accent);
   }
 
-  .aurelle-categories__view-all img {
+  .aurelle-categories__css-arrow {
     display: block;
+    position: relative;
+    width: 13px;
+    height: 8px;
     flex: 0 0 auto;
+  }
+
+  .aurelle-categories__css-arrow::before {
+    position: absolute;
+    top: 50%;
+    right: 1px;
+    left: 0;
+    height: 1px;
+    background: currentColor;
+    content: '';
+    transform: translateY(-50%);
+  }
+
+  .aurelle-categories__css-arrow::after {
+    position: absolute;
+    top: 50%;
+    right: 1px;
+    width: 6px;
+    height: 6px;
+    border-top: 1px solid currentColor;
+    border-right: 1px solid currentColor;
+    content: '';
+    transform: translateY(-50%) rotate(45deg);
   }
 
   .aurelle-categories__grid {

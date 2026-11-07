@@ -97,15 +97,9 @@
         {% if section.settings.main_image != blank %}
           {{ section.settings.main_image | image_url: width: 1400 | image_tag: class: 'aurelle-hero__image', alt: main_image_alt, widths: '444, 888, 1332', sizes: '(min-width: 1200px) 444px, (min-width: 1001px) 34vw, (min-width: 601px) 52vw, calc(100vw - 170px)', loading: 'eager', fetchpriority: 'high' }}
         {% else %}
-          <img
-            class="aurelle-hero__image"
-            src="{{ 'aurelle-hero-main.jpeg' | asset_url }}"
-            alt="{{ main_image_alt | escape }}"
-            width="512"
-            height="288"
-            loading="eager"
-            fetchpriority="high"
-          >
+          <div class="aurelle-hero__media-placeholder" role="img" aria-label="{{ main_image_alt | default: 'Main editorial image placeholder' | escape }}">
+            <span aria-hidden="true">◇</span>
+          </div>
         {% endif %}
       </div>
 
@@ -114,14 +108,9 @@
           {% if section.settings.detail_image != blank %}
             {{ section.settings.detail_image | image_url: width: 900 | image_tag: class: 'aurelle-hero__image', alt: detail_image_alt, widths: '254, 508, 762', sizes: '(min-width: 1200px) 254px, 42vw', loading: 'lazy' }}
           {% else %}
-            <img
-              class="aurelle-hero__image"
-              src="{{ 'aurelle-hero-detail.jpeg' | asset_url }}"
-              alt="{{ detail_image_alt | escape }}"
-              width="512"
-              height="288"
-              loading="lazy"
-            >
+            <div class="aurelle-hero__media-placeholder aurelle-hero__media-placeholder--detail" role="img" aria-label="{{ detail_image_alt | default: 'Detail image placeholder' | escape }}">
+              <span aria-hidden="true">◇</span>
+            </div>
           {% endif %}
         </div>
         {% if section.settings.caption_eyebrow != blank or section.settings.caption_title != blank %}
@@ -398,6 +387,41 @@
     object-fit: cover;
     object-position: center;
     transition: transform 700ms cubic-bezier(0.2, 0.65, 0.3, 1);
+  }
+
+  .aurelle-hero__media-placeholder {
+    display: grid;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    place-items: center;
+    overflow: hidden;
+    color: var(--aurelle-hero-accent);
+    background:
+      radial-gradient(circle at 50% 42%, rgb(255 255 255 / 66%) 0 14%, transparent 15%),
+      linear-gradient(145deg, #eee8de, #d4c9b9);
+  }
+
+  .aurelle-hero__media-placeholder::before {
+    position: absolute;
+    width: 62%;
+    aspect-ratio: 1;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    content: '';
+    opacity: 0.2;
+  }
+
+  .aurelle-hero__media-placeholder span {
+    position: relative;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(72px, 9vw, 128px);
+    line-height: 1;
+    opacity: 0.48;
+  }
+
+  .aurelle-hero__media-placeholder--detail span {
+    font-size: clamp(54px, 6vw, 86px);
   }
 
   .aurelle-hero__main-image:hover .aurelle-hero__image,
@@ -839,7 +863,7 @@
       "type": "text",
       "id": "eyebrow",
       "label": "Eyebrow",
-      "default": "Maison Joaillerie Parisienne"
+      "default": "A study in enduring form"
     },
     {
       "type": "richtext",
@@ -851,7 +875,7 @@
       "type": "textarea",
       "id": "description",
       "label": "Description",
-      "default": "Sculptural 18-karat solid gold and brilliant-cut conflict-free diamonds handcrafted in our historical Place Vendôme atelier."
+      "default": "A considered collection of jewellery designed to bring quiet distinction to everyday moments."
     },
     {
       "type": "text",
@@ -931,15 +955,15 @@
       "type": "text",
       "id": "proof_point_one",
       "label": "First proof point",
-      "default": "Certified RJC Member",
-      "info": "Verify this business claim before publishing."
+      "default": "Considered materials",
+      "info": "Editable supporting message. Add only claims your business can substantiate."
     },
     {
       "type": "text",
       "id": "proof_point_two",
       "label": "Second proof point",
-      "default": "GIA Natural Gemstones",
-      "info": "Verify this business claim before publishing."
+      "default": "Thoughtful craftsmanship",
+      "info": "Editable supporting message. Add only claims your business can substantiate."
     },
     {
       "type": "color",

@@ -454,13 +454,13 @@
       "type": "testimonial",
       "name": "Client testimonial",
       "settings": [
-        { "type": "textarea", "id": "quote", "label": "Quote", "default": "The weight of the 18k gold is astonishing. It feels like an ancient talisman rendered for modern life. I haven't taken off my solitaire since it arrived.", "info": "Design-reference sample only. Replace with a genuine customer review and obtain permission before publishing." },
+        { "type": "textarea", "id": "quote", "label": "Quote", "default": "Add an approved customer quotation before enabling this section.", "info": "Replace this placeholder with genuine customer feedback and obtain permission before publishing." },
         { "type": "range", "id": "rating", "label": "Star rating", "min": 1, "max": 5, "step": 1, "default": 5 },
-        { "type": "text", "id": "customer_name", "label": "Customer name", "default": "Camille V.", "info": "Sample identity from design reference; replace with a real, authorized review attribution." },
-        { "type": "text", "id": "verification", "label": "Customer detail", "default": "Verified Buyer · Paris" },
+        { "type": "text", "id": "customer_name", "label": "Customer name", "default": "Customer name", "info": "Use a real, authorized review attribution." },
+        { "type": "text", "id": "verification", "label": "Customer detail", "default": "Approved customer detail" },
         { "type": "image_picker", "id": "avatar", "label": "Customer photo", "info": "Optional. Use a photo only with the customer's permission." },
         { "type": "text", "id": "avatar_alt", "label": "Customer photo alternative text" },
-        { "type": "text", "id": "initials", "label": "Initials shown if no photo", "default": "CV" }
+        { "type": "text", "id": "initials", "label": "Initials shown if no photo", "default": "CN" }
       ]
     }
   ],
@@ -469,9 +469,7 @@
     {
       "name": "AURELLE testimonials",
       "blocks": [
-        { "type": "testimonial", "settings": { "quote": "The weight of the 18k gold is astonishing. It feels like an ancient talisman rendered for modern life. I haven't taken off my solitaire since it arrived.", "rating": 5, "customer_name": "Camille V.", "verification": "Verified Buyer · Paris", "initials": "CV" } },
-        { "type": "testimonial", "settings": { "quote": "Purchased the Aura Tennis Necklace for our 10th anniversary. The fluidity of the setting sits perfectly flat against the collarbone without twisting.", "rating": 5, "customer_name": "Eleanor M.", "verification": "Verified Buyer · New York", "initials": "EM" } },
-        { "type": "testimonial", "settings": { "quote": "The bespoke packaging alone is worth noting—heavy silk, wax seal, and the GIA dossier. AURELLE treats jewellery purchasing with proper dignity.", "rating": 5, "customer_name": "Marcus K.", "verification": "Verified Buyer · Geneva", "initials": "MK" } }
+        { "type": "testimonial", "settings": { "quote": "Add an approved customer quotation before enabling this section.", "rating": 5, "customer_name": "Customer name", "verification": "Approved customer detail", "initials": "CN" } }
       ]
     }
   ]

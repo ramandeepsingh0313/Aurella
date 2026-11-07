@@ -23,40 +23,40 @@
         "show_payment_icons": true
       },
       "blocks": {
-        "rjc_certified": {
+        "customer_assurance": {
           "type": "benefit",
           "settings": {
             "icon": "rjc",
-            "heading": "RJC Certified",
-            "description": "Responsible Jewellery Council ethics & sourcing."
+            "heading": "Customer assurance",
+            "description": "Add an accurate, verifiable customer benefit."
           }
         },
-        "gia_inspected": {
+        "product_details": {
           "type": "benefit",
           "settings": {
             "icon": "gia",
-            "heading": "GIA Inspected",
-            "description": "Conflict-free natural & bespoke stones."
+            "heading": "Product details",
+            "description": "Share confirmed material and product information."
           }
         },
-        "recycled_gold": {
+        "care_guidance": {
           "type": "benefit",
           "settings": {
             "icon": "recycled",
-            "heading": "18K Recycled Gold",
-            "description": "100% refined circular solid gold atelier casting."
+            "heading": "Care guidance",
+            "description": "Help customers care for their chosen pieces."
           }
         },
-        "insured_delivery": {
+        "delivery_information": {
           "type": "benefit",
           "settings": {
             "icon": "delivery",
-            "heading": "Insured Delivery",
-            "description": "Armored couriers and 30-day private vault returns."
+            "heading": "Delivery information",
+            "description": "Add your confirmed delivery methods and terms."
           }
         }
       },
-      "block_order": ["rjc_certified", "gia_inspected", "recycled_gold", "insured_delivery"]
+      "block_order": ["customer_assurance", "product_details", "care_guidance", "delivery_information"]
     }
   },
   "order": [
