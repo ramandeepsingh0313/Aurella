@@ -7,6 +7,8 @@
 
     {% # Load and preload the critical CSS %}
     {{ 'critical.css' | asset_url | stylesheet_tag: preload: true }}
+    {{ 'aurelle-motion.css' | asset_url | stylesheet_tag }}
+    <script src="{{ 'aurelle-motion.js' | asset_url }}" defer></script>
 
     {% # Social, title, etc. %}
     {% render 'meta-tags' %}
@@ -14,7 +16,7 @@
     {{ content_for_header }}
   </head>
 
-  <body>
+  <body class="template-{{ request.page_type | handle }}">
     {% sections 'header-group' %}
 
     {{ content_for_layout }}

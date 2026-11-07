@@ -49,6 +49,27 @@ These project-specific rules supplement all preceding repository instructions. I
 - Never copy their Liquid, JavaScript, CSS, wording, assets, schema, exact layout, distinctive interaction details, or visual trade dress. AURELLE must retain its own code, information architecture, styling, and brand expression.
 - When closing a capability gap, implement the feature from Shopify documentation and AURELLE's own component system.
 
+Benchmark roles are deliberately separate:
+
+- **AURELLE** is the primary visual identity and design-system reference.
+- **Impulse** is a benchmark for shopping functionality, merchandising, product discovery, conversion UX, and merchant flexibility only.
+- **Prestige** is a benchmark for luxury storytelling, editorial image presentation, sophisticated motion, refined interaction quality, and homepage experience only.
+- These references never authorize copying proprietary code, CSS, JavaScript, assets, animation sequences, distinctive layouts, wording, or trade dress.
+
+### Motion design standards
+
+- Motion must be subtle, purposeful, and subordinate to content and commerce. Do not animate every available element.
+- Use shared motion tokens and reusable utilities. Prefer opacity and compositor-friendly transforms; avoid animating layout properties or introducing layout shift.
+- Typical timing ranges are 150-250ms for micro-interactions, 300-550ms for content transitions, and 450-750ms for editorial reveals. Depart only for a documented interaction need.
+- Do not add heavyweight animation libraries when CSS and a small shared controller are sufficient.
+- Critical content, LCP media, navigation, Add to Cart, checkout, and forms must remain visible and usable before JavaScript initializes and when JavaScript is unavailable.
+- Always honor `prefers-reduced-motion: reduce`. Reduced motion must remove decorative movement without removing content, state changes, or focus feedback.
+- Motion must preserve visible keyboard focus, semantic controls, accessible dialog behavior, touch usability, and current Shopify purchase/data contracts.
+- Shared initialization must be idempotent, multi-instance safe, and compatible with dynamically rendered content plus Shopify Theme Editor section load, unload, and reorder events. Avoid duplicate observers and listeners; clean up observed nodes when sections unload.
+- Merchant-configurable motion is appropriate only when the setting has a clear, maintainable effect. Never require a merchant to enable motion for a component to function.
+- Avoid scroll-jacking, intrusive parallax, excessive stagger, cursor-following effects, or motion that delays interaction. Mobile motion should be lighter when viewport or device constraints warrant it.
+- Review animation changes for responsiveness, main-thread cost, paint area, image loading priority, and cumulative layout shift. Preserve existing AURELLE styling and layout structure.
+
 ### Licensing and claims
 
 - Do not add or distribute an image, icon, font, logo, press mark, trademark, or other asset without documentary commercial redistribution rights suitable for a downloadable theme.

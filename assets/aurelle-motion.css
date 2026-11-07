@@ -1,0 +1,157 @@
+:root {
+  --aurelle-motion-fast: 180ms;
+  --aurelle-motion-medium: 380ms;
+  --aurelle-motion-slow: 640ms;
+  --aurelle-motion-ease: cubic-bezier(0.2, 0.65, 0.3, 1);
+  --aurelle-motion-distance: 16px;
+}
+
+/* Reveal states are added only after JavaScript confirms content is below the fold. */
+.aurelle-motion-pending {
+  opacity: 0;
+  transform: translate3d(0, var(--aurelle-motion-distance), 0);
+}
+
+.aurelle-motion-pending,
+.aurelle-motion-visible {
+  transition:
+    opacity var(--aurelle-motion-slow) var(--aurelle-motion-ease) var(--aurelle-motion-delay, 0ms),
+    transform var(--aurelle-motion-slow) var(--aurelle-motion-ease) var(--aurelle-motion-delay, 0ms);
+}
+
+.aurelle-motion-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+/* Above-the-fold content stays visible while receiving a restrained entrance. */
+.aurelle-motion-intro {
+  animation: aurelle-motion-intro var(--aurelle-motion-slow) var(--aurelle-motion-ease) both;
+  animation-delay: var(--aurelle-motion-delay, 0ms);
+}
+
+@keyframes aurelle-motion-intro {
+  from { opacity: 0.82; transform: translate3d(0, 8px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+/* Shared luxury micro-interactions. Component colors and dimensions remain local. */
+:where(
+  .aurelle-hero__button,
+  .aurelle-featured-product button,
+  .aurelle-product__add-to-bag,
+  .aurelle-product__booking,
+  .aurelle-cart__checkout,
+  .aurelle-cart__update,
+  .aurelle-contact button,
+  .aurelle-search__form button,
+  .aurelle-footer__submit,
+  .aurelle-not-found a
+) {
+  transition-duration: var(--aurelle-motion-fast);
+  transition-timing-function: var(--aurelle-motion-ease);
+}
+
+:where(
+  .aurelle-contact input,
+  .aurelle-contact textarea,
+  .aurelle-search input,
+  .aurelle-footer input,
+  .aurelle-cart input,
+  .aurelle-product input,
+  .aurelle-product select,
+  .aurelle-featured-product input,
+  .aurelle-featured-product select
+) {
+  transition:
+    border-color var(--aurelle-motion-fast) ease,
+    box-shadow var(--aurelle-motion-fast) ease,
+    background-color var(--aurelle-motion-fast) ease;
+}
+
+.aurelle-motion-working {
+  cursor: progress;
+  opacity: 0.72;
+}
+
+.aurelle-motion-confirmed {
+  animation: aurelle-motion-confirm var(--aurelle-motion-medium) var(--aurelle-motion-ease);
+}
+
+@keyframes aurelle-motion-confirm {
+  50% { transform: scale(0.94); }
+}
+
+:where(
+  .aurelle-product-card,
+  .ac__card,
+  .collection-card,
+  .aurelle-blog__card,
+  .search-result
+) {
+  transition:
+    border-color var(--aurelle-motion-fast) ease,
+    box-shadow var(--aurelle-motion-medium) var(--aurelle-motion-ease),
+    transform var(--aurelle-motion-medium) var(--aurelle-motion-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :where(.aurelle-product-card, .ac__card, .collection-card, .aurelle-blog__card, .search-result):hover {
+    transform: translate3d(0, -3px, 0);
+    box-shadow: 0 14px 34px rgb(30 28 25 / 7%);
+  }
+}
+
+:where(
+  .aurelle-featured-product__media,
+  .aurelle-product__media-item,
+  .aurelle-product__thumbnail,
+  .aurelle-featured-product__thumbnail
+) {
+  transition:
+    opacity var(--aurelle-motion-medium) var(--aurelle-motion-ease),
+    border-color var(--aurelle-motion-fast) ease,
+    transform var(--aurelle-motion-medium) var(--aurelle-motion-ease);
+}
+
+:where(input, textarea, select, button, summary, a):focus-visible {
+  transition: outline-offset var(--aurelle-motion-fast) ease;
+}
+
+@media (max-width: 760px) {
+  :root { --aurelle-motion-distance: 10px; }
+
+  .aurelle-motion-pending,
+  .aurelle-motion-visible {
+    transition-duration: 480ms;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --aurelle-motion-fast: 0ms;
+    --aurelle-motion-medium: 0ms;
+    --aurelle-motion-slow: 0ms;
+    --aurelle-motion-distance: 0px;
+  }
+
+  .aurelle-motion-pending,
+  .aurelle-motion-visible,
+  .aurelle-motion-intro,
+  .aurelle-motion-confirmed {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+
+  :where(
+    .aurelle-product-card,
+    .ac__card,
+    .collection-card,
+    .aurelle-blog__card,
+    .search-result
+  ):hover {
+    transform: none;
+  }
+}
